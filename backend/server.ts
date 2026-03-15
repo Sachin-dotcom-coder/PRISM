@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 
 import connectDB from './src/config/db';
-import enquiryRoutes from "./src/routers/enquiryrouter";
+import matchRoutes from "./src/routers/matchrouter";
 
 dotenv.config();
 
@@ -14,7 +14,7 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/enquiries", enquiryRoutes);
+app.use("/api/matches", matchRoutes);
 
 const PORT = process.env.PORT || 5000;
 
