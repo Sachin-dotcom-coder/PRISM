@@ -9,12 +9,17 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "framer-motion": "^12.38.0",
+    "lucide-react": "^0.479.0",
+    "mongoose": "^9.3.0",
     "next": "16.1.6",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "swr": "^2.4.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/mongoose": "^5.11.96",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import "./hero.css";
+
+import Navbar from "../components/Navbar";
 
 export default function HeroPage() {
   const [mounted, setMounted] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -15,48 +17,7 @@ export default function HeroPage() {
 
   return (
     <div className="relative w-full h-screen bg-[#000000] overflow-hidden flex flex-col items-center justify-center font-sans text-white">
-      
-      {/* --- Taskbar Navigation --- */}
-      <header className="absolute top-0 left-0 w-full z-50 flex items-center justify-between px-6 py-4 bg-transparent">
-
-        {/* Left: PRISM Logo — clickable, sized to fit taskbar */}
-        <a href="#" className="flex items-center shrink-0 transition-opacity duration-300 hover:opacity-80">
-          <img
-            src="/prismtransparentlogo.png"
-            alt="PRISM Logo"
-            className="h-16 w-44 object-contain"
-          />
-        </a>
-
-        {/* Center: Nav Links — absolutely centered so they never shift */}
-        <nav className="absolute left-1/2 -translate-x-1/2 hidden md:flex gap-14 items-center">
-          <a href="#" className="text-white capitalize tracking-[0.2em] text-base font-semibold transition-all duration-300 hover:scale-[1.04] hover:text-[#FFBF00]">Home</a>
-          <a href="#" className="text-white capitalize tracking-[0.2em] text-base font-semibold transition-all duration-300 hover:scale-[1.04] hover:text-[#FFBF00]">Teams</a>
-          <a href="#" className="text-white capitalize tracking-[0.2em] text-base font-semibold transition-all duration-300 hover:scale-[1.04] hover:text-[#FFBF00]">Contact</a>
-        </nav>
-
-        {/* Right: Hamburger Menu */}
-        <div
-          className="relative z-[110] py-2"
-          onMouseEnter={() => setMenuOpen(true)}
-          onMouseLeave={() => setMenuOpen(false)}
-        >
-          {/* Animated hamburger — morphs to X on hover */}
-          <div className="group flex flex-col items-start gap-[6px] cursor-pointer">
-            <span className="block h-[2px] w-8 bg-white origin-center transition-all duration-300 group-hover:bg-[#FFBF00] group-hover:rotate-45 group-hover:translate-y-[10px]"></span>
-            <span className="block h-[2px] w-8 bg-white transition-all duration-300 group-hover:bg-[#FFBF00] group-hover:opacity-0 group-hover:scale-x-0"></span>
-            <span className="block h-[2px] w-8 bg-white origin-center transition-all duration-300 group-hover:bg-[#FFBF00] group-hover:-rotate-45 group-hover:-translate-y-[10px]"></span>
-          </div>
-
-          {/* Dropdown — opens from top-right corner */}
-          <div className={`absolute top-[40px] right-0 transition-all duration-500 flex flex-col gap-2 text-sm font-medium tracking-wide bg-[rgba(0,0,0,0.95)] p-6 pt-8 border-b border-l border-[#FFBF00]/40 backdrop-blur-sm ${menuOpen ? 'opacity-100 pointer-events-auto translate-y-0' : 'opacity-0 pointer-events-none translate-y-[-10px]'}`}>
-            <a href="#" className="flex items-center px-3 py-2 text-gray-200 transition-colors duration-300 hover:text-[#FFBF00] hover:bg-[#FFBF00]/10 rounded-sm">Events</a>
-            <a href="#" className="flex items-center px-3 py-2 text-gray-200 transition-colors duration-300 hover:text-[#FFBF00] hover:bg-[#FFBF00]/10 rounded-sm">Competitions</a>
-            <a href="#" className="flex items-center px-3 py-2 text-gray-200 transition-colors duration-300 hover:text-[#FFBF00] hover:bg-[#FFBF00]/10 rounded-sm">Contact</a>
-          </div>
-        </div>
-
-      </header>
+      <Navbar />
 
       {/* --- Step 4: The Live Score Ticker Component --- */}
       {/* Step 19: mask-image applied for edge fade so text smoothly dissolves at screen boundaries */}
@@ -120,32 +81,44 @@ export default function HeroPage() {
       {/* --- Step 5: Hero Page Core Content (PRISM 2026) --- */}
       <div className="relative z-10 flex flex-col items-center justify-center mt-20">
         {/* === Step 15: Gradient Title + Neon Glow === */}
-        <h1
-          className="text-[12vw] md:text-[8vw] font-black tracking-[-0.05em] leading-none uppercase select-none"
-          style={{
-            background: "linear-gradient(180deg, #FFDF73 0%, #FFBF00 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            textShadow: "none",
-            filter:
-              "drop-shadow(0px 0px 15px rgba(255,191,0,0.4)) drop-shadow(0px 0px 40px rgba(255,191,0,0.25)) drop-shadow(0px 0px 80px rgba(255,191,0,0.12))",
-          }}
-        >
-          PRISM 2026
-        </h1>
+        <div className="text-center">
+          <p className="text-[#FFBF00] text-xl md:text-2xl font-bold tracking-[0.3em] uppercase mb-4">
+            University Premier League 2026
+          </p>
+          <h1
+            className="text-[12vw] md:text-[8vw] font-black tracking-[-0.05em] leading-none uppercase select-none"
+            style={{
+              background: "linear-gradient(180deg, #FFDF73 0%, #FFBF00 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              textShadow: "none",
+              filter:
+                "drop-shadow(0px 0px 15px rgba(255,191,0,0.4)) drop-shadow(0px 0px 40px rgba(255,191,0,0.25)) drop-shadow(0px 0px 80px rgba(255,191,0,0.12))",
+            }}
+          >
+            PRISM
+          </h1>
+          <p className="text-white/60 text-sm md:text-base tracking-[0.2em] font-medium mt-4 uppercase">
+            Live scores, standings and match analytics
+          </p>
+        </div>
 
-        {/* === CTA Container (chamfered corners) === */}
-        <div
-          className="mt-8 flex flex-col items-center gap-1"
+        {/* === CTA Button === */}
+        <Link 
+          href="/sports/cricket"
+          className="mt-10 px-10 py-4 bg-gradient-to-b from-[#FFDF73] to-[#FFBF00] text-black font-black uppercase tracking-[0.2em] rounded-sm transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(255,191,0,0.4)] active:scale-95"
           style={{
             clipPath: "polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)",
-            border: "1px solid rgba(255,191,0,0.4)",
-            padding: "20px 40px 22px",
           }}
         >
-          <span className="text-base md:text-lg tracking-[0.35em] font-semibold text-white">SVNIT, SURAT</span>
-          <span className="text-base md:text-lg tracking-[0.35em] font-semibold text-white">30 - 31 MARCH</span>
+          View Matches
+        </Link>
+
+        {/* === Event Metadata === */}
+        <div className="mt-6 flex flex-col items-center gap-1 opacity-50">
+          <span className="text-xs md:text-sm tracking-[0.35em] font-semibold text-white">SVNIT, SURAT</span>
+          <span className="text-xs md:text-sm tracking-[0.35em] font-semibold text-white">30 - 31 MARCH</span>
         </div>
       </div>
 
