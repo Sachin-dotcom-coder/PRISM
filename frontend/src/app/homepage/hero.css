@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+
+/* heropage specific animations */
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+/* --- Marquee Ticker Animation --- */
+@keyframes marqueeScroll {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); } /* Scrolls 50% because content is duplicated inside */
+}
+
+.marquee-content {
+  animation: marqueeScroll 25s linear infinite;
+  will-change: transform;
+  display: inline-block;
+}
+
+/* Pause on hover (optional nice-to-have) */
+.marquee-content:hover {
+  animation-play-state: paused;
+}
+
+/* === Step 17: Ambient Particle Sparks === */
+@keyframes floatUp1 {
+  0%   { transform: translateY(0px)   translateX(0px)  scale(1);   opacity: 0;   }
+  10%  { opacity: 0.25; }
+  80%  { opacity: 0.15; }
+  100% { transform: translateY(-90vh) translateX(30px)  scale(0.5); opacity: 0;   }
+}
+@keyframes floatUp2 {
+  0%   { transform: translateY(0px)   translateX(0px)  scale(1);   opacity: 0;   }
+  10%  { opacity: 0.2; }
+  90%  { opacity: 0.1; }
+  100% { transform: translateY(-80vh) translateX(-20px) scale(0.4); opacity: 0;   }
+}
+@keyframes floatUp3 {
+  0%   { transform: translateY(0px)   translateX(0px)  scale(1);   opacity: 0;   }
+  15%  { opacity: 0.3; }
+  85%  { opacity: 0.1; }
+  100% { transform: translateY(-95vh) translateX(15px)  scale(0.3); opacity: 0;   }
+}
+.particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255, 191, 0, 0.7);
+  box-shadow: 0 0 6px 2px rgba(255, 191, 0, 0.3);
+  pointer-events: none;
+}
+.p1  { left: 10%;  bottom: 10%; animation: floatUp1 8s  ease-in-out infinite 0s; }
+.p2  { left: 22%;  bottom: 5%;  animation: floatUp2 11s ease-in-out infinite 1s; }
+.p3  { left: 35%;  bottom: 15%; animation: floatUp3 9s  ease-in-out infinite 2s; }
+.p4  { left: 48%;  bottom: 8%;  animation: floatUp1 12s ease-in-out infinite 3s; }
+.p5  { left: 60%;  bottom: 12%; animation: floatUp2 10s ease-in-out infinite 0.5s; }
+.p6  { left: 73%;  bottom: 6%;  animation: floatUp3 7s  ease-in-out infinite 1.5s; }
+.p7  { left: 85%;  bottom: 18%; animation: floatUp1 13s ease-in-out infinite 2.5s; }
+.p8  { left: 15%;  bottom: 30%; animation: floatUp2 9s  ease-in-out infinite 4s; }
+.p9  { left: 55%;  bottom: 25%; animation: floatUp3 11s ease-in-out infinite 0.8s; }
+.p10 { left: 78%;  bottom: 35%; animation: floatUp1 14s ease-in-out infinite 3.5s; }
+
+/* --- 3D Wireframe Ball Animation --- */
+.wireframe-scene {
+  perspective: 1000px;
+  width: 100%;
+  height: 100%;
+}
+
+.wireframe-ball {
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  animation: rotateSphere 20s linear infinite;
+}
+
+.wireframe-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 191, 0, 0.4);
+  box-shadow: 0 0 15px rgba(255, 191, 0, 0.1) inset, 0 0 10px rgba(255, 191, 0, 0.2);
+}
+
+/* Rotate each ring on the Y and X axes to form a basketball shape */
+.wireframe-ring:nth-child(1) { transform: rotateY(0deg); border-color: rgba(255, 191, 0, 0.6); }
+.wireframe-ring:nth-child(2) { transform: rotateX(90deg); border-color: rgba(255, 191, 0, 0.6); }
+.wireframe-ring:nth-child(3) { transform: rotateY(50deg); border-color: rgba(255, 191, 0, 0.3); }
+.wireframe-ring:nth-child(4) { transform: rotateY(-50deg); border-color: rgba(255, 191, 0, 0.3); }
+
+@keyframes rotateSphere {
+  0% {
+    transform: rotateX(15deg) rotateY(0deg) rotateZ(0deg);
+  }
+  100% {
+    transform: rotateX(15deg) rotateY(360deg) rotateZ(360deg);
+  }
+}
+
