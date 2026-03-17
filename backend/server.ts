@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 
 import connectDB from './src/config/db';
 import matchRoutes from "./src/routers/matchrouter";
+import volleyballMatchRoutes from "./src/routers/volleyball_router";
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api/matches", matchRoutes);
+app.use("/api/volleyball", volleyballMatchRoutes);
 
 const PORT = process.env.PORT || 5000;
 
