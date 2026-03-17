@@ -1,7 +1,7 @@
 /* eslint-disable no-var, @typescript-eslint/no-explicit-any */
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URLCRICKET = process.env.mongodb_urlcricket;
 const MONGODB_FOOTBALL_URI = process.env.MONGODB_FOOTBALL_URI;
 const MONGODB_HOMEPAGE_URI = process.env.MONGODB_HOMEPAGE_URI;
 
@@ -49,7 +49,7 @@ async function connectToDatabase(uri: string, key: 'cricket' | 'football' | 'hom
 }
 
 export async function dbConnectCricket() {
-  return connectToDatabase(MONGODB_URI!, 'cricket');
+  return connectToDatabase(MONGODB_URLCRICKET!, 'cricket');
 }
 
 export async function dbConnectFootball() {

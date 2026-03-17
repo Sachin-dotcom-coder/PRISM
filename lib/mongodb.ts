@@ -1,11 +1,11 @@
 /* eslint-disable no-var, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/cricket_tracker";
+const MONGODB_URLCRICKET = process.env.mongodb_urlcricket || "mongodb://localhost:27017/cricket_tracker";
 
-if (!MONGODB_URI && process.env.NODE_ENV !== "production") {
+if (!MONGODB_URLCRICKET && process.env.NODE_ENV !== "production") {
   throw new Error(
-    "Please define the MONGODB_URI environment variable inside .env.local"
+    "Please define the MONGODB_URLCRICKET environment variable inside .env.local"
   );
 }
 
@@ -29,7 +29,7 @@ async function dbConnect() {
       bufferCommands: false,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI as string, opts).then((mongoose) => {
+    cached.promise = mongoose.connect(MONGODB_URLCRICKET as string, opts).then((mongoose) => {
       return mongoose;
     });
   }
