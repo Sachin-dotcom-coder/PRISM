@@ -7,6 +7,7 @@ import matchRoutes from "./src/routers/matchrouter";
 import volleyballMatchRoutes from "./src/routers/volleyball_router";
 import volleyballLeadRoutes from "./src/routers/volley_leade_router";
 import tennisMatchRoutes from "./src/routers/tennis_router";
+import tennisLeadRoutes from "./src/routers/tennis_lead_router";
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ app.use("/api/matches", matchRoutes);
 app.use("/api/volleyball", volleyballMatchRoutes);
 app.use("/api/volleylead",volleyballLeadRoutes);
 app.use("/api/tennis", tennisMatchRoutes);
+app.use("/api/tennis-leaderboard", tennisLeadRoutes);
 
 const PORT = process.env.PORT || 5000;
 
