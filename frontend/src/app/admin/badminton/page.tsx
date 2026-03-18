@@ -132,7 +132,10 @@ export default function BadmintonAdminPage() {
                         {new Date(match.match_date).toLocaleString()}
                       </td>
                       <td className="p-4 text-center font-mono text-zinc-300 font-bold bg-zinc-900/30">
-                        {match.total_games}
+                        <span className="text-[#FFBF00] text-lg glow-text mx-2 tracking-widest">{match.team1_score ?? '-'}</span>
+                         - 
+                        <span className="text-[#FFBF00] text-lg glow-text mx-2 tracking-widest">{match.team2_score ?? '-'}</span>
+                        <div className="text-[9px] text-zinc-500 uppercase tracking-widest mt-1">({match.total_games} Sets)</div>
                       </td>
                       <td className="p-4 text-center">
                         <span className={`px-2 py-1 text-[10px] uppercase font-[900] tracking-widest rounded border ${

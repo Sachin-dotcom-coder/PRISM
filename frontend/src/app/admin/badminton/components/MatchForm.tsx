@@ -18,6 +18,8 @@ export default function MatchForm({ initialData, onSuccess, onCancel }: MatchFor
     team2_department: '',
     match_date: new Date().toISOString().slice(0, 16),
     venue: '',
+    team1_score: '',
+    team2_score: '',
     games: [],
     total_games: 0,
     winner: '',
@@ -62,8 +64,8 @@ export default function MatchForm({ initialData, onSuccess, onCancel }: MatchFor
   const addGame = () => {
     const newGame: IGame = {
       game_number: formData.games.length + 1,
-      team1_score: 0,
-      team2_score: 0,
+      team1_score: '',
+      team2_score: '',
     };
     setFormData(prev => ({ 
       ...prev, 
@@ -72,18 +74,7 @@ export default function MatchForm({ initialData, onSuccess, onCancel }: MatchFor
     }));
   };
 
-  const calculateWinner = () => {
-    let t1Wins = 0;
-    let t2Wins = 0;
-    formData.games.forEach(g => {
-      if (g.team1_score > g.team2_score) t1Wins++;
-      else if (g.team2_score > g.team1_score) t2Wins++;
-    });
-    
-    if (t1Wins > t2Wins) setFormData(prev => ({ ...prev, winner: prev.team1_department }));
-    else if (t2Wins > t1Wins) setFormData(prev => ({ ...prev, winner: prev.team2_department }));
-    else setFormData(prev => ({ ...prev, winner: 'Draw' }));
-  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,7 +117,12 @@ export default function MatchForm({ initialData, onSuccess, onCancel }: MatchFor
         </div>
         <div>
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Match Stage</label>
-          <input required type="text" name="match_stage" value={formData.match_stage} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white" placeholder="e.g. Quarter Finals" />
+          <select required name="match_stage" value={formData.match_stage} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white">
+            <option value="" disabled>— Select Stage —</option>
+            <option value="group">Group</option>
+            <option value="semifinal">Semifinal</option>
+            <option value="final">Final</option>
+          </select>
         </div>
         <div>
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Venue</label>
@@ -145,6 +141,14 @@ export default function MatchForm({ initialData, onSuccess, onCancel }: MatchFor
           <input required type="datetime-local" name="match_date" value={String(formData.match_date)} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white" />
         </div>
         <div>
+          <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Match Score (T1 - T2)</label>
+          <div className="flex gap-2">
+            <input required type="number" min="0" name="team1_score" value={formData.team1_score} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white text-center" placeholder="T1" />
+            <span className="text-zinc-500 flex items-center">-</span>
+            <input required type="number" min="0" name="team2_score" value={formData.team2_score} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white text-center" placeholder="T2" />
+          </div>
+        </div>
+        <div>
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Match Status</label>
           <select required name="match_status" value={formData.match_status} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white">
             <option value="scheduled">Scheduled</option>
@@ -156,7 +160,6 @@ export default function MatchForm({ initialData, onSuccess, onCancel }: MatchFor
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Winner</label>
           <div className="flex gap-2">
              <input type="text" name="winner" value={formData.winner || ''} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white" placeholder="Winner Dept" />
-             <button type="button" onClick={calculateWinner} className="px-3 bg-zinc-700 text-xs rounded hover:bg-[#FFBF00] hover:text-black transition-colors" title="Auto-calculate Winner">Auto</button>
           </div>
         </div>
       </div>

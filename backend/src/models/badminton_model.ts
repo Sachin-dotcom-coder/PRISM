@@ -14,6 +14,8 @@ export interface IBadmintonMatch extends Document {
   match_date: Date;
   venue: string;
   games: IGame[];
+  team1_score: number;
+  team2_score: number;
   total_games: number;
   winner: string | null;
   match_status: string;
@@ -67,6 +69,16 @@ const BadmintonMatchSchema: Schema<IBadmintonMatch> = new Schema<IBadmintonMatch
     games: {
       type: [GameSchema],
       default: []
+    },
+
+    // ✅ Overall Match Scores
+    team1_score: {
+      type: Number,
+      default: 0
+    },
+    team2_score: {
+      type: Number,
+      default: 0
     },
 
     // ✅ NEW: total number of games played

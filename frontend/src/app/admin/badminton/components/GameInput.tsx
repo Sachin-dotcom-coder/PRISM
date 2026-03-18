@@ -27,7 +27,7 @@ export default function GameInput({ game, index, updateGame, removeGame }: GameI
           type="number" 
           min="0"
           value={game.team1_score} 
-          onChange={(e) => updateGame(index, { ...game, team1_score: Number(e.target.value) })}
+          onChange={(e) => updateGame(index, { ...game, team1_score: e.target.value === '' ? '' : Number(e.target.value) })}
           className="w-full bg-zinc-900 border border-zinc-700 rounded p-2 text-sm focus:border-[#FFBF00] outline-none text-white transition-colors"
           required
         />
@@ -38,7 +38,7 @@ export default function GameInput({ game, index, updateGame, removeGame }: GameI
           type="number" 
           min="0"
           value={game.team2_score} 
-          onChange={(e) => updateGame(index, { ...game, team2_score: Number(e.target.value) })}
+          onChange={(e) => updateGame(index, { ...game, team2_score: e.target.value === '' ? '' : Number(e.target.value) })}
           className="w-full bg-zinc-900 border border-zinc-700 rounded p-2 text-sm focus:border-[#FFBF00] outline-none text-white transition-colors"
           required
         />
