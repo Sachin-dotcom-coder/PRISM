@@ -78,5 +78,9 @@ VolleyballMatchSchema.pre<IVolleyballMatch>("validate", async function () {
   }
 });
 
+const VOLLEYBALL_URI = process.env.MONGODB_VOLLEYBALL_URI || 
+  "mongodb+srv://Vishal:VISHAL2006@prism.mczk5vc.mongodb.net/volleyballDB?appName=PRISM";
 
-export default mongoose.models.VolleyballMatch || mongoose.model<IVolleyballMatch>("VolleyballMatch", VolleyballMatchSchema);
+const volleyballDb = mongoose.createConnection(VOLLEYBALL_URI);
+
+export default volleyballDb.models.VolleyballMatch || volleyballDb.model<IVolleyballMatch>("VolleyballMatch", VolleyballMatchSchema);

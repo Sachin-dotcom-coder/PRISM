@@ -35,8 +35,13 @@ VolleyballLeaderboardSchema.index(
   { unique: true }
 );
 
-export default mongoose.models.VolleyballLeaderboard ||
-  mongoose.model<IVolleyballLeaderboard>(
+const VOLLEYBALL_URI = process.env.MONGODB_VOLLEYBALL_URI || 
+  "mongodb+srv://Vishal:VISHAL2006@prism.mczk5vc.mongodb.net/volleyballDB?appName=PRISM";
+
+const volleyballDb = mongoose.createConnection(VOLLEYBALL_URI);
+
+export default volleyballDb.models.VolleyballLeaderboard ||
+  volleyballDb.model<IVolleyballLeaderboard>(
     "VolleyballLeaderboard",
     VolleyballLeaderboardSchema
   );

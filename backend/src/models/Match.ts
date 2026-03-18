@@ -76,8 +76,8 @@ const MatchSchema = new Schema(
 
 import mongoose from "mongoose";
 
-export function getMatchModel(gender: "m" | "f" = "m") {
+export function getMatchModel(conn: mongoose.Connection, gender: "m" | "f" = "m") {
   const collectionName = gender === "f" ? "matches_f" : "matches";
   const modelName = gender === "f" ? "MatchF" : "Match";
-  return mongoose.models[modelName] || mongoose.model(modelName, MatchSchema, collectionName);
+  return conn.models[modelName] || conn.model(modelName, MatchSchema, collectionName);
 }
