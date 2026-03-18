@@ -97,8 +97,7 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       
-      {/* Admin Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Link href="/admin/leaderboard/cricket" className="glass p-6 rounded-2xl border border-zinc-800 hover:border-accent transition-all group">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -124,6 +123,22 @@ export default function AdminDashboard() {
               <div>
                 <h3 className="font-sports text-lg">Homepage Leaderboard</h3>
                 <p className="text-sm text-zinc-500">Update top performers on homepage</p>
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center">
+              <Plus className="w-5 h-5" />
+            </div>
+          </div>
+        </Link>
+        <Link href="/admin/badminton" className="glass p-6 rounded-2xl border border-zinc-800 hover:border-[#FFBF00] transition-all group">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-[#FFBF00]/20 flex items-center justify-center text-[#FFBF00] group-hover:scale-110 transition-transform">
+                <Activity className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-sports text-lg">Badminton Matches</h3>
+                <p className="text-sm text-zinc-500">Manage stage, sets & points</p>
               </div>
             </div>
             <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center">

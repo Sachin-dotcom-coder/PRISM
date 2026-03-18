@@ -155,6 +155,8 @@ export default function CricketLeaderboardAdmin() {
             <tbody className="divide-y divide-zinc-800/30">
               {!teams ? (
                 <tr><td colSpan={7} className="p-10 text-center text-zinc-500 animate-pulse">Loading teams...</td></tr>
+              ) : !Array.isArray(teams) ? (
+                <tr><td colSpan={7} className="p-10 text-center text-red-500">Error: {teams.error || 'Failed to load teams. Check backend connection.'}</td></tr>
               ) : teams.length === 0 ? (
                 <tr><td colSpan={7} className="p-10 text-center text-zinc-500">No teams registered.</td></tr>
               ) : (

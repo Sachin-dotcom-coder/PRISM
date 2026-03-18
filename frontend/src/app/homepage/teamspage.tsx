@@ -24,8 +24,7 @@ export default function TeamsPage() {
         TEAMS
       </h2>
 
-      <div className="relative w-full border-y border-[rgba(255,191,0,0.3)] py-6 
-                      [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+      <div className="relative w-full border-y border-[rgba(255,191,0,0.3)] py-6 [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
         <div className="flex items-center w-full animate-marquee-slow hover:[animation-play-state:paused] group pb-2">
           {marqueeContent.map((dept, idx) => (
             <React.Fragment key={idx}>
