@@ -43,6 +43,39 @@ export default function TeamsPage() {
         </div>
       </div>
 
+      {/* --- Live Score Horizontal Bars --- */}
+      <div className="w-full max-w-6xl mx-auto flex flex-col gap-4 px-[5vw] mt-12 mb-4" id="live-score">
+        {/* Football Bar */}
+        <div className="w-full bg-[rgba(20,20,20,0.8)] border border-[rgba(255,191,0,0.4)] py-4 px-6 md:px-10 flex flex-col md:flex-row items-center justify-between rounded-sm shadow-[0_0_15px_rgba(255,191,0,0.05)] transition-all hover:border-[#FFBF00] hover:shadow-[0_0_20px_rgba(255,191,0,0.15)]">
+           <span className="text-[#FFBF00] font-bold tracking-[0.3em] text-xs md:text-sm mb-2 md:mb-0">FOOTBALL</span>
+           <span className="text-white font-[800] tracking-widest text-lg md:text-xl">ECE <span className="mx-2 md:mx-4 text-zinc-500 text-sm font-bold">VS</span> CSE</span>
+           <div className="flex items-center gap-6 mt-2 md:mt-0">
+               <span className="text-zinc-400 text-xs md:text-sm tracking-widest font-mono">78'</span>
+               <span className="text-white font-mono text-xl md:text-2xl font-bold">2 - <span className="text-[#FFBF00] drop-shadow-[0_0_8px_rgba(255,191,0,0.8)]">1</span></span>
+           </div>
+        </div>
+
+        {/* Cricket Bar */}
+        <div className="w-full bg-[rgba(20,20,20,0.8)] border border-[rgba(255,191,0,0.4)] py-4 px-6 md:px-10 flex flex-col md:flex-row items-center justify-between rounded-sm shadow-[0_0_15px_rgba(255,191,0,0.05)] transition-all hover:border-[#FFBF00] hover:shadow-[0_0_20px_rgba(255,191,0,0.15)]">
+           <span className="text-[#FFBF00] font-bold tracking-[0.3em] text-xs md:text-sm mb-2 md:mb-0">CRICKET</span>
+           <span className="text-white font-[800] tracking-widest text-lg md:text-xl">MECH <span className="mx-2 md:mx-4 text-zinc-500 text-sm font-bold">VS</span> AI</span>
+           <div className="flex items-center gap-6 mt-2 md:mt-0">
+               <span className="text-zinc-400 text-xs md:text-sm tracking-widest font-mono">14.2 Ov</span>
+               <span className="text-[#FFBF00] font-mono text-xl md:text-2xl font-bold drop-shadow-[0_0_8px_rgba(255,191,0,0.8)]">134/4</span>
+           </div>
+        </div>
+
+        {/* Kabaddi Bar */}
+        <div className="w-full bg-[rgba(20,20,20,0.8)] border border-[rgba(255,191,0,0.4)] py-4 px-6 md:px-10 flex flex-col md:flex-row items-center justify-between rounded-sm shadow-[0_0_15px_rgba(255,191,0,0.05)] transition-all hover:border-[#FFBF00] hover:shadow-[0_0_20px_rgba(255,191,0,0.15)]">
+           <span className="text-[#FFBF00] font-bold tracking-[0.3em] text-xs md:text-sm mb-2 md:mb-0">KABADDI</span>
+           <span className="text-white font-[800] tracking-widest text-lg md:text-xl">CHE <span className="mx-2 md:mx-4 text-zinc-500 text-sm font-bold">VS</span> EEE</span>
+           <div className="flex items-center gap-6 mt-2 md:mt-0">
+               <span className="text-zinc-400 text-xs md:text-sm tracking-widest font-mono">2nd Half 14:12</span>
+               <span className="text-white font-mono text-xl md:text-2xl font-bold">42 - <span className="text-[#FFBF00] drop-shadow-[0_0_8px_rgba(255,191,0,0.8)]">38</span></span>
+           </div>
+        </div>
+      </div>
+
       <div className="px-[5vw] py-[8vh]">
         <h3 className="font-sans font-[800] text-xl uppercase tracking-widest text-[#FFBF00] mb-6">
           CURRENT STANDINGS

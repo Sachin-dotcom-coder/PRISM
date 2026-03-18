@@ -19,28 +19,7 @@ export default function HeroPage() {
     <div className="relative w-full h-screen bg-[#000000] overflow-hidden flex flex-col items-center justify-center font-sans text-white">
       <Navbar />
 
-      {/* --- Step 4: The Live Score Ticker Component --- */}
-      {/* Step 19: mask-image applied for edge fade so text smoothly dissolves at screen boundaries */}
-      <div
-        className="absolute top-[100px] left-0 w-full bg-[rgba(20,20,20,0.6)] py-2 z-40 overflow-hidden"
-        style={{
-          WebkitMaskImage: "linear-gradient(to right, transparent, black 5%, black 95%, transparent)",
-          maskImage: "linear-gradient(to right, transparent, black 5%, black 95%, transparent)",
-        }}
-      >
-         <div className="marquee-content inline-block text-xs md:text-sm tracking-widest font-mono whitespace-nowrap flex items-center">
-            {/* Duplicate content to create seamless infinite scroll */}
-            <span className="mx-8 text-white">FOOTBALL : ECE VS CSE | 78' | 2 - <span className="text-[#FFBF00]">1</span></span>
-            <span className="mx-8 text-white">CRICKET : AI vs MECH | 14.2 Ov | <span className="text-[#FFBF00]">134/4</span></span>
-            <span className="mx-8 text-white">KABADDI : CHE vs EEE | 2nd Half 14:12 | 42 - <span className="text-[#FFBF00]">38</span></span>
-            <span className="mx-8 text-white">FOOTBALL : ECE VS CSE | 78' | 2 - <span className="text-[#FFBF00]">1</span></span>
-            <span className="mx-8 text-white">CRICKET : AI vs MECH | 14.2 Ov | <span className="text-[#FFBF00]">134/4</span></span>
-            <span className="mx-8 text-white">KABADDI : CHE vs EEE | 2nd Half 14:12 | 42 - <span className="text-[#FFBF00]">38</span></span>
-            <span className="mx-8 text-white">FOOTBALL : ECE VS CSE | 78' | 2 - <span className="text-[#FFBF00]">1</span></span>
-            <span className="mx-8 text-white">CRICKET : AI vs MECH | 14.2 Ov | <span className="text-[#FFBF00]">134/4</span></span>
-            <span className="mx-8 text-white">KABADDI : CHE vs EEE | 2nd Half 14:12 | 42 - <span className="text-[#FFBF00]">38</span></span>
-         </div>
-      </div>
+
 
 
       {/* === Step 17: Ambient Particle Sparks === */}
