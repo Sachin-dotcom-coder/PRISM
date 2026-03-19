@@ -12,6 +12,7 @@ export interface IAthleticsLeaderboard extends Document {
     | "triple_jump"
     | "double_jump";
   category: "boys" | "girls";
+  group: string; // e.g. "A", "B"
   createdAt: Date;
   updatedAt: Date;
 }
@@ -44,6 +45,10 @@ const AthleticsLeaderboardSchema: Schema<IAthleticsLeaderboard> = new Schema(
       type: String,
       enum: ["boys", "girls"],
       required: true,
+    },
+    group: {
+      type: String,
+      required: true, // e.g. "A", "B"
     },
   },
   {
