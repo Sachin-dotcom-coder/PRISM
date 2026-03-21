@@ -14,7 +14,6 @@ const MOCK_ADMIN = {
   email: "admin@prism.com"
 };
 
-
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { gender } = useGender();
@@ -22,7 +21,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navigation = [
     { name: `${genderLabel} Cricket`, href: "/admin/cricket", icon: LayoutDashboard },
     { name: `${genderLabel} Football`, href: "/admin/football", icon: Activity },
-    { name: `Homepage LB`, href: "/admin/leaderboard", icon: Trophy },
+    { name: `${genderLabel} Badminton`, href: "/admin/badminton", icon: Activity },
+    { name: `${genderLabel} Table Tennis`, href: "/admin/table-tennis", icon: Activity },
+    { name: "Homepage LB", href: "/admin/leaderboard", icon: Trophy },
+    { name: "Cricket LB", href: "/admin/leaderboard/cricket", icon: Database },
+    { name: "Football LB", href: "/admin/leaderboard/football", icon: Database },
     { name: "Settings", href: "/admin/settings", icon: Settings },
   ];
   const [password, setPassword] = useState("");

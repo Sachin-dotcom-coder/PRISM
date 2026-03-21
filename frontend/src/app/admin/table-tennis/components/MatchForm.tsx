@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { IBadmintonMatch, IGame } from '../types';
+import { ITableTennisMatch, IGame } from '../types';
 import GameInput from './GameInput';
 import { Plus, Save, X } from 'lucide-react';
-import { createMatch, updateMatch } from '../services/badmintonApi';
+import { createMatch, updateMatch } from '../services/tableTennisApi';
 
 interface MatchFormProps {
-  initialData?: IBadmintonMatch | null;
+  initialData?: ITableTennisMatch | null;
   onSuccess: () => void;
   onCancel: () => void;
 }
 
 export default function MatchForm({ initialData, onSuccess, onCancel }: MatchFormProps) {
-  const [formData, setFormData] = useState<IBadmintonMatch>({
+  const [formData, setFormData] = useState<ITableTennisMatch>({
     match_id: Date.now() % 1000000,
     match_stage: '',
     team1_department: '',
@@ -104,7 +104,7 @@ export default function MatchForm({ initialData, onSuccess, onCancel }: MatchFor
   return (
     <form onSubmit={handleSubmit} className="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800 space-y-6">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-[#FFBF00] font-bold text-lg">{initialData ? 'Edit Badminton Match' : 'Create New Badminton Match'}</h3>
+        <h3 className="text-[#FFBF00] font-bold text-lg">{initialData ? 'Edit table tennis match' : 'Create New table tennis match'}</h3>
         <button type="button" onClick={onCancel} className="text-zinc-500 hover:text-white"><X /></button>
       </div>
 
@@ -117,12 +117,7 @@ export default function MatchForm({ initialData, onSuccess, onCancel }: MatchFor
         </div>
         <div>
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Match Stage</label>
-          <select required name="match_stage" value={formData.match_stage} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white">
-            <option value="" disabled>— Select Stage —</option>
-            <option value="group">Group</option>
-            <option value="semifinal">Semifinal</option>
-            <option value="final">Final</option>
-          </select>
+          <input required type="text" name="match_stage" value={formData.match_stage} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white" placeholder="e.g. Quarter Finals" />
         </div>
         <div>
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Venue</label>

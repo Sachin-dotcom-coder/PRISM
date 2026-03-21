@@ -4,16 +4,16 @@ import React, { useState, useEffect } from 'react';
 import { Plus, ArrowLeft, RefreshCw, Pencil, Trash2, Activity } from 'lucide-react';
 import Link from 'next/link';
 import MatchForm from './components/MatchForm';
-import { IBadmintonMatch } from './types';
-import { getMatches, deleteMatch } from './services/badmintonApi';
+import { ITableTennisMatch } from './types';
+import { getMatches, deleteMatch } from './services/tableTennisApi';
 
-export default function BadmintonAdminPage() {
-  const [matches, setMatches] = useState<IBadmintonMatch[]>([]);
+export default function TableTennisAdminPage() {
+  const [matches, setMatches] = useState<ITableTennisMatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
   const [showForm, setShowForm] = useState(false);
-  const [editingMatch, setEditingMatch] = useState<IBadmintonMatch | null>(null);
+  const [editingMatch, setEditingMatch] = useState<ITableTennisMatch | null>(null);
 
   const fetchMatches = async () => {
     setLoading(true);
@@ -39,7 +39,7 @@ export default function BadmintonAdminPage() {
     setShowForm(true);
   };
 
-  const handleEdit = (match: IBadmintonMatch) => {
+  const handleEdit = (match: ITableTennisMatch) => {
     setEditingMatch(match);
     setShowForm(true);
   };
@@ -70,7 +70,7 @@ export default function BadmintonAdminPage() {
              <div className="w-10 h-10 rounded-xl bg-[#FFBF00]/20 flex items-center justify-center text-[#FFBF00]">
                 <Activity className="w-5 h-5" />
              </div>
-             <h1 className="text-3xl font-[900] tracking-widest text-[#FFBF00] uppercase">Badminton CMS</h1>
+             <h1 className="text-3xl font-[900] tracking-widest text-[#FFBF00] uppercase">Table Tennis CMS</h1>
           </div>
         </div>
         
@@ -114,7 +114,7 @@ export default function BadmintonAdminPage() {
                 {loading && matches.length === 0 ? (
                   <tr><td colSpan={8} className="p-10 text-center text-[#FFBF00] font-bold animate-pulse">Fetching MongoDB Data...</td></tr>
                 ) : matches.length === 0 ? (
-                  <tr><td colSpan={8} className="p-10 text-center text-zinc-500">No badminton matches found in database. Create one.</td></tr>
+                  <tr><td colSpan={8} className="p-10 text-center text-zinc-500">No table tennis matches found in database. Create one.</td></tr>
                 ) : (
                   matches.map((match) => (
                     <tr key={match.match_id} className="hover:bg-zinc-900/40 transition-colors">

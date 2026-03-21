@@ -101,72 +101,42 @@ export const getBadmintonMatchById = async (req: Request, res: Response): Promis
 export const updateBadmintonMatch = async (req: Request, res: Response): Promise<void> => {
   try {
     const { match_id } = req.params;
-    const { games, match_status } = req.body;
+    const { 
+      games, 
+      match_status, 
+      team1_score, 
+      team2_score, 
+      match_stage, 
+      venue, 
+      match_date, 
+      team1_department, 
+      team2_department, 
+      winner 
+    } = req.body;
 
     const updateData: any = {};
 
-    // ✅ Handle games (score update)
-    if (games !== undefined) {
-      if (!Array.isArray(games) || games.length === 0) {
-        res.status(400).json({
-          success: false,
-          message: "Games must be a non-empty array.",
-        });
-        return;
-      }
+    // Standard fields
+    if (match_stage !== undefined) updateData.match_stage = match_stage;
+    if (venue !== undefined) updateData.venue = venue;
+    if (match_date !== undefined) updateData.match_date = match_date;
+    if (team1_department !== undefined) updateData.team1_department = team1_department;
+    if (team2_department !== undefined) updateData.team2_department = team2_department;
+    if (winner !== undefined) updateData.winner = winner;
+    if (match_status !== undefined) updateData.match_status = match_status;
+    if (team1_score !== undefined) updateData.team1_score = team1_score;
+    if (team2_score !== undefined) updateData.team2_score = team2_score;
 
-      let team1Wins = 0;
-      let team2Wins = 0;
-
-      games.forEach((game: any) => {
-        if (
-          typeof game.team1_score !== "number" ||
-          typeof game.team2_score !== "number"
-        ) {
-          res.status(400).json({
-            success: false,
-            message: "Invalid score format.",
-          });
-          return;
-        }
-
-        if (game.team1_score > game.team2_score) {
-          team1Wins++;
-        } else if (game.team2_score > game.team1_score) {
-          team2Wins++;
-        }
-      });
-
-      let winner = null;
-
-      if (team1Wins > team2Wins) {
-        winner = "team1";
-      } else if (team2Wins > team1Wins) {
-        winner = "team2";
-      }
-
+    // ✅ Handle games array if provided
+    if (games !== undefined && Array.isArray(games)) {
       updateData.games = games;
       updateData.total_games = games.length;
-      updateData.winner = winner;
-      updateData.match_status = "completed";
-    }
-
-    // ✅ Optional manual match_status update
-    if (match_status !== undefined) {
-      if (!["scheduled", "ongoing", "completed"].includes(match_status)) {
-        res.status(400).json({
-          success: false,
-          message: "Invalid match_status.",
-        });
-        return;
-      }
-      updateData.match_status = match_status;
     }
 
     if (Object.keys(updateData).length === 0) {
       res.status(400).json({
         success: false,
-        message: "Provide 'games' or 'match_status' to update.",
+        message: "No valid fields provided to update.",
       });
       return;
     }

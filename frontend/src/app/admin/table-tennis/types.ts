@@ -4,7 +4,7 @@ export interface IGame {
   team2_score: number | '';
 }
 
-export interface IBadmintonMatch {
+export interface ITableTennisMatch {
   _id?: string;
   match_id: number;
   match_stage: string;
