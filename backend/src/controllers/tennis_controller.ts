@@ -19,7 +19,9 @@ export const createTennisMatch = async (req: Request, res: Response) => {
 // READ all tennis matches
 export const getAllTennisMatches = async (req: Request, res: Response) => {
   try {
-    const matches = await TennisMatch.find();
+    const { gender } = req.query;
+    const filter = gender ? { gender: gender as string } : {};
+    const matches = await TennisMatch.find(filter).sort({ createdAt: 1 });
     res.status(200).json(matches);
   } catch (error) {
     console.error("Failed to fetch tennis matches", error);

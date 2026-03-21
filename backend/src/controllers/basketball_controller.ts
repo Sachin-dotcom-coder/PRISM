@@ -1,44 +1,37 @@
 import { Request, Response } from "express";
-import BasketballMatch, { IQuarter } from "../models/basketball_model";
+import BasketballMatch, { IGame } from "../models/basketball_model";
 
-const evaluateMatch = (team1_name: string, team2_name: string, quarters: IQuarter[]) => {
-  if (quarters.length > 4) {
-    return { valid: false, error: "Maximum 4 quarters allowed." };
-  }
-
-  // Ensure unique quarter_numbers 1 to 4
-  const quarterNumbers = quarters.map(q => q.quarter_number);
-  const uniqueQuarters = new Set(quarterNumbers);
-  if (uniqueQuarters.size !== quarters.length) {
-     return { valid: false, error: "Duplicate quarters provided." };
+const evaluateMatch = (team1_department: string, team2_department: string, games: IGame[]) => {
+  if (games.length > 1) {
+    return { valid: false, error: "Basketball module only permits one final score entry." };
   }
 
   let t1Points = 0;
   let t2Points = 0;
 
-  for (const q of quarters) {
-    if (!Number.isInteger(q.team1_points) || q.team1_points < 0) return { valid: false, error: "Points must be a non-negative integer." };
-    if (!Number.isInteger(q.team2_points) || q.team2_points < 0) return { valid: false, error: "Points must be a non-negative integer." };
+  for (const q of games) {
+    if (!Number.isInteger(q.team1_score) || q.team1_score < 0) return { valid: false, error: "Scores must be non-negative integers." };
+    if (!Number.isInteger(q.team2_score) || q.team2_score < 0) return { valid: false, error: "Scores must be non-negative integers." };
     
-    t1Points += q.team1_points;
-    t2Points += q.team2_points;
+    t1Points += q.team1_score;
+    t2Points += q.team2_score;
   }
 
   let winner: string | null = null;
   let status = "ongoing";
 
   if (t1Points > t2Points) {
-    winner = team1_name;
+    winner = team1_department;
   } else if (t2Points > t1Points) {
-    winner = team2_name;
-  } else if (quarters.length === 4) {
-    // Both 4 quarters played, still tied
+    winner = team2_department;
+  } else if (games.length === 1) {
+    // Both played, still tied
     winner = "draw";
   }
 
-  if (quarters.length === 0) {
+  if (games.length === 0) {
     status = "scheduled";
-  } else if (quarters.length === 4) {
+  } else if (games.length === 1) {
     status = "completed";
   }
 
@@ -48,21 +41,21 @@ const evaluateMatch = (team1_name: string, team2_name: string, quarters: IQuarte
 export const createBasketballMatch = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
-      match_id, match_stage, team1_name, team2_name, match_date, venue, quarters, scoring_breakdown
+      match_id, match_stage, team1_department, team2_department, match_date, venue, games, gender, match_status
     } = req.body;
 
-    if (match_id === undefined || !match_stage || !team1_name || !team2_name) {
+    if (match_id === undefined || !match_stage || !team1_department || !team2_department || !gender) {
       res.status(400).json({ success: false, message: "Missing required fields." });
       return;
     }
 
-    if (!["league", "quarterfinal", "semifinal", "final"].includes(match_stage)) {
-       res.status(400).json({ success: false, message: "Invalid match_stage." });
+    if (!["men", "women"].includes(gender)) {
+       res.status(400).json({ success: false, message: "Invalid gender selection." });
        return;
     }
 
-    const quartersArr = quarters || [];
-    const evaluation = evaluateMatch(team1_name, team2_name, quartersArr);
+    const gamesArr = games || [];
+    const evaluation = evaluateMatch(team1_department, team2_department, gamesArr);
     
     if (!evaluation.valid) {
       res.status(400).json({ success: false, message: evaluation.error });
@@ -72,16 +65,15 @@ export const createBasketballMatch = async (req: Request, res: Response): Promis
     const newMatch = new BasketballMatch({
       match_id,
       match_stage,
-      team1_name,
-      team2_name,
+      team1_department,
+      team2_department,
       match_date,
       venue,
-      quarters: quartersArr,
-      scoring_breakdown,
-      team1_total_points: evaluation.team1Total,
-      team2_total_points: evaluation.team2Total,
+      gender,
+      games: gamesArr,
+      total_games: 1,
       winner: evaluation.winner,
-      match_status: req.body.match_status || (evaluation.status !== "scheduled" ? evaluation.status : "scheduled")
+      match_status: match_status || (evaluation.status !== "scheduled" ? evaluation.status : "scheduled")
     });
 
     const savedMatch = await newMatch.save();
@@ -97,7 +89,12 @@ export const createBasketballMatch = async (req: Request, res: Response): Promis
 
 export const getAllBasketballMatches = async (req: Request, res: Response): Promise<void> => {
   try {
-    const matches = await BasketballMatch.find();
+    const { gender } = req.query;
+    const filter = gender ? { gender: gender as string } : {};
+    
+    // Default to 'men' if no gender specified in admin interface request, or just return all?
+    // Let's filter correctly as requested.
+    const matches = await BasketballMatch.find(filter).sort({ match_id: 1 });
     res.status(200).json({ success: true, message: "Matches fetched.", data: matches });
   } catch (error: any) {
     res.status(500).json({ success: false, message: "Server Error", data: error.message });
@@ -121,7 +118,7 @@ export const getBasketballMatchById = async (req: Request, res: Response): Promi
 export const updateBasketballMatch = async (req: Request, res: Response): Promise<void> => {
   try {
     const { match_id } = req.params;
-    const { quarters, scoring_breakdown, match_status } = req.body;
+    const { games, match_status, team1_department, team2_department, match_stage, match_date, venue, gender } = req.body;
 
     const match = await BasketballMatch.findOne({ match_id: Number(match_id) });
     if (!match) {
@@ -131,29 +128,37 @@ export const updateBasketballMatch = async (req: Request, res: Response): Promis
 
     const updateData: any = {};
     
-    if (quarters !== undefined) {
-      if (!Array.isArray(quarters)) {
-         res.status(400).json({ success: false, message: "quarters must be an array." });
+    const t1Dept = team1_department || match.team1_department;
+    const t2Dept = team2_department || match.team2_department;
+
+    if (match_stage !== undefined) updateData.match_stage = match_stage;
+    if (team1_department !== undefined) updateData.team1_department = team1_department;
+    if (team2_department !== undefined) updateData.team2_department = team2_department;
+    if (match_date !== undefined) updateData.match_date = match_date;
+    if (venue !== undefined) updateData.venue = venue;
+    if (gender !== undefined) updateData.gender = gender;
+    
+    if (games !== undefined) {
+      if (!Array.isArray(games)) {
+         res.status(400).json({ success: false, message: "games must be an array." });
          return;
       }
 
-      const evaluation = evaluateMatch(match.team1_name, match.team2_name, quarters);
+      const evaluation = evaluateMatch(t1Dept, t2Dept, games);
 
       if (!evaluation.valid) {
          res.status(400).json({ success: false, message: evaluation.error });
          return;
       }
 
-      updateData.quarters = quarters;
-      updateData.team1_total_points = evaluation.team1Total;
-      updateData.team2_total_points = evaluation.team2Total;
+      updateData.games = games;
       updateData.winner = evaluation.winner;
 
       if (evaluation.status === "completed") {
          updateData.match_status = "completed";
       } else if (match_status) {
          updateData.match_status = match_status;
-      } else if (quarters.length > 0) {
+      } else if (games.length > 0) {
          updateData.match_status = "ongoing";
       }
     } else if (match_status) {
@@ -164,12 +169,8 @@ export const updateBasketballMatch = async (req: Request, res: Response): Promis
       updateData.match_status = match_status;
     }
 
-    if (scoring_breakdown !== undefined) {
-       updateData.scoring_breakdown = scoring_breakdown;
-    }
-
     if (Object.keys(updateData).length === 0) {
-      res.status(400).json({ success: false, message: "Provide quarters, scoring_breakdown, or match_status to update." });
+      res.status(400).json({ success: false, message: "Provide fields to update." });
       return;
     }
 
@@ -179,7 +180,7 @@ export const updateBasketballMatch = async (req: Request, res: Response): Promis
       { new: true, runValidators: true }
     );
 
-    res.status(200).json({ success: true, message: "Match score updated.", data: updatedMatch });
+    res.status(200).json({ success: true, message: "Match updated.", data: updatedMatch });
   } catch (error: any) {
     res.status(500).json({ success: false, message: "Server Error", data: error.message });
   }

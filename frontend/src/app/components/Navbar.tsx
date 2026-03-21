@@ -138,6 +138,7 @@ export default function Navbar() {
               </div>
 
               {/* Navigation links */}
+<<<<<<< Updated upstream
               <div className="mt-8 flex gap-12 flex-wrap justify-center">
                 <Link href="/" onClick={() => setIsOpen(false)} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-[#FFBF00] transition-colors">Home</Link>
                 <Link href="/#teams" onClick={() => setIsOpen(false)} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-[#FFBF00] transition-colors">Teams</Link>
@@ -145,6 +146,17 @@ export default function Navbar() {
                 <Link href="/#leaderboard" onClick={() => setIsOpen(false)} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-[#FFBF00] transition-colors">Leaderboard</Link>
                 <Link href="/#about" onClick={() => setIsOpen(false)} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-[#FFBF00] transition-colors">About Prism</Link>
                 <Link href="#" onClick={() => setIsOpen(false)} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-[#FFBF00] transition-colors">Contact</Link>
+=======
+              <div className="mt-8 flex flex-col items-center gap-6">
+                <div className="flex gap-12 flex-wrap justify-center">
+                  <Link href="/" onClick={() => setIsOpen(false)} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-[#FFBF00] transition-colors">Home</Link>
+                  <Link href="/#teams" onClick={() => setIsOpen(false)} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-[#FFBF00] transition-colors">Teams</Link>
+                  <Link href="/#scores" onClick={() => setIsOpen(false)} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-[#FFBF00] transition-colors">Live Score</Link>
+                  <Link href="/#leaderboard" onClick={() => setIsOpen(false)} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-[#FFBF00] transition-colors">Leaderboard</Link>
+                  <Link href="/#about" onClick={() => setIsOpen(false)} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-[#FFBF00] transition-colors">About Prism</Link>
+                  <Link href="#" onClick={() => setIsOpen(false)} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-[#FFBF00] transition-colors">Contact</Link>
+                </div>
+>>>>>>> Stashed changes
               </div>
 
               {/* Admin link */}

@@ -6,8 +6,12 @@ import Link from 'next/link';
 import MatchForm from './components/MatchForm';
 import { IBadmintonMatch } from './types';
 import { getMatches, deleteMatch } from './services/badmintonApi';
+import { useGender } from '@/app/components/Providers';
 
 export default function BadmintonAdminPage() {
+  const { gender: globalGender } = useGender();
+  const gender = globalGender === "f" ? "women" : "men";
+  
   const [matches, setMatches] = useState<IBadmintonMatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -19,7 +23,7 @@ export default function BadmintonAdminPage() {
     setLoading(true);
     setError('');
     try {
-      const response = await getMatches();
+      const response = await getMatches(gender);
       const data = Array.isArray(response) ? response : (response as any).data || [];
       if (!Array.isArray(data)) throw new Error("Invalid response format");
       setMatches(data);
@@ -32,7 +36,7 @@ export default function BadmintonAdminPage() {
 
   useEffect(() => {
     fetchMatches();
-  }, []);
+  }, [gender]);
 
   const handleAddNew = () => {
     setEditingMatch(null);
@@ -89,6 +93,7 @@ export default function BadmintonAdminPage() {
       {showForm ? (
         <MatchForm 
           initialData={editingMatch} 
+          gender={gender}
           onSuccess={onFormSuccess} 
           onCancel={() => setShowForm(false)} 
         />

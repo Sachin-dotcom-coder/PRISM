@@ -6,11 +6,12 @@ import { createMatch, updateMatch } from '../services/badmintonApi';
 
 interface MatchFormProps {
   initialData?: IBadmintonMatch | null;
+  gender: "men" | "women";
   onSuccess: () => void;
   onCancel: () => void;
 }
 
-export default function MatchForm({ initialData, onSuccess, onCancel }: MatchFormProps) {
+export default function MatchForm({ initialData, gender, onSuccess, onCancel }: MatchFormProps) {
   const [formData, setFormData] = useState<IBadmintonMatch>({
     match_id: Date.now() % 1000000,
     match_stage: '',
@@ -23,7 +24,9 @@ export default function MatchForm({ initialData, onSuccess, onCancel }: MatchFor
     games: [],
     total_games: 0,
     winner: '',
-    match_status: 'scheduled',
+    match_status: 'completed',
+    match_type: 'singles',
+    gender: gender
   });
   
   const [loading, setLoading] = useState(false);
@@ -35,10 +38,13 @@ export default function MatchForm({ initialData, onSuccess, onCancel }: MatchFor
         ...initialData,
         match_date: typeof initialData.match_date === 'string' 
           ? initialData.match_date.slice(0, 16) 
-          : new Date(initialData.match_date).toISOString().slice(0, 16)
+          : new Date(initialData.match_date).toISOString().slice(0, 16),
+        match_type: initialData.match_type || 'singles'
       });
+    } else {
+      setFormData(prev => ({ ...prev, gender }));
     }
-  }, [initialData]);
+  }, [initialData, gender]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -88,10 +94,12 @@ export default function MatchForm({ initialData, onSuccess, onCancel }: MatchFor
     }
 
     try {
+      const payload = { ...formData, gender };
+      
       if (initialData?._id || (initialData && initialData.match_id)) {
-        await updateMatch(formData.match_id, formData);
+        await updateMatch(formData.match_id, payload);
       } else {
-        await createMatch(formData);
+        await createMatch(payload);
       }
       onSuccess();
     } catch (err: any) {
@@ -125,8 +133,11 @@ export default function MatchForm({ initialData, onSuccess, onCancel }: MatchFor
           </select>
         </div>
         <div>
-          <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Venue</label>
-          <input required type="text" name="venue" value={formData.venue} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white" placeholder="e.g. Indoor Court 1" />
+          <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Match Type</label>
+          <select required name="match_type" value={formData.match_type} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white">
+            <option value="singles">Singles</option>
+            <option value="doubles">Doubles</option>
+          </select>
         </div>
         <div>
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Team 1 Dept</label>
@@ -147,14 +158,6 @@ export default function MatchForm({ initialData, onSuccess, onCancel }: MatchFor
             <span className="text-zinc-500 flex items-center">-</span>
             <input required type="number" min="0" name="team2_score" value={formData.team2_score} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white text-center" placeholder="T2" />
           </div>
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Match Status</label>
-          <select required name="match_status" value={formData.match_status} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white">
-            <option value="scheduled">Scheduled</option>
-            <option value="ongoing">Ongoing</option>
-            <option value="completed">Completed</option>
-          </select>
         </div>
         <div>
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Winner</label>

@@ -4,11 +4,11 @@ import TTMatch from "../models/TT.model";
 export const createTTMatch = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
-      match_id, match_stage, team1_department, team2_department, match_date, venue
+      match_id, match_stage, match_type, team1_department, team2_department, match_date, venue, gender
     } = req.body;
 
-    if (match_id === undefined || !match_stage || !team1_department || !team2_department || !match_date || !venue) {
-      res.status(400).json({ success: false, message: "Missing required fields." });
+    if (match_id === undefined || !match_stage || !match_type || !team1_department || !team2_department || !match_date || !venue || !gender) {
+      res.status(400).json({ success: false, message: "Missing required fields including gender and match_type." });
       return;
     }
 
@@ -27,7 +27,9 @@ export const createTTMatch = async (req: Request, res: Response): Promise<void> 
 
 export const getAllTTMatches = async (req: Request, res: Response): Promise<void> => {
   try {
-    const matches = await TTMatch.find();
+    const { gender } = req.query;
+    const filter = gender ? { gender: String(gender) } : {};
+    const matches = await TTMatch.find(filter);
     res.status(200).json({ success: true, message: "Matches fetched successfully.", data: matches });
   } catch (error: any) {
     res.status(500).json({ success: false, message: "Server Error", data: error.message });
@@ -52,12 +54,13 @@ export const updateTTMatchScore = async (req: Request, res: Response): Promise<v
   try {
     const { match_id } = req.params;
     const { 
-      games, match_status, team1_score, team2_score, match_stage, venue, match_date, team1_department, team2_department, winner 
+      games, match_status, team1_score, team2_score, match_stage, match_type, venue, match_date, team1_department, team2_department, winner, gender 
     } = req.body;
 
     const updateData: any = {};
 
     if (match_stage !== undefined) updateData.match_stage = match_stage;
+    if (match_type !== undefined) updateData.match_type = match_type;
     if (venue !== undefined) updateData.venue = venue;
     if (match_date !== undefined) updateData.match_date = match_date;
     if (team1_department !== undefined) updateData.team1_department = team1_department;
@@ -66,6 +69,7 @@ export const updateTTMatchScore = async (req: Request, res: Response): Promise<v
     if (match_status !== undefined) updateData.match_status = match_status;
     if (team1_score !== undefined) updateData.team1_score = team1_score;
     if (team2_score !== undefined) updateData.team2_score = team2_score;
+    if (gender !== undefined) updateData.gender = gender;
 
     if (games !== undefined && Array.isArray(games)) {
       updateData.games = games;

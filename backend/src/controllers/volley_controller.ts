@@ -1,115 +1,135 @@
 import { Request, Response } from "express";
 import VolleyballMatch from "../models/volleyball_model";
 
-// CREATE a new volleyball match
-export const createVolleyballMatch = async (req: Request, res: Response) => {
+export const createVolleyballMatch = async (req: Request, res: Response): Promise<void> => {
   try {
-    const match = await VolleyballMatch.create(req.body);
-    res.status(201).json(match);
-  } catch (error) {
-    console.error("Failed to create volleyball match", error);
-    res.status(500).json({
-      message: "Failed to create volleyball match",
-      error: (error as Error).message || error,
-      details: (error as any).errors || null,
-    });
-  }
-};
+    const {
+      match_id, match_stage, team1_department, team2_department, match_date, gender,
+      team1_score, team2_score, winner
+    } = req.body;
 
-// READ all volleyball matches
-export const getAllVolleyballMatches = async (req: Request, res: Response) => {
-  try {
-    const matches = await VolleyballMatch.find();
-    res.status(200).json(matches);
-  } catch (error) {
-    console.error("Failed to fetch volleyball matches", error);
-    res.status(500).json({
-      message: "Failed to fetch volleyball matches",
-      error: (error as Error).message || error,
-    });
-  }
-};
-
-// SEARCH volleyball matches by filters (category, stage, status, dept_name1, dept_name2)
-export const searchVolleyballMatches = async (req: Request, res: Response) => {
-  try {
-    const { category, stage, status, dept_name1, dept_name2 } = req.query;
-
-    const filter: Record<string, unknown> = {};
-    if (category) filter.category = category;
-    if (stage) filter.stage = stage;
-    if (status) filter.status = status;
-    if (dept_name1) filter.dept_name1 = dept_name1;
-    if (dept_name2) filter.dept_name2 = dept_name2;
-
-    const matches = await VolleyballMatch.find(filter).sort({ createdAt: 1 });
-    res.status(200).json(matches);
-  } catch (error) {
-    console.error("Failed to search volleyball matches", error);
-    res.status(500).json({
-      message: "Failed to search volleyball matches",
-      error: (error as Error).message || error,
-    });
-  }
-};
-
-// READ a single volleyball match by match_id
-export const getVolleyballMatchById = async (req: Request, res: Response) => {
-  try {
-    const matchId = req.params.id as string;
-    const match = await VolleyballMatch.findOne({ match_id: matchId });
-    if (!match) {
-      res.status(404).json({ message: "Volleyball match not found" });
+    if (match_id === undefined || !match_stage || !team1_department || !team2_department || !gender) {
+      res.status(400).json({ success: false, message: "Missing required fields." });
       return;
     }
-    res.status(200).json(match);
-  } catch (error) {
-    console.error("Failed to fetch volleyball match", error);
-    res.status(500).json({
-      message: "Failed to fetch volleyball match",
-      error: (error as Error).message || error,
+
+    if (!["men", "women"].includes(gender)) {
+       res.status(400).json({ success: false, message: "Invalid gender selection." });
+       return;
+    }
+
+    const newMatch = new VolleyballMatch({
+      match_id,
+      match_stage,
+      team1_department,
+      team2_department,
+      match_date,
+      gender,
+      team1_score,
+      team2_score,
+      winner,
+      match_status: "completed"
     });
+
+    const savedMatch = await newMatch.save();
+    res.status(201).json({ success: true, message: "Volleyball match created.", data: savedMatch });
+  } catch (error: any) {
+    if (error.code === 11000) {
+      res.status(400).json({ success: false, message: "match_id must be unique." });
+      return;
+    }
+    res.status(500).json({ success: false, message: "Server Error", data: error.message });
   }
 };
 
-// UPDATE a volleyball match by match_id
-export const updateVolleyballMatch = async (req: Request, res: Response) => {
+export const getAllVolleyballMatches = async (req: Request, res: Response): Promise<void> => {
   try {
-    const matchId = req.params.id as string;
-    const match = await VolleyballMatch.findOneAndUpdate(
-      { match_id: matchId },
-      req.body,
+    const { gender } = req.query;
+    const filter = gender ? { gender: gender as string } : {};
+    
+    const matches = await VolleyballMatch.find(filter).sort({ match_id: 1 });
+    res.status(200).json({ success: true, message: "Matches fetched.", data: matches });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: "Server Error", data: error.message });
+  }
+};
+
+export const getVolleyballMatchById = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { match_id } = req.params;
+    const { gender } = req.query;
+    
+    const match = await VolleyballMatch.findOne({ match_id: Number(match_id) });
+    if (!match) {
+      res.status(404).json({ success: false, message: "Match not found." });
+      return;
+    }
+    
+    if (gender && match.gender !== gender) {
+      res.status(400).json({ success: false, message: "Match exists but gender filter applies." });
+      return;
+    }
+
+    res.status(200).json({ success: true, message: "Match fetched.", data: match });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: "Server Error", data: error.message });
+  }
+};
+
+export const updateVolleyballMatch = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { match_id } = req.params;
+    const { team1_department, team2_department, match_stage, match_date, gender, winner, team1_score, team2_score } = req.body;
+
+    const match = await VolleyballMatch.findOne({ match_id: Number(match_id) });
+    if (!match) {
+      res.status(404).json({ success: false, message: "Match not found." });
+      return;
+    }
+
+    const updateData: any = {};
+    
+    if (match_stage !== undefined) updateData.match_stage = match_stage;
+    if (team1_department !== undefined) updateData.team1_department = team1_department;
+    if (team2_department !== undefined) updateData.team2_department = team2_department;
+    if (match_date !== undefined) updateData.match_date = match_date;
+    if (gender !== undefined) updateData.gender = gender;
+    
+    if (team1_score !== undefined) updateData.team1_score = team1_score;
+    if (team2_score !== undefined) updateData.team2_score = team2_score;
+    if (winner !== undefined) updateData.winner = winner;
+
+    updateData.match_status = "completed";
+
+    if (Object.keys(updateData).length === 0) {
+      res.status(400).json({ success: false, message: "Provide fields to update." });
+      return;
+    }
+
+    const updatedMatch = await VolleyballMatch.findOneAndUpdate(
+      { match_id: Number(match_id) },
+      updateData,
       { new: true, runValidators: true }
     );
-    if (!match) {
-      res.status(404).json({ message: "Volleyball match not found" });
-      return;
-    }
-    res.status(200).json(match);
-  } catch (error) {
-    console.error("Failed to update volleyball match", error);
-    res.status(500).json({
-      message: "Failed to update volleyball match",
-      error: (error as Error).message || error,
-    });
+
+    res.status(200).json({ success: true, message: "Match updated.", data: updatedMatch });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: "Server Error", data: error.message });
   }
 };
 
-// DELETE a volleyball match by match_id
-export const deleteVolleyballMatch = async (req: Request, res: Response) => {
+export const deleteVolleyballMatch = async (req: Request, res: Response): Promise<void> => {
   try {
-    const matchId = req.params.id as string;
-    const match = await VolleyballMatch.findOneAndDelete({ match_id: matchId });
-    if (!match) {
-      res.status(404).json({ message: "Volleyball match not found" });
+    const { match_id } = req.params;
+    const deletedMatch = await VolleyballMatch.findOneAndDelete({ match_id: Number(match_id) });
+
+    if (!deletedMatch) {
+      res.status(404).json({ success: false, message: "Match not found." });
       return;
     }
-    res.status(200).json({ message: "Volleyball match deleted successfully" });
-  } catch (error) {
-    console.error("Failed to delete volleyball match", error);
-    res.status(500).json({
-      message: "Failed to delete volleyball match",
-      error: (error as Error).message || error,
-    });
+
+    res.status(200).json({ success: true, message: "Match deleted.", data: deletedMatch });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: "Server Error", data: error.message });
   }
 };

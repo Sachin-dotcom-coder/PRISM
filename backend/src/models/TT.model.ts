@@ -11,14 +11,18 @@ export interface ITTMatch extends Document {
   match_id: number;
   match_name?: string;
   match_stage: string;
+  match_type: "singles" | "doubles";
   team1_department: string;
   team2_department: string;
   match_date?: Date;
   venue?: string;
+  team1_score?: number;
+  team2_score?: number;
   games: ITTGame[];
   total_games: number;
   winner: string | null;
   match_status: string;
+  gender: "men" | "women";
 }
 
 const TTGameSchema: Schema<ITTGame> = new Schema<ITTGame>({
@@ -39,6 +43,11 @@ const TTMatchSchema: Schema<ITTMatch> = new Schema<ITTMatch>(
     },
     match_stage: {
       type: String,
+      required: true
+    },
+    match_type: {
+      type: String,
+      enum: ["singles", "doubles"],
       required: true
     },
     team1_department: {
@@ -76,6 +85,11 @@ const TTMatchSchema: Schema<ITTMatch> = new Schema<ITTMatch>(
       type: String,
       enum: ["scheduled", "ongoing", "completed"],
       default: "scheduled"
+    },
+    gender: {
+      type: String,
+      enum: ["men", "women"],
+      required: true
     }
   },
   { timestamps: true }

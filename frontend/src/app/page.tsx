@@ -1,7 +1,10 @@
 import HeroPage from "./homepage/heropage";
 import TeamsPage from "./homepage/teamspage";
+<<<<<<< Updated upstream
 
 
+=======
+>>>>>>> Stashed changes
 import SportScoreBar from "./components/SportScoreBar";
 import HomepageLeaderboard from "./components/HomepageLeaderboard";
 import AboutPrism from "./components/AboutPrism";
@@ -12,8 +15,11 @@ export default function Home() {
     <main className="min-h-screen bg-black overflow-x-hidden flex flex-col items-center justify-start">
       <HeroPage />
       <TeamsPage />
+<<<<<<< Updated upstream
 
       
+=======
+>>>>>>> Stashed changes
       {/* Sport Score Bars */}
       <section id="scores" className="w-full">
         <SportScoreBar 
@@ -46,7 +52,10 @@ export default function Home() {
         </h2>
         <HomepageLeaderboard />
       </section>
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
       <AboutPrism />
       <Footer />
     </main>

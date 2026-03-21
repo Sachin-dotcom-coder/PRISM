@@ -15,8 +15,8 @@ export const getLeaderboardStandings = async (req: Request, res: Response) => {
     const standings: Record<string, { dept_name: string; group: string; wins: number; losses: number; matches: number }> = {};
 
     for (const match of matches) {
-      const t1 = match.team1_name;
-      const t2 = match.team2_name;
+      const t1 = match.team1_department;
+      const t2 = match.team2_department;
       const winner = match.winner;
       const group1 = deptToGroup[t1] || "Unknown";
       const group2 = deptToGroup[t2] || "Unknown";

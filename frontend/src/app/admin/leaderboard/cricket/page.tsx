@@ -149,36 +149,6 @@ export default function CricketLeaderboardAdmin() {
           </div>
         )}
 
-<<<<<<< Updated upstream
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-zinc-800 bg-zinc-900/60 text-zinc-500 text-xs uppercase tracking-wider">
-                <th className="text-left p-4">Team</th>
-                <th className="p-4 text-center">Played</th>
-                <th className="p-4 text-center">Wins</th>
-                <th className="p-4 text-center">Losses</th>
-                <th className="p-4 text-center">NRR</th>
-                <th className="p-4 text-center text-[#FFBF00]">Points</th>
-                <th className="p-4 w-24"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-800/30">
-              {!teams ? (
-                <tr><td colSpan={7} className="p-10 text-center text-zinc-500 animate-pulse">Loading teams...</td></tr>
-              ) : !Array.isArray(teams) ? (
-                <tr><td colSpan={7} className="p-10 text-center text-red-500">Error: {teams.error || 'Failed to load teams. Check backend connection.'}</td></tr>
-              ) : teams.length === 0 ? (
-                <tr><td colSpan={7} className="p-10 text-center text-zinc-500">No teams registered.</td></tr>
-              ) : (
-                teams.map((team: any) => (
-                  <TeamRow key={team._id} team={team} onUpdate={handleUpdate} onDelete={() => handleDelete(team)} />
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-=======
         {saveMsg && <div className={`px-6 py-2 text-sm font-semibold ${saveMsg.startsWith("✅") ? "bg-green-900/30 text-green-400" : "bg-red-900/30 text-red-400"}`}>{saveMsg}</div>}
         {error && <div className="p-8 text-center text-red-400">Failed to load.</div>}
         {!teams && <div className="p-8 text-center text-zinc-500 animate-pulse">Loading...</div>}
@@ -218,7 +188,6 @@ export default function CricketLeaderboardAdmin() {
           </div>
         )}
         <div className="px-6 py-3 text-xs text-zinc-600 border-t border-zinc-800/50">💡 Matches = W+L · Points = W×2 — auto-calculated on save</div>
->>>>>>> Stashed changes
       </div>
     </div>
   );

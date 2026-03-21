@@ -1,86 +1,61 @@
 import mongoose, { Document, Schema } from "mongoose";
 
-export interface IVolleyballMatch extends Document {
-  match_id: string;
-  category: "boys" | "girls";
-  stage: "league" | "quarter_final" | "semi_final" | "grand_finale";
-  best_of: 3 | 5;
-  points_per_set: 15 | 25;
-  status: "scheduled" | "ongoing" | "completed";
-  dept_name1: string;
-  dept_name2: string;
-  winner_dept?: string;
-  createdAt: Date;
-  updatedAt: Date;
+export interface IGame {
+  game_number: number;
+  team1_score: number;
+  team2_score: number;
 }
 
-const VolleyballMatchSchema: Schema<IVolleyballMatch> = new Schema(
+export interface IVolleyballMatch extends Document {
+  match_id: number;
+  match_stage: string;
+  team1_department: string;
+  team2_department: string;
+  match_date?: Date;
+  venue?: string;
+  team1_score?: number;
+  team2_score?: number;
+  games: IGame[];
+  total_games: number;
+  winner: string | null;
+  match_status: string;
+  gender: "men" | "women";
+}
+
+const GameSchema = new Schema<IGame>({
+  game_number: { type: Number, required: true },
+  team1_score: { type: Number, required: true, min: 0 },
+  team2_score: { type: Number, required: true, min: 0 }
+}, { _id: false });
+
+const VolleyballMatchSchema = new Schema<IVolleyballMatch>(
   {
-    match_id: {
+    match_id: { type: Number, required: true, unique: true },
+    match_stage: { 
+      type: String, 
+      required: true 
+    },
+    team1_department: { type: String, required: true },
+    team2_department: { type: String, required: true },
+    match_date: { type: Date },
+    venue: { type: String },
+    team1_score: { type: Number },
+    team2_score: { type: Number },
+    games: { type: [GameSchema], default: [] },
+    total_games: { type: Number, default: 0 },
+    winner: { type: String, default: null }, 
+    match_status: { 
+      type: String, 
+      enum: ["scheduled", "ongoing", "completed"], 
+      default: "scheduled" 
+    },
+    gender: {
       type: String,
-      required: true,
-      unique: true,
-    },
-    category: {
-      type: String,
-      enum: ["boys", "girls"],
-      required: true,
-    },
-    stage: {
-      type: String,
-      enum: ["league", "quarter_final", "semi_final", "grand_finale"],
-      required: true,
-    },
-    best_of: {
-      type: Number,
-      enum: [3, 5],
-    },
-    points_per_set: {
-      type: Number,
-      enum: [15, 25],
-    },
-    status: {
-      type: String,
-      enum: ["scheduled", "ongoing", "completed"],
-      default: "scheduled",
-      required: true,
-    },
-    dept_name1: {
-      type: String,
-      required: true,
-    },
-    dept_name2: {
-      type: String,
-      required: true,
-    },
-    winner_dept: {
-      type: String,
-      default: null,
-    },
+      enum: ["men", "women"],
+      required: true
+    }
   },
-  {
-    timestamps: true, // Automatically manages createdAt and updatedAt
-  }
+  { timestamps: true }
 );
 
-// Pre-validate hook to automatically set best_of and points_per_set based on rules
-
-VolleyballMatchSchema.pre<IVolleyballMatch>("validate", async function () {
-  if (this.stage === "league") {
-    this.best_of = 3;
-    this.points_per_set = 15;
-  } else if (this.stage === "quarter_final" || this.stage === "semi_final") {
-    this.best_of = 3;
-    this.points_per_set = this.category === "boys" ? 25 : 15;
-  } else if (this.stage === "grand_finale") {
-    this.best_of = this.category === "boys" ? 5 : 3;
-    this.points_per_set = 25;
-  }
-});
-
-const VOLLEYBALL_URI = process.env.MONGODB_VOLLEYBALL_URI || 
-  "mongodb+srv://Vishal:VISHAL2006@prism.mczk5vc.mongodb.net/volleyballDB?appName=PRISM";
-
-const volleyballDb = mongoose.createConnection(VOLLEYBALL_URI);
-
-export default volleyballDb.models.VolleyballMatch || volleyballDb.model<IVolleyballMatch>("VolleyballMatch", VolleyballMatchSchema);
+export default mongoose.models.VolleyballMatch || mongoose.model<IVolleyballMatch>("VolleyballMatch", VolleyballMatchSchema);

@@ -13,5 +13,9 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*", "server.ts"]
+  "include": ["src/**/*", "server.ts"],
+  "exclude": [
+    "src/routers/football/**/*",
+    "src/routers/cricket/**/*"
+  ]
 }

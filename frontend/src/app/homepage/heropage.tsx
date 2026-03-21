@@ -19,8 +19,11 @@ export default function HeroPage() {
     <div className="relative w-full h-screen bg-[#000000] overflow-hidden flex flex-col items-center justify-center font-sans text-white">
       <Navbar />
 
+<<<<<<< Updated upstream
 
 
+=======
+>>>>>>> Stashed changes
       {/* --- Step 4: The Live Score Ticker Component --- */}
       {/* Step 19: mask-image applied for edge fade so text smoothly dissolves at screen boundaries */}
       <div
@@ -38,7 +41,10 @@ export default function HeroPage() {
             <span className="mx-12 text-white font-bold">CRICKET : AI vs MECH | 14.2 Ov | <span className="text-[#FFBF00] text-lg font-black">134/4</span></span>
          </div>
       </div>
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 
 
       {/* === Step 17: Ambient Particle Sparks === */}

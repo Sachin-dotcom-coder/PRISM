@@ -9,6 +9,7 @@ export interface IGame {
 export interface IBadmintonMatch extends Document {
   match_id: number;
   match_stage: string;
+  match_type: "singles" | "doubles";
   team1_department: string;
   team2_department: string;
   match_date: Date;
@@ -19,6 +20,7 @@ export interface IBadmintonMatch extends Document {
   total_games: number;
   winner: string | null;
   match_status: string;
+  gender: "men" | "women";
 }
 
 const GameSchema: Schema<IGame> = new Schema<IGame>({
@@ -46,6 +48,11 @@ const BadmintonMatchSchema: Schema<IBadmintonMatch> = new Schema<IBadmintonMatch
     match_stage: {
       type: String,
       enum: ["group", "semifinal", "final"],
+      required: true
+    },
+    match_type: {
+      type: String,
+      enum: ["singles", "doubles"],
       required: true
     },
     team1_department: {
@@ -96,6 +103,11 @@ const BadmintonMatchSchema: Schema<IBadmintonMatch> = new Schema<IBadmintonMatch
       type: String,
       enum: ["scheduled", "ongoing", "completed"],
       default: "scheduled"
+    },
+    gender: {
+      type: String,
+      enum: ["men", "women"],
+      required: true
     }
   },
   { timestamps: true }

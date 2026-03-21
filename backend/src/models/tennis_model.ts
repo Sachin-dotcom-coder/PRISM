@@ -2,22 +2,22 @@ import mongoose, { Document, Schema } from "mongoose";
 
 export interface ITennisGame {
   tie_id: number;
-  match_type: "singles" | "doubles";
   score_dept1: number;
   score_dept2: number;
-  winner_dept: string;
   status: "scheduled" | "ongoing" | "completed";
 }
 
 export interface ITennisMatch extends Document {
   match_id: string;
-  category: "boys" | "girls";
-  stage: "league" | "quarter_final" | "semi_final" | "grand_finale";
+  match_type: "singles" | "doubles";
+  category: string;
+  stage: string;
   dept_name1: string;
   dept_name2: string;
   games: ITennisGame[];
   winner_dept?: string;
   status: "scheduled" | "ongoing" | "completed";
+  gender: "men" | "women";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,21 +28,12 @@ const TennisGameSchema: Schema<ITennisGame> = new Schema(
       type: Number,
       required: true,
     },
-    match_type: {
-      type: String,
-      enum: ["singles", "doubles"],
-      required: true,
-    },
     score_dept1: {
       type: Number,
       required: true,
     },
     score_dept2: {
       type: Number,
-      required: true,
-    },
-    winner_dept: {
-      type: String,
       required: true,
     },
     status: {
@@ -62,14 +53,17 @@ const TennisMatchSchema: Schema<ITennisMatch> = new Schema(
       required: true,
       unique: true,
     },
+    match_type: {
+      type: String,
+      enum: ["singles", "doubles"],
+      required: true,
+    },
     category: {
       type: String,
-      enum: ["boys", "girls"],
       required: true,
     },
     stage: {
       type: String,
-      enum: ["league", "quarter_final", "semi_final", "grand_finale"],
       required: true,
     },
     dept_name1: {
@@ -92,6 +86,11 @@ const TennisMatchSchema: Schema<ITennisMatch> = new Schema(
       type: String,
       enum: ["scheduled", "ongoing", "completed"],
       default: "completed",
+      required: true,
+    },
+    gender: {
+      type: String,
+      enum: ["men", "women"],
       required: true,
     },
   },

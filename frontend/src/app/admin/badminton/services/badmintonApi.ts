@@ -3,14 +3,14 @@ import { IBadmintonMatch } from "../types";
 // Prefer NEXT_PUBLIC_BACKEND_URL if set, else fallback to standard Express URL
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000/api";
 
-export const getMatches = async (): Promise<IBadmintonMatch[]> => {
-  const res = await fetch(`${BASE_URL}/badminton`);
+export const getMatches = async (gender: "men" | "women"): Promise<IBadmintonMatch[]> => {
+  const res = await fetch(`${BASE_URL}/badminton?gender=${gender}`);
   if (!res.ok) throw new Error("Failed to fetch matches");
   return res.json();
 };
 
-export const getMatch = async (match_id: number): Promise<IBadmintonMatch> => {
-  const res = await fetch(`${BASE_URL}/badminton/${match_id}`);
+export const getMatch = async (match_id: number, gender: "men" | "women"): Promise<IBadmintonMatch> => {
+  const res = await fetch(`${BASE_URL}/badminton/${match_id}?gender=${gender}`);
   if (!res.ok) throw new Error(`Failed to fetch match ${match_id}`);
   return res.json();
 };

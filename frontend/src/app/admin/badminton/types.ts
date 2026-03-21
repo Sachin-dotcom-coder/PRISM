@@ -8,6 +8,7 @@ export interface IBadmintonMatch {
   _id?: string;
   match_id: number;
   match_stage: string;
+  match_type: "singles" | "doubles";
   team1_department: string;
   team2_department: string;
   match_date: Date | string;
@@ -18,4 +19,5 @@ export interface IBadmintonMatch {
   total_games: number;
   winner: string | null;
   match_status: string;
+  gender: "men" | "women";
 }
