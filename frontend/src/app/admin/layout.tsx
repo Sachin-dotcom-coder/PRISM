@@ -18,6 +18,7 @@ const navigation = [
   { name: "Cricket Matches", href: "/admin", icon: LayoutDashboard },
   { name: "Football Matches", href: "/admin/football", icon: Activity },
   { name: "Badminton Matches", href: "/admin/badminton", icon: Activity },
+  { name: "Table Tennis Matches", href: "/admin/table-tennis", icon: Activity },
   { name: "Homepage LB", href: "/admin/leaderboard", icon: Trophy },
   { name: "Cricket LB", href: "/admin/leaderboard/cricket", icon: Database },
   { name: "Football LB", href: "/admin/leaderboard/football", icon: Database },
