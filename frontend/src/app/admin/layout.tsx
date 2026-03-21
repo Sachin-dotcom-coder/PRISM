@@ -14,20 +14,20 @@ const MOCK_ADMIN = {
   email: "admin@prism.com"
 };
 
-const navigation = [
-  { name: "Cricket Matches", href: "/admin", icon: LayoutDashboard },
-  { name: "Football Matches", href: "/admin/football", icon: Activity },
-  { name: "Badminton Matches", href: "/admin/badminton", icon: Activity },
-  { name: "Table Tennis Matches", href: "/admin/table-tennis", icon: Activity },
-  { name: "Homepage LB", href: "/admin/leaderboard", icon: Trophy },
-  { name: "Cricket LB", href: "/admin/leaderboard/cricket", icon: Database },
-  { name: "Football LB", href: "/admin/leaderboard/football", icon: Database },
-  { name: "Settings", href: "/admin/settings", icon: Settings },
-];
-
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { gender } = useGender();
+  const genderLabel = gender === "f" ? "Women's" : "Men's";
+  const navigation = [
+    { name: `${genderLabel} Cricket`, href: "/admin/cricket", icon: LayoutDashboard },
+    { name: `${genderLabel} Football`, href: "/admin/football", icon: Activity },
+    { name: `${genderLabel} Badminton`, href: "/admin/badminton", icon: Activity },
+    { name: `${genderLabel} Table Tennis`, href: "/admin/table-tennis", icon: Activity },
+    { name: "Homepage LB", href: "/admin/leaderboard", icon: Trophy },
+    { name: "Cricket LB", href: "/admin/leaderboard/cricket", icon: Database },
+    { name: "Football LB", href: "/admin/leaderboard/football", icon: Database },
+    { name: "Settings", href: "/admin/settings", icon: Settings },
+  ];
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
@@ -87,27 +87,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex h-[calc(100vh-80px)] overflow-hidden bg-background">
       {/* Sidebar */}
-      <div className={`w-64 border-r overflow-y-auto shadow-sm ${gender === 'f' ? 'border-zinc-200 bg-white' : 'border-zinc-800 bg-card'}`}>
+      <div className={`w-64 border-r overflow-y-auto shadow-sm border-zinc-800 bg-card`}>
         <div className="p-6 h-full flex flex-col">
           <div className="flex-1">
-            <h2 className={`text-xl font-bold glow-text mb-6 ${gender === 'f' ? 'text-accent' : ''}`}>Admin Panel</h2>
+            <h2 className={`text-xl font-bold glow-text mb-6`}>Admin Panel • {genderLabel}</h2>
             
-            <nav className="space-y-2">
+            <nav className="space-y-1">
               {navigation.map((item) => {
                 const isActive = pathname === item.href;
                 const Icon = item.icon;
                 return (
                   <Link
-                    key={item.name}
+                    key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 ${
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
                       isActive 
-                        ? (gender === "f" ? "bg-accent/10 text-accent font-semibold" : "bg-accent/20 text-accent font-semibold")
-                        : (gender === "f" ? "text-zinc-500 hover:bg-zinc-100 hover:text-accent" : "text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200")
+                        ? "bg-accent/15 text-accent font-bold border-l-2 border-accent"
+                        : "text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200"
                     }`}
                   >
                     <Icon className="w-5 h-5" />
-                    {item.name}
+                    <span className="text-sm font-medium">{item.name}</span>
                   </Link>
                 );
               })}
@@ -120,11 +120,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               setIsAuthenticated(false);
               router.push("/");
             }}
-            className={`mt-6 w-full px-4 py-3 rounded-lg border text-sm font-semibold transition-all text-left ${
-              gender === 'f' 
-                ? 'bg-zinc-100 border-zinc-300 text-zinc-800 hover:bg-red-50 hover:text-red-500 hover:border-red-200' 
-                : 'bg-zinc-900 border-zinc-800 hover:bg-danger/20 hover:text-danger hover:border-danger/50 text-white'
-            }`}
+            className={`mt-6 w-full px-4 py-3 rounded-lg border text-sm font-semibold transition-all text-left bg-zinc-900 border-zinc-800 hover:bg-danger/20 hover:text-danger hover:border-danger/50 text-white`}
           >
             Logout
           </button>

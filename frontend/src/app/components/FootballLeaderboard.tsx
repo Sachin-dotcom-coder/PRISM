@@ -48,65 +48,78 @@ export default function FootballLeaderboard() {
         </span>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-zinc-900/50 text-zinc-400 font-semibold uppercase tracking-wider text-xs border-b border-zinc-800">
-            <tr>
-              <th className="px-4 py-3">#</th>
-              <th className="px-4 py-3">Team</th>
-              <th className="px-4 py-3 text-center">M</th>
-              <th className="px-4 py-3 text-center">W</th>
-              <th className="px-4 py-3 text-center">D</th>
-              <th className="px-4 py-3 text-center">L</th>
-              <th className="px-4 py-3 text-center">GD</th>
-              <th className="px-4 py-3 text-center text-green-400">Pts</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-800/50">
-            {validTeams.map((team: any, index: number) => {
-              const style = RANK_STYLES[index] ?? null;
-              const isTop3 = index < 3;
-              return (
-                <motion.tr
-                  key={team._id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25, delay: index * 0.04 }}
-                  className={`hover:bg-zinc-900/30 transition-colors ${isTop3 ? style!.bg.split(" ")[0] : ""}`}
-                >
-                  <td className="px-4 py-3">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black ${isTop3 ? style!.badge : "text-zinc-500"}`}>
-                      {index + 1}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-[10px] border border-zinc-700 font-bold">
-                        {team.shortName?.slice(0, 3)}
-                      </div>
-                      <span className={`font-bold text-xs ${isTop3 ? style!.label : "text-zinc-200"}`}>{team.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-center text-zinc-400 text-xs">{team.matches ?? 0}</td>
-                  <td className="px-4 py-3 text-center text-zinc-400 text-xs">{team.wins ?? 0}</td>
-                  <td className="px-4 py-3 text-center text-zinc-400 text-xs">{team.draws ?? 0}</td>
-                  <td className="px-4 py-3 text-center text-zinc-400 text-xs">{team.losses ?? 0}</td>
-                  <td className="px-4 py-3 text-center text-zinc-400 text-xs">{team.goalDifference ?? 0}</td>
-                  <td className="px-4 py-3 text-center text-green-400 font-sports text-base font-bold">
-                    {team.points ?? 0}
-                  </td>
-                </motion.tr>
-              );
-            })}
-            {validTeams.length === 0 && (
-              <tr>
-                <td colSpan={8} className="px-4 py-10 text-center text-zinc-500 text-xs">
-                  No teams in standings yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <div className="divide-y divide-zinc-800">
+        {["A", "B"].map((gp) => {
+          const gpTeams = validTeams.filter((t: any) => (t.group || "A") === gp);
+          return (
+            <div key={gp} className="p-2 sm:p-4">
+              <h4 className="px-6 py-2 text-[10px] font-bold text-green-500 uppercase tracking-widest flex items-center gap-2 bg-green-500/5 rounded-t-lg border-x border-t border-zinc-800/50">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> Group {gp} Standing
+              </h4>
+              <div className="overflow-x-auto border border-zinc-800/50 rounded-b-xl bg-background/30">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-zinc-900/50 text-zinc-400 font-semibold uppercase tracking-wider text-[10px] border-b border-zinc-800">
+                    <tr>
+                      <th className="px-4 py-3">#</th>
+                      <th className="px-4 py-3">Team</th>
+                      <th className="px-4 py-3 text-center">M</th>
+                      <th className="px-4 py-3 text-center">W</th>
+                      <th className="px-4 py-3 text-center">D</th>
+                      <th className="px-4 py-3 text-center">L</th>
+                      <th className="px-4 py-3 text-center">GD</th>
+                      <th className="px-4 py-3 text-center text-green-400">Pts</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/50">
+                    {gpTeams.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="px-4 py-10 text-center text-zinc-500 text-xs italic">
+                          No teams assigned to Group {gp} yet.
+                        </td>
+                      </tr>
+                    ) : (
+                      gpTeams.map((team: any, index: number) => {
+                        const style = RANK_STYLES[index] ?? null;
+                        const isTop3 = index < 3;
+                        return (
+                          <motion.tr
+                            key={team._id}
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.25, delay: index * 0.04 }}
+                            className={`hover:bg-zinc-900/30 transition-colors ${isTop3 ? style!.bg.split(" ")[0] : ""}`}
+                          >
+                            <td className="px-4 py-3">
+                              <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${isTop3 ? style!.badge : "text-zinc-500"}`}>
+                                {index + 1}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 rounded-full bg-zinc-800 flex items-center justify-center text-[8px] border border-zinc-700 font-bold">
+                                  {team.shortName?.slice(0, 3)}
+                                </div>
+                                <span className={`font-bold text-[11px] sm:text-xs truncate max-w-[80px] sm:max-w-none ${isTop3 ? style!.label : "text-zinc-200"}`}>{team.name}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-center text-zinc-400 text-[10px]">{team.matches ?? 0}</td>
+                            <td className="px-4 py-3 text-center text-zinc-400 text-[10px]">{team.wins ?? 0}</td>
+                            <td className="px-4 py-3 text-center text-zinc-400 text-[10px]">{team.draws ?? 0}</td>
+                            <td className="px-4 py-3 text-center text-zinc-400 text-[10px]">{team.losses ?? 0}</td>
+                            <td className="px-4 py-3 text-center text-zinc-400 text-[10px]">{team.goalDifference ?? 0}</td>
+                            <td className="px-4 py-3 text-center text-green-400 font-sports text-sm font-bold">
+                              {team.points ?? 0}
+                            </td>
+                          </motion.tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

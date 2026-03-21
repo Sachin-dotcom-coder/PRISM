@@ -19,7 +19,27 @@ export default function HeroPage() {
     <div className="relative w-full h-screen bg-[#000000] overflow-hidden flex flex-col items-center justify-center font-sans text-white">
       <Navbar />
 
+<<<<<<< Updated upstream
 
+=======
+      {/* --- Step 4: The Live Score Ticker Component --- */}
+      {/* Step 19: mask-image applied for edge fade so text smoothly dissolves at screen boundaries */}
+      <div
+        className="absolute top-[120px] left-0 w-full bg-black/60 backdrop-blur-md py-4 z-40 overflow-hidden border-y border-white/20"
+        style={{
+          WebkitMaskImage: "linear-gradient(to right, transparent, black 10%, black 90%, transparent)",
+          maskImage: "linear-gradient(to right, transparent, black 10%, black 90%, transparent)",
+        }}
+      >
+         <div className="marquee-content inline-block text-xs md:text-sm tracking-[0.3em] font-mono whitespace-nowrap flex items-center">
+            <span className="mx-12 text-white font-bold">FOOTBALL : ECE VS CSE | 78' | <span className="text-[#FFBF00] text-lg font-black">2 - 1</span></span>
+            <span className="mx-12 text-white font-bold">CRICKET : AI vs MECH | 14.2 Ov | <span className="text-[#FFBF00] text-lg font-black">134/4</span></span>
+            <span className="mx-12 text-white font-bold">KABADDI : CHE vs EEE | 2nd Half 14:12 | <span className="text-[#FFBF00] text-lg font-black">42 - 38</span></span>
+            <span className="mx-12 text-white font-bold">FOOTBALL : ECE VS CSE | 78' | <span className="text-[#FFBF00] text-lg font-black">2 - 1</span></span>
+            <span className="mx-12 text-white font-bold">CRICKET : AI vs MECH | 14.2 Ov | <span className="text-[#FFBF00] text-lg font-black">134/4</span></span>
+         </div>
+      </div>
+>>>>>>> Stashed changes
 
 
       {/* === Step 17: Ambient Particle Sparks === */}

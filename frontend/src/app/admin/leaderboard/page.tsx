@@ -113,7 +113,7 @@ export default function HomepageLeaderboardAdmin() {
         <div>
           <h2 className="font-sports text-xl tracking-wide">Homepage Leaderboard</h2>
           <p className="text-xs text-zinc-500 mt-0.5">
-            Database: <code className="text-accent bg-zinc-900 px-1.5 py-0.5 rounded">Homepage → Leaderboard</code>
+            Database: <code className="text-accent bg-zinc-900 px-1.5 py-0.5 rounded">Homepage → {gender === 'f' ? 'Leaderboard_f' : 'Leaderboard'}</code>
             <span className="ml-3 text-zinc-600">Fields: First 🥇 · Second 🥈 · Third 🥉 · Points</span>
           </p>
         </div>

@@ -26,7 +26,7 @@ export async function PUT(req: NextRequest) {
     const Team = getTeamModel(conn, gender);
 
     const body = await req.json();
-    const { _id, wins, losses, nrr } = body;
+    const { _id, wins, losses, nrr, group } = body;
 
     if (!_id) return NextResponse.json({ error: "Team _id is required" }, { status: 400 });
 
@@ -41,7 +41,8 @@ export async function PUT(req: NextRequest) {
           losses: losses || 0, 
           nrr: nrr || 0, 
           matches: totalMatches, 
-          points: totalPoints 
+          points: totalPoints,
+          group: group || "A"
         } 
       },
       { new: true }
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
     const Team = getTeamModel(conn, gender);
 
     const body = await req.json();
-    const { name, shortName } = body;
+    const { name, shortName, group } = body;
 
     const newTeam = await Team.create({
       name,
@@ -72,7 +73,8 @@ export async function POST(req: NextRequest) {
       wins: 0,
       losses: 0,
       nrr: 0,
-      points: 0
+      points: 0,
+      group: group || "A"
     });
 
     return NextResponse.json(newTeam, { status: 201 });

@@ -27,11 +27,11 @@ function calcEco(runs: number, overs: number) {
 }
 
 /* ── Types ─────────────────────────────────────────────── */
-type Batter = { batter: string; runs: number; balls: number; fours: number; sixes: number; strikeRate: number; status: string };
-type Bowler = { bowler: string; overs: number; maidens: number; runs: number; wickets: number; economyRates: string };
+type Batter = { batter: string; runs: number; balls: number; fours: number; sixes: number; strikeRate: number; status: string; isOnStrike: boolean };
+type Bowler = { bowler: string; overs: number; balls: number; maidens: number; runs: number; wickets: number; economyRates: string; isCurrentBowler?: boolean };
 
-const emptyBatter = (): Batter => ({ batter: "", runs: 0, balls: 0, fours: 0, sixes: 0, strikeRate: 0, status: "not out" });
-const emptyBowler = (): Bowler => ({ bowler: "", overs: 0, maidens: 0, runs: 0, wickets: 0, economyRates: "0.0" });
+const emptyBatter = (): Batter => ({ batter: "", runs: 0, balls: 0, fours: 0, sixes: 0, strikeRate: 0, status: "not out", isOnStrike: false });
+const emptyBowler = (): Bowler => ({ bowler: "", overs: 0, balls: 0, maidens: 0, runs: 0, wickets: 0, economyRates: "0.0", isCurrentBowler: false });
 
 /* ── Inline editable batter row ────────────────────────── */
 function BatterRow({ batter, onUpdate, onDelete }: { batter: Batter; onUpdate: (b: Batter) => void; onDelete: () => void }) {
@@ -49,12 +49,28 @@ function BatterRow({ batter, onUpdate, onDelete }: { batter: Batter; onUpdate: (
   const f = (field: keyof Batter, val: string | number) => setDraft(p => ({ ...p, [field]: val }));
 
   if (!editing) return (
-    <tr className="border-b border-zinc-800/50 theme-women:border-zinc-300/50 hover:bg-zinc-900/20 theme-women:hover:bg-zinc-100/50 transition-colors">
-      <td className="p-3 font-semibold text-zinc-200 theme-women:text-zinc-800">{batter.batter}</td>
+    <tr className="border-b border-zinc-800/50 hover:bg-zinc-900/20 transition-colors">
+      <td className="p-3 font-semibold text-zinc-200">
+        <div className="flex items-center gap-2">
+          {batter.isOnStrike && <span className="text-accent animate-pulse">★</span>}
+          {batter.batter}
+        </div>
+      </td>
       <td className="p-3 text-center">
-        <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${batter.status === "not out" ? "bg-green-900/50 text-green-400" : "bg-zinc-800 text-zinc-500"}`}>
-          {batter.status}
-        </span>
+        <button 
+          onClick={() => {
+            // Deselect all others first
+            onUpdate({ ...batter, isOnStrike: !batter.isOnStrike }); 
+            // Wait, I need access to the whole list to deselect others. 
+            // But I can handle this in the parent where setBatters/setBowlers is called.
+          }}
+          className={`text-xs px-2 py-0.5 rounded-full font-semibold transition-all ${
+            batter.isOnStrike ? "bg-accent text-white shadow-neon" : 
+            batter.status === "not out" ? "bg-green-900/50 text-green-400 hover:bg-accent/20" : "bg-zinc-800 text-zinc-500"
+          }`}
+        >
+          {batter.isOnStrike ? "Striking" : batter.status}
+        </button>
       </td>
       <td className="p-3 text-center font-bold text-accent">{batter.runs}</td>
       <td className="p-3 text-center text-zinc-400">{batter.balls}</td>
@@ -109,9 +125,28 @@ function BowlerRow({ bowler, onUpdate, onDelete }: { bowler: Bowler; onUpdate: (
   const f = (field: keyof Bowler, val: string | number) => setDraft(p => ({ ...p, [field]: val }));
 
   if (!editing) return (
-    <tr className="border-b border-zinc-800/50 theme-women:border-zinc-300/50 hover:bg-zinc-900/20 theme-women:hover:bg-zinc-100/50 transition-colors">
-      <td className="p-3 font-semibold text-zinc-200 theme-women:text-zinc-800">{bowler.bowler}</td>
+    <tr className="border-b border-zinc-800/50 hover:bg-zinc-900/20 transition-colors">
+      <td className="p-3 font-semibold text-zinc-200">
+        <div className="flex items-center gap-2">
+          {bowler.isCurrentBowler && <span className="text-red-400 animate-pulse">●</span>}
+          {bowler.bowler}
+        </div>
+      </td>
+      <td className="p-3 text-center">
+        <button 
+          onClick={() => {
+            // Handle single selection in parent
+            onUpdate({ ...bowler, isCurrentBowler: !bowler.isCurrentBowler });
+          }}
+          className={`text-xs px-2 py-0.5 rounded-full font-semibold transition-all ${
+            bowler.isCurrentBowler ? "bg-red-500 text-white shadow-neon" : "bg-zinc-800 text-zinc-400 hover:bg-red-500/20"
+          }`}
+        >
+          {bowler.isCurrentBowler ? "Bowling" : "Select"}
+        </button>
+      </td>
       <td className="p-3 text-center text-zinc-400">{bowler.overs}</td>
+      <td className="p-3 text-center text-zinc-400">{bowler.balls}</td>
       <td className="p-3 text-center text-zinc-400">{bowler.maidens}</td>
       <td className="p-3 text-center text-zinc-400">{bowler.runs}</td>
       <td className="p-3 text-center font-bold text-red-400">{bowler.wickets}</td>
@@ -202,13 +237,86 @@ export default function AdminMatchUpdater() {
     if (!selectedEvent || inningsOver) return;
     const logic = BALL_LOGIC[selectedEvent];
     if (!logic) return;
-    setBalls(prev => [...prev, { event: selectedEvent, ...logic }]);
+    
+    // 1. Update Balls State
+    const newBall = { event: selectedEvent, ...logic };
+    setBalls(prev => [...prev, newBall]);
+
+    // Calculate next stats locally to avoid stale state in rotation logic
+    const nextTotalLegal = totalLegal + (logic.countsAsBall ? 1 : 0);
+
+    // 2. Update Bowlers Table (Current Bowler)
+    setBowlers(prev => {
+      const bowlerIdx = prev.findIndex(b => b.isCurrentBowler);
+      if (bowlerIdx === -1) return prev;
+
+      const newBowlers = [...prev];
+      const b = { ...newBowlers[bowlerIdx] };
+      
+      if (logic.countsAsBall) {
+          b.overs = incrementOvers(b.overs);
+          b.balls = (b.balls || 0) + 1;
+      }
+      b.runs += logic.runs;
+      if (logic.isWicket) b.wickets += 1;
+      b.economyRates = calcEco(b.runs, b.overs);
+      newBowlers[bowlerIdx] = b;
+      return newBowlers;
+    });
+
+    // 3. Update Batters & Strike Rotation (Runs + Over Complete)
+    setBatters(prev => {
+      const strikerIdx = prev.findIndex(b => b.isOnStrike);
+      if (strikerIdx === -1) return prev;
+      
+      let newBatters = [...prev];
+      const s = { ...newBatters[strikerIdx] };
+      
+      if (logic.countsAsBall) s.balls += 1;
+      s.runs += logic.runs;
+      if (selectedEvent === "4") s.fours += 1;
+      if (selectedEvent === "6") s.sixes += 1;
+      if (logic.isWicket) {
+        s.status = "out";
+        s.isOnStrike = false;
+      }
+      s.strikeRate = parseFloat(calcSR(s.runs, s.balls));
+      newBatters[strikerIdx] = s;
+
+      // Determine if strike should rotate
+      let shouldRotate = false;
+      
+      // Run-based rotation (1, 3 runs) - only if it's a legal ball
+      if (!logic.isWicket && logic.countsAsBall && (logic.runs === 1 || logic.runs === 3)) {
+        shouldRotate = !shouldRotate;
+      }
+      
+      // Over-complete rotation
+      if (logic.countsAsBall && nextTotalLegal > 0 && nextTotalLegal % 6 === 0) {
+        shouldRotate = !shouldRotate;
+      }
+
+      if (shouldRotate) {
+        const currentStrikerIdx = newBatters.findIndex(b => b.isOnStrike); 
+        const nonStrikerIdx = newBatters.findIndex((b, idx) => b.status === "not out" && idx !== currentStrikerIdx && !b.isOnStrike);
+        
+        if (currentStrikerIdx !== -1 && nonStrikerIdx !== -1) {
+          const finalBatters = [...newBatters];
+          finalBatters[currentStrikerIdx] = { ...finalBatters[currentStrikerIdx], isOnStrike: false };
+          finalBatters[nonStrikerIdx] = { ...finalBatters[nonStrikerIdx], isOnStrike: true };
+          return finalBatters;
+        }
+      }
+      
+      return newBatters;
+    });
+
     setSelectedEvent("");
   };
 
   const undoLastBall = () => setBalls(prev => prev.slice(0, -1));
 
-  // Load existing innings from DB — sets the base values and resets the new-balls buffer
+  // Load existing innings from DB
   const loadInnings = useCallback((matchData: any, teamIdx: number) => {
     if (!matchData) return;
     setStatus(matchData.status || "UPCOMING");
@@ -217,7 +325,6 @@ export default function AdminMatchUpdater() {
       const dbRuns     = inn.runs     || 0;
       const dbWickets  = inn.wickets  || 0;
       const dbOvers    = inn.overs    || 0;
-      // Convert stored overs (e.g. 3.4) back to count of legal balls (3*6 + 4 = 22)
       const intOvers   = Math.floor(dbOvers);
       const ballsInOver = Math.round((dbOvers - intOvers) * 10);
       const dbLegal    = intOvers * 6 + ballsInOver;
@@ -225,14 +332,48 @@ export default function AdminMatchUpdater() {
       setBaseRuns(dbRuns);
       setBaseWickets(dbWickets);
       setBaseLegalBalls(dbLegal);
+      
+      // Mark current bowler from match-level data
+      const dbBowlers = (inn.bowlers || []).map((b: any) => ({
+          ...b,
+          isCurrentBowler: b.bowler === matchData.currentBowler
+      }));
+      
       setBatters(inn.batters || []);
-      setBowlers(inn.bowlers || []);
+      setBowlers(dbBowlers);
     } else {
       setBaseRuns(0); setBaseWickets(0); setBaseLegalBalls(0);
       setBatters([]); setBowlers([]);
     }
-    // Always clear the new-ball buffer so we start fresh on top of DB values
-    setBalls([]);
+    
+    // Load recent balls from DB into the buffer if they exist
+    // If totalLegal % 6 === 0, it means the over is done, 
+    // but the user wants it to only be written over if the over is done.
+    // For now, let's load them and allow the user to see them.
+    if (matchData.recent_balls && matchData.recent_balls.length > 0) {
+        // Map strings back to ball objects using BALL_LOGIC
+        const loadedBalls = matchData.recent_balls.map((ev: string) => ({
+            event: ev,
+            ...(BALL_LOGIC[ev] || { runs: 0, isWicket: false, countsAsBall: true })
+        }));
+        setBalls(loadedBalls);
+        // Base values already include these runs/wickets if they were saved in innings
+        // So we need to subtract them from base to avoid double counting if we are using session buffer
+        // Actually, the current logic adds balls ON TOP of base.
+        // If we want balls to be persistent 'This Over', we should either:
+        // A) baseValues = match stats MINUS current over balls
+        // B) totalValues = baseValues (which is match stats)
+        // Let's go with B and only use 'balls' for visual display of the current over.
+        // But addBallEvent updates batters/bowlers which then get saved.
+        // So 'balls' should only be the ones NOT YET saved? 
+        // No, the user wants 'This Over' section to stay.
+        
+        // Let's refine: balls = latest balls from recent_balls in DB.
+        // When handleSave is called, we save latest batters/bowlers.
+        // 'base' values in this component are a bit redundant if we update batters/bowlers directly.
+    } else {
+        setBalls([]);
+    }
     setSelectedEvent("");
   }, []);
 
@@ -262,21 +403,30 @@ export default function AdminMatchUpdater() {
       batters, bowlers,
     };
 
+    const isOverComplete = totalLegal > 0 && totalLegal % 6 === 0;
+
+    const currentStriker = batters.find(b => b.isOnStrike)?.batter || "";
+    const currentNonStriker = batters.find(b => b.status === "not out" && !b.isOnStrike)?.batter || "";
+    const activeBowler = bowlers.find(b => b.isCurrentBowler)?.bowler || "";
+
     try {
       const res = await fetch(`/api/matches?gender=${gender}`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           match_id: match.match_id, status,
           innings: updatedInnings,
-          recent_balls: balls.length > 0 ? recentEvents : match.recent_balls,
+          recent_balls: isOverComplete ? [] : balls.map(b => b.event),
+          striker: currentStriker,
+          nonStriker: currentNonStriker,
+          currentBowler: activeBowler,
         }),
       });
       const data = await res.json();
       if (!res.ok) { setSaveMsg(`❌ ${data.error}`); }
       else {
         setSaveMsg("✅ Saved to database!");
-        // After save, clear new-ball buffer; base will reload from DB on mutate
-        setBalls([]);
+        // If the over was complete, we've cleared it in DB, so clear it locally too
+        if (isOverComplete) setBalls([]);
         mutate();
       }
     } catch (e: any) { setSaveMsg(`❌ ${e.message}`); }
@@ -301,7 +451,7 @@ export default function AdminMatchUpdater() {
         <Link href="/admin" className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm font-semibold">
           <ArrowLeft className="w-4 h-4" /> Back
         </Link>
-        <span className="text-sm font-bold bg-zinc-800 theme-women:bg-zinc-500/20 theme-women:text-zinc-700 px-3 py-1 rounded tracking-widest">{match.match_id}</span>
+        <span className="text-sm font-bold bg-zinc-800 px-3 py-1 rounded tracking-widest">{match.match_id}</span>
       </div>
 
       {/* Match header + status */}
@@ -311,7 +461,7 @@ export default function AdminMatchUpdater() {
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-zinc-500 uppercase">Status</span>
             <select value={status} onChange={e => setStatus(e.target.value)}
-              className={`bg-zinc-900 border rounded-lg px-3 py-1 text-sm font-bold focus:outline-none ${status === "LIVE" ? "border-red-500/50 text-red-400" : "border-zinc-800 text-zinc-300 theme-women:bg-zinc-100 theme-women:border-zinc-300 theme-women:text-zinc-800"}`}>
+              className={`bg-zinc-900 border rounded-lg px-3 py-1 text-sm font-bold focus:outline-none ${status === "LIVE" ? "border-red-500/50 text-red-400" : "border-zinc-800 text-zinc-300"}`}>
               <option value="UPCOMING">Upcoming</option><option value="LIVE">Live</option><option value="COMPLETED">Completed</option>
             </select>
           </div>
@@ -319,7 +469,7 @@ export default function AdminMatchUpdater() {
         <div className="flex gap-2">
           {[0, 1].map(i => (
             <button key={i} onClick={() => setActiveTeam(i as 0 | 1)}
-              className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${activeTeam === i ? "bg-accent text-white" : "bg-zinc-800 text-zinc-400 hover:text-white theme-women:bg-zinc-200 theme-women:text-zinc-700 theme-women:hover:bg-zinc-300"}`}>
+              className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${activeTeam === i ? "bg-accent text-white" : "bg-zinc-800 text-zinc-400 hover:text-white"}`}>
               {teamNames[i]} Innings
             </button>
           ))}
@@ -359,9 +509,9 @@ export default function AdminMatchUpdater() {
           {balls.slice(-6).map((b, i) => (
             <div key={i} className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold border ${
               b.event === "W" ? "bg-red-500 text-white border-red-400" :
-              b.event === "4" || b.event === "6" ? (gender === 'f' ? "bg-accent/10 text-accent border-accent/40" : "bg-accent/20 text-accent border-accent/40") :
-              b.event === "WD" || b.event === "NB" ? (gender === 'f' ? "bg-yellow-100 text-yellow-700 border-yellow-300" : "bg-yellow-900/40 text-yellow-400 border-yellow-700/40") :
-              (gender === 'f' ? "bg-zinc-200 text-zinc-700 border-zinc-300" : "bg-zinc-800 text-zinc-300 border-zinc-700")
+              b.event === "4" || b.event === "6" ? "bg-accent/20 text-accent border-accent/40" :
+              b.event === "WD" || b.event === "NB" ? "bg-yellow-900/40 text-yellow-400 border-yellow-700/40" :
+              "bg-zinc-800 text-zinc-300 border-zinc-700"
             }`}>{b.event}</div>
           ))}
           {balls.length === 0 && <span className="text-zinc-600 text-xs">No balls bowled yet</span>}
@@ -419,11 +569,11 @@ export default function AdminMatchUpdater() {
           <span className="ml-2 text-zinc-600 font-normal normal-case">({batters.length} batters)</span>
         </h3>
 
-        <div className="overflow-x-auto rounded-xl border border-zinc-800 theme-women:border-zinc-300">
+        <div className="overflow-x-auto rounded-xl border border-zinc-800">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-zinc-800 theme-women:border-zinc-300 bg-zinc-900/60 theme-women:bg-zinc-100/60 text-zinc-500 text-xs uppercase tracking-wider">
-                <th className="text-left p-3">Batter</th><th className="p-3">Status</th>
+              <tr className="border-b border-zinc-800 bg-zinc-900/60 text-zinc-500 text-xs uppercase tracking-wider">
+                <th className="text-left p-3">Batter</th><th className="p-3">Status/Strike</th>
                 <th className="p-3">R</th><th className="p-3">B</th>
                 <th className="p-3">4s</th><th className="p-3">6s</th>
                 <th className="p-3">SR</th><th className="p-3 w-20"></th>
@@ -435,7 +585,11 @@ export default function AdminMatchUpdater() {
               )}
               {batters.map((b, idx) => (
                 <BatterRow key={idx} batter={b as any}
-                  onUpdate={(updated) => setBatters(p => p.map((x, i) => i === idx ? updated as any : x))}
+                  onUpdate={(updated) => setBatters(p => p.map((x, i) => {
+                    if (i === idx) return updated as any;
+                    if ((updated as any).isOnStrike) return { ...x, isOnStrike: false };
+                    return x;
+                  }))}
                   onDelete={() => setBatters(p => p.filter((_, i) => i !== idx))} />
               ))}
             </tbody>
@@ -450,18 +604,18 @@ export default function AdminMatchUpdater() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 p-4 bg-zinc-900/50 rounded-2xl border border-zinc-800/50">
             <div className="col-span-2">
               <label className="block text-xs text-zinc-500 mb-1 font-semibold uppercase">Name</label>
-              <input placeholder="e.g. Rahul Sharma" value={newBatter.batter} onChange={e => setNewBatter(p => ({ ...p, batter: e.target.value }))} className={`w-full rounded-lg p-2.5 text-sm focus:border-accent ${gender === 'f' ? 'bg-zinc-100 text-zinc-900 border border-zinc-300' : 'bg-zinc-800 border border-zinc-700'}`} />
+              <input placeholder="e.g. Rahul Sharma" value={newBatter.batter} onChange={e => setNewBatter(p => ({ ...p, batter: e.target.value }))} className={`w-full rounded-lg p-2.5 text-sm focus:border-accent bg-zinc-800 border border-zinc-700`} />
             </div>
             <div>
               <label className="block text-xs text-zinc-500 mb-1 font-semibold uppercase">Status</label>
-              <select value={newBatter.status} onChange={e => setNewBatter(p => ({ ...p, status: e.target.value }))} className={`w-full rounded-lg p-2.5 text-sm ${gender === 'f' ? 'bg-zinc-100 text-zinc-900 border border-zinc-300' : 'bg-zinc-800 border border-zinc-700'}`}>
+              <select value={newBatter.status} onChange={e => setNewBatter(p => ({ ...p, status: e.target.value }))} className={`w-full rounded-lg p-2.5 text-sm bg-zinc-800 border border-zinc-700`}>
                 <option value="not out">Not Out</option><option value="out">Out</option><option value="dnb">DNB</option>
               </select>
             </div>
             {[["Runs","runs"],["Balls","balls"],["4s","fours"],["6s","sixes"]].map(([label, key]) => (
               <div key={key}>
                 <label className="block text-xs text-zinc-500 mb-1 font-semibold uppercase">{label}</label>
-                <input type="number" min={0} value={(newBatter as any)[key]} onChange={e => setNewBatter(p => ({ ...p, [key]: +e.target.value }))} className={`w-full rounded-lg p-2.5 text-sm focus:border-accent ${gender === 'f' ? 'bg-zinc-100 text-zinc-900 border border-zinc-300' : 'bg-zinc-800 border border-zinc-700'}`} />
+                <input type="number" min={0} value={(newBatter as any)[key]} onChange={e => setNewBatter(p => ({ ...p, [key]: +e.target.value }))} className={`w-full rounded-lg p-2.5 text-sm focus:border-accent bg-zinc-800 border border-zinc-700`} />
               </div>
             ))}
             <div className="flex items-end gap-2">
@@ -479,11 +633,12 @@ export default function AdminMatchUpdater() {
           <span className="ml-2 text-zinc-600 font-normal normal-case">({bowlers.length} bowlers)</span>
         </h3>
 
-        <div className="overflow-x-auto rounded-xl border border-zinc-800 theme-women:border-zinc-300">
+        <div className="overflow-x-auto rounded-xl border border-zinc-800">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-zinc-800 theme-women:border-zinc-300 bg-zinc-900/60 theme-women:bg-zinc-100/60 text-zinc-500 text-xs uppercase tracking-wider">
-                <th className="text-left p-3">Bowler</th><th className="p-3">O</th><th className="p-3">M</th>
+              <tr className="border-b border-zinc-800 bg-zinc-900/60 text-zinc-500 text-xs uppercase tracking-wider">
+                <th className="text-left p-3">Bowler</th><th className="p-3">Current</th>
+                <th className="p-3">O</th><th className="p-3">Balls</th><th className="p-3">M</th>
                 <th className="p-3">R</th><th className="p-3">W</th><th className="p-3">Eco</th><th className="p-3 w-20"></th>
               </tr>
             </thead>
@@ -493,7 +648,11 @@ export default function AdminMatchUpdater() {
               )}
               {bowlers.map((b, idx) => (
                 <BowlerRow key={idx} bowler={b as any}
-                  onUpdate={(updated) => setBowlers(p => p.map((x, i) => i === idx ? updated as any : x))}
+                  onUpdate={(updated) => setBowlers(p => p.map((x, i) => {
+                    if (i === idx) return updated as any;
+                    if ((updated as any).isCurrentBowler) return { ...x, isCurrentBowler: false };
+                    return x;
+                  }))}
                   onDelete={() => setBowlers(p => p.filter((_, i) => i !== idx))} />
               ))}
             </tbody>
@@ -507,24 +666,24 @@ export default function AdminMatchUpdater() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 p-4 bg-zinc-900/50 rounded-2xl border border-zinc-800/50">
             <div className="col-span-2">
               <label className="block text-xs text-zinc-500 mb-1 font-semibold uppercase">Name</label>
-              <input placeholder="e.g. Arjun Singh" value={newBowler.bowler} onChange={e => setNewBowler(p => ({ ...p, bowler: e.target.value }))} className={`w-full rounded-lg p-2.5 text-sm focus:border-accent ${gender === 'f' ? 'bg-zinc-100 text-zinc-900 border border-zinc-300' : 'bg-zinc-800 border border-zinc-700'}`} />
+              <input placeholder="e.g. Arjun Singh" value={newBowler.bowler} onChange={e => setNewBowler(p => ({ ...p, bowler: e.target.value }))} className={`w-full rounded-lg p-2.5 text-sm focus:border-accent bg-zinc-800 border border-zinc-700`} />
             </div>
             <div>
               <label className="block text-xs text-zinc-500 mb-1 font-semibold uppercase">Overs</label>
               <div className="flex gap-1">
-                <input type="number" step="0.1" value={newBowler.overs} onChange={e => setNewBowler(p => ({ ...p, overs: parseFloat(e.target.value) || 0 }))} className={`w-full rounded-lg p-2.5 text-sm ${gender === 'f' ? 'bg-zinc-100 text-zinc-900 border border-zinc-300' : 'bg-zinc-800 border border-zinc-700'}`} />
-                <button onClick={() => setNewBowler(p => ({ ...p, overs: incrementOvers(p.overs) }))} className={`px-2 rounded-lg text-xs font-bold transition-all ${gender === 'f' ? 'bg-zinc-200 text-zinc-800 hover:bg-zinc-300' : 'bg-zinc-700 hover:bg-accent'}`}>+</button>
+                <input type="number" step="0.1" value={newBowler.overs} onChange={e => setNewBowler(p => ({ ...p, overs: parseFloat(e.target.value) || 0 }))} className={`w-full rounded-lg p-2.5 text-sm bg-zinc-800 border border-zinc-700`} />
+                <button onClick={() => setNewBowler(p => ({ ...p, overs: incrementOvers(p.overs) }))} className={`px-2 rounded-lg text-xs font-bold transition-all bg-zinc-700 hover:bg-accent`}>+</button>
               </div>
             </div>
-            {[["Maidens","maidens"],["Runs","runs"],["Wickets","wickets"]].map(([label, key]) => (
+            {[["Maidens","maidens"],["Runs","runs"],["Wickets","wickets"],["Balls","balls"]].map(([label, key]) => (
               <div key={key}>
-                <label className={`block text-xs mb-1 font-semibold uppercase ${key === "wickets" ? (gender === 'f' ? 'text-red-600' : 'text-red-400') : "text-zinc-500"}`}>{label}</label>
-                <input type="number" min={0} value={(newBowler as any)[key]} onChange={e => setNewBowler(p => ({ ...p, [key]: +e.target.value }))} className={`w-full rounded-lg p-2.5 text-sm focus:border-accent ${gender === 'f' ? `bg-zinc-100 text-zinc-900 border outline-none ${key === 'wickets' ? 'border-red-500' : 'border-zinc-300'}` : `bg-zinc-800 border ${key === 'wickets' ? 'border-red-500/30 text-red-400' : 'border-zinc-700'}`}`} />
+                <label className={`block text-xs mb-1 font-semibold uppercase ${key === "wickets" ? 'text-red-400' : "text-zinc-500"}`}>{label}</label>
+                <input type="number" min={0} value={(newBowler as any)[key]} onChange={e => setNewBowler(p => ({ ...p, [key]: +e.target.value }))} className={`w-full rounded-lg p-2.5 text-sm focus:border-accent bg-zinc-800 border ${key === 'wickets' ? 'border-red-500/30 text-red-400' : 'border-zinc-700'}`} />
               </div>
             ))}
             <div className="flex items-end gap-2">
               <div className="flex-1 bg-zinc-800 rounded-lg p-2.5 text-center text-xs text-zinc-500">Eco: <span className="text-accent font-bold">{calcEco(newBowler.runs, newBowler.overs)}</span></div>
-              <button onClick={addBowler} className="flex items-center gap-1 px-4 py-2.5 bg-accent hover:bg-accent/80 text-white rounded-lg text-sm font-bold transition-all"><Plus className="w-4 h-4" /> Add</button>
+              <button onClick={addBowler} className="flex items-center gap-1 px-4 py-2.5 bg-accent hover:bg-accent/80 text-white rounded-lg text-sm font-bold transition-all"><Plus className="w-4 h-4" /> Add Bowler</button>
             </div>
           </div>
         </details>

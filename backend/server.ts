@@ -13,8 +13,14 @@ import basketballRoutes from "./src/routers/basketball_router";
 import powerSportsRoutes from "./src/routers/powersports_router";
 import volleyballLeadRoutes from "./src/routers/volley_leade_router";
 import tennisMatchRoutes from "./src/routers/tennis_router";
-import tennisLeadRoutes from "./src/routers/tennis_lead_router";
-import athleticsLeadRoutes from "./src/routers/athletics_lead_router";
+import tennisLead from "./src/routers/tennis_lead_router";
+import athleticsLead from "./src/routers/athletics_lead_router";
+import badmintonLeadRoutes from "./src/routers/badminton_lead_router";
+import basketballLeadRoutes from "./src/routers/basketball_lead_router";
+import handballLeadRoutes from "./src/routers/handball_lead_router";
+import ttLeadRoutes from "./src/routers/TT_lead_router";
+import powersportLeadRoutes from "./src/routers/powersports_lead_router";
+
 
 dotenv.config();
 
@@ -35,8 +41,14 @@ app.use("/api/basketball", basketballRoutes);
 app.use("/api/powersports", powerSportsRoutes);
 app.use("/api/volleylead", volleyballLeadRoutes);
 app.use("/api/tennis", tennisMatchRoutes);
-app.use("/api/tennis-leaderboard", tennisLeadRoutes);
-app.use("/api/athletics-leaderboard", athleticsLeadRoutes);
+app.use("/api/badminton", badmintonRoutes);
+app.use("/api/tennis-lead",tennisLead);
+app.use("/api/athletics-lead",athleticsLead);
+app.use("/api/badminton-leaderboard", badmintonLeadRoutes);
+app.use("/api/basketball-leaderboard", basketballLeadRoutes);
+app.use("/api/handball-leaderboard",handballLeadRoutes);
+app.use("/api/tt-lead",ttLeadRoutes);
+app.use("/api/powersport-lead",powersportLeadRoutes)
 
 const PORT = process.env.PORT || 5000;
 

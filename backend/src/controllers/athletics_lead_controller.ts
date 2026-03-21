@@ -1,3 +1,45 @@
+export const getLeaderboardStandings = async (req: Request, res: Response) => {
+  try {
+    // Only completed events
+    const events = await AthleticsEvent.find({ event_status: "completed" });
+    // Get group info for each team from leaderboard
+    const leaderboardEntries = await AthleticsLeaderboard.find();
+    const deptToGroup: Record<string, string> = {};
+    leaderboardEntries.forEach(entry => {
+      deptToGroup[entry.dept_name] = entry.group;
+    });
+
+    // Standings: dept_name -> { dept_name, group, points, participations }
+    const standings: Record<string, { dept_name: string; group: string; points: number; participations: number }> = {};
+
+    for (const event of events) {
+      for (const participant of event.participants || []) {
+        const dept = participant.department;
+        const group = deptToGroup[dept] || "Unknown";
+        if (!standings[dept]) standings[dept] = { dept_name: dept, group, points: 0, participations: 0 };
+        standings[dept].participations++;
+        // Award points for rank (e.g., 1st=5, 2nd=3, 3rd=1)
+        if (participant.rank === 1) standings[dept].points += 5;
+        else if (participant.rank === 2) standings[dept].points += 3;
+        else if (participant.rank === 3) standings[dept].points += 1;
+      }
+    }
+
+    // Group standings by group
+    const grouped: Record<string, any[]> = {};
+    Object.values(standings).forEach(entry => {
+      if (!grouped[entry.group]) grouped[entry.group] = [];
+      grouped[entry.group].push(entry);
+    });
+    // Sort each group by points desc, then participations desc
+    Object.keys(grouped).forEach(group => {
+      grouped[group].sort((a, b) => b.points - a.points || b.participations - a.participations);
+    });
+    res.status(200).json(grouped);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to compute standings", error: (error as Error).message || error });
+  }
+};
 import { Request, Response } from "express";
 import AthleticsLeaderboard from "../models/athletics_lead_model";
 import AthleticsEvent from "../models/athletics_model";
@@ -63,64 +105,6 @@ export const getAllLeaderboardEntries = async (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({
       message: "Failed to fetch leaderboard entries",
-      error: (error as Error).message || error,
-    });
-  }
-};
-
-export const getLeaderboardStandings = async (req: Request, res: Response) => {
-  try {
-    const { event_name, category } = req.query;
-
-    const filter: Record<string, unknown> = {};
-    if (event_name) filter.event_name = event_name;
-    if (category) filter.category = category;
-
-    const entries = await AthleticsLeaderboard.find(filter).sort({
-      event_name: 1,
-      category: 1,
-    });
-
-    const enriched = await Promise.all(
-      entries.map(async (entry) => {
-        const stats = await computeStats(entry.dept_name, entry.event_name, entry.category);
-        return {
-          leaderboard_id: entry.leaderboard_id,
-          dept_name: entry.dept_name,
-          event_name: entry.event_name,
-          category: entry.category,
-          ...stats,
-        };
-      })
-    );
-
-    const result: Record<string, Record<string, typeof enriched>> = {};
-
-    for (const row of enriched) {
-      if (!result[row.event_name]) result[row.event_name] = {};
-      if (!result[row.event_name][row.category]) result[row.event_name][row.category] = [];
-      result[row.event_name][row.category].push(row);
-    }
-
-    for (const evt of Object.keys(result)) {
-      for (const cat of Object.keys(result[evt])) {
-        result[evt][cat].sort((a, b) => b.best_performance - a.best_performance);
-        let currentRank = 1;
-        for (let i = 0; i < result[evt][cat].length; i++) {
-          if (i > 0 && result[evt][cat][i].best_performance === result[evt][cat][i - 1].best_performance) {
-            result[evt][cat][i].rank = result[evt][cat][i - 1].rank;
-          } else {
-            result[evt][cat][i].rank = currentRank;
-          }
-          currentRank++;
-        }
-      }
-    }
-
-    res.status(200).json(result);
-  } catch (error) {
-    res.status(500).json({
-      message: "Failed to fetch leaderboard standings",
       error: (error as Error).message || error,
     });
   }

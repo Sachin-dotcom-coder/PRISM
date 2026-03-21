@@ -18,7 +18,7 @@ export default function TeamsPage() {
   const validTeams = Array.isArray(teams) ? teams : [];
 
   return (
-    <section className="relative w-full h-auto bg-[#000000] pt-[15vh] pb-[8vh] overflow-hidden">
+    <section id="teams" className="relative w-full h-auto bg-[#000000] pt-[15vh] pb-[8vh] overflow-hidden">
       
       <h2 className="text-center font-sans font-[900] text-5xl md:text-6xl uppercase tracking-[0.4em] text-[#FFBF00] mb-12 drop-shadow-[0_0_15px_rgba(255,191,0,0.4)]">
         TEAMS
@@ -41,6 +41,7 @@ export default function TeamsPage() {
           ))}
         </div>
       </div>
+<<<<<<< Updated upstream
 
       {/* --- Live Score Horizontal Bars --- */}
       <div className="w-full max-w-6xl mx-auto flex flex-col gap-4 px-[5vw] mt-12 mb-4" id="live-score">
@@ -151,6 +152,8 @@ export default function TeamsPage() {
         </div>
       </div>
 
+=======
+>>>>>>> Stashed changes
     </section>
   );
 }
