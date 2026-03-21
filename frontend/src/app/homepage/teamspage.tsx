@@ -41,7 +41,7 @@ export default function TeamsPage() {
           ))}
         </div>
       </div>
-<<<<<<< Updated upstream
+
 
       {/* --- Live Score Horizontal Bars --- */}
       <div className="w-full max-w-6xl mx-auto flex flex-col gap-4 px-[5vw] mt-12 mb-4" id="live-score">
@@ -152,8 +152,6 @@ export default function TeamsPage() {
         </div>
       </div>
 
-=======
->>>>>>> Stashed changes
     </section>
   );
 }
