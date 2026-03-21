@@ -34,64 +34,76 @@ export default function Leaderboard() {
         </span>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-zinc-900/50 text-zinc-400 font-semibold uppercase tracking-wider text-xs border-b border-zinc-800">
-            <tr>
-              <th scope="col" className="px-6 py-4">Position</th>
-              <th scope="col" className="px-6 py-4">Team</th>
-              <th scope="col" className="px-6 py-4 text-center">P</th>
-              <th scope="col" className="px-6 py-4 text-center">W</th>
-              <th scope="col" className="px-6 py-4 text-center">L</th>
-              <th scope="col" className="px-6 py-4 text-center">NRR</th>
-              <th scope="col" className="px-6 py-4 text-center text-[#FFBF00]">Pts</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-800/50">
-            {validTeams.map((team: any, index: number) => (
-              <motion.tr 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
-                key={team._id} 
-                className="hover:bg-zinc-900/30 transition-colors"
-              >
-                <td className="px-6 py-4 font-sports text-lg text-zinc-500">
-                  {index + 1}
-                </td>
-                <td className="px-6 py-4 font-bold tracking-wide flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs border border-zinc-700">
-                    {team.shortName}
-                  </div>
-                  <span className="text-zinc-200">{team.name}</span>
-                </td>
-                <td className="px-6 py-4 text-center text-zinc-400 font-medium">
-                  {team.matches}
-                </td>
-                <td className="px-6 py-4 text-center text-zinc-400 font-medium">
-                  {team.wins}
-                </td>
-                <td className="px-6 py-4 text-center text-zinc-400 font-medium">
-                  {team.losses}
-                </td>
-                <td className="px-6 py-4 text-center text-zinc-400 font-medium">
-                  {team.nrr?.toFixed(3) || "0.000"}
-                </td>
-                <td className="px-6 py-4 text-center text-[#FFBF00] font-sports text-xl drop-shadow-md">
-                  {team.points}
-                </td>
-              </motion.tr>
-            ))}
-            
-            {validTeams.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-6 py-10 text-center text-zinc-500">
-                  No teams added to the leaderboard yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <div className="divide-y divide-zinc-800">
+        {["A", "B"].map((gp) => {
+          const gpTeams = validTeams.filter((t: any) => (t.group || "A") === gp);
+          return (
+            <div key={gp} className="p-2 sm:p-4">
+              <h4 className="px-6 py-2 text-[10px] font-bold text-accent uppercase tracking-widest flex items-center gap-2 bg-accent/5 rounded-t-lg border-x border-t border-zinc-800/50">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" /> Group {gp} Standing
+              </h4>
+              <div className="overflow-x-auto border border-zinc-800/50 rounded-b-xl bg-background/30">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-zinc-900/50 text-zinc-400 font-semibold uppercase tracking-wider text-[10px] border-b border-zinc-800">
+                    <tr>
+                      <th scope="col" className="px-6 py-3">Pos</th>
+                      <th scope="col" className="px-6 py-3">Team</th>
+                      <th scope="col" className="px-6 py-3 text-center">P</th>
+                      <th scope="col" className="px-6 py-3 text-center">W</th>
+                      <th scope="col" className="px-6 py-3 text-center">L</th>
+                      <th scope="col" className="px-6 py-3 text-center">NRR</th>
+                      <th scope="col" className="px-6 py-3 text-center text-[#FFBF00]">Pts</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/50">
+                    {gpTeams.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-8 text-center text-zinc-600 text-xs italic">
+                          No teams assigned to Group {gp} yet.
+                        </td>
+                      </tr>
+                    ) : (
+                      gpTeams.map((team: any, index: number) => (
+                        <motion.tr 
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: index * 0.05 }}
+                          key={team._id} 
+                          className="hover:bg-zinc-900/30 transition-colors"
+                        >
+                          <td className="px-6 py-3 font-sports text-base text-zinc-500">
+                            {index + 1}
+                          </td>
+                          <td className="px-6 py-3 font-bold tracking-wide flex items-center gap-3">
+                            <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-[10px] border border-zinc-700">
+                              {team.shortName}
+                            </div>
+                            <span className="text-zinc-200 text-xs sm:text-sm truncate max-w-[100px] sm:max-w-none">{team.name}</span>
+                          </td>
+                          <td className="px-6 py-3 text-center text-zinc-400 font-medium">
+                            {team.matches}
+                          </td>
+                          <td className="px-6 py-3 text-center text-zinc-400 font-medium">
+                            {team.wins}
+                          </td>
+                          <td className="px-6 py-3 text-center text-zinc-400 font-medium">
+                            {team.losses}
+                          </td>
+                          <td className="px-6 py-3 text-center text-zinc-400 font-medium text-xs">
+                            {team.nrr?.toFixed(3) || "0.000"}
+                          </td>
+                          <td className="px-6 py-3 text-center text-[#FFBF00] font-sports text-lg drop-shadow-md">
+                            {team.points}
+                          </td>
+                        </motion.tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

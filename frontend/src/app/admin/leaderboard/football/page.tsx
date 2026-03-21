@@ -13,6 +13,7 @@ type FTeam = {
   _id: string; name: string; shortName: string;
   wins: number; draws: number; losses: number; matches: number;
   goalsFor: number; goalsAgainst: number; goalDifference: number; points: number;
+  group: string;
 };
 
 function FTeamRow({ team, rank, onUpdate, onDelete }: { team: FTeam; rank: number; onUpdate: (t: FTeam) => void; onDelete: () => void }) {
@@ -29,7 +30,10 @@ function FTeamRow({ team, rank, onUpdate, onDelete }: { team: FTeam; rank: numbe
       <td className="p-3">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-bold">{team.shortName}</div>
-          <span className="font-semibold text-zinc-200 text-sm">{team.name}</span>
+          <div className="flex flex-col">
+            <span className="font-semibold text-zinc-200 text-sm">{team.name}</span>
+            <span className="text-[10px] text-green-500 font-bold uppercase tracking-tighter">Group {team.group || "A"}</span>
+          </div>
         </div>
       </td>
       <td className="p-3 text-center text-zinc-400 text-sm">{team.matches}</td>
@@ -65,7 +69,12 @@ function FTeamRow({ team, rank, onUpdate, onDelete }: { team: FTeam; rank: numbe
       <td className="p-2">
         <div className="space-y-1">
           <input className="bg-zinc-800 rounded px-2 py-1 text-xs w-28 block" value={draft.name} onChange={e => f("name", e.target.value)} placeholder="Full Name" />
-          <input className="bg-zinc-800 rounded px-2 py-1 text-xs w-16 block" value={draft.shortName} onChange={e => f("shortName", e.target.value)} placeholder="Short" />
+          <div className="flex gap-1">
+            <input className="bg-zinc-800 rounded px-2 py-1 text-xs w-16 block" value={draft.shortName} onChange={e => f("shortName", e.target.value)} placeholder="Short" />
+            <select className="bg-zinc-800 rounded px-1 py-1 text-[10px] w-12 font-bold text-green-500" value={draft.group||"A"} onChange={e => f("group", e.target.value)}>
+              <option value="A">GP A</option><option value="B">GP B</option>
+            </select>
+          </div>
         </div>
       </td>
       {/* Auto-calculated M column */}
@@ -96,7 +105,7 @@ export default function FootballLeaderboardAdmin() {
   const validTeams: FTeam[] = Array.isArray(teams) ? teams : [];
   const [saveMsg, setSaveMsg] = useState("");
   const [addMode, setAddMode] = useState(false);
-  const [newTeam, setNewTeam] = useState({ name: "", shortName: "", wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0 });
+  const [newTeam, setNewTeam] = useState({ name: "", shortName: "", wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, group: "A" });
   const showMsg = (msg: string) => { setSaveMsg(msg); setTimeout(() => setSaveMsg(""), 3000); };
 
   const handleUpdate = async (t: FTeam) => {
@@ -117,7 +126,7 @@ export default function FootballLeaderboardAdmin() {
     const res = await fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(newTeam) });
     if (res.ok) {
       showMsg(`✅ ${newTeam.name} added!`);
-      setNewTeam({ name: "", shortName: "", wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0 });
+      setNewTeam({ name: "", shortName: "", wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, group: "A" });
       setAddMode(false); mutate();
     } else { const d = await res.json(); showMsg(`❌ ${d.error}`); }
   };
@@ -128,9 +137,9 @@ export default function FootballLeaderboardAdmin() {
       <div className="flex items-center gap-3 p-4 glass rounded-2xl border border-zinc-800/50">
         <span className="text-2xl">⚽</span>
         <div>
-          <h2 className="font-sports text-xl tracking-wide">Football Leaderboard</h2>
+          <h2 className="font-sports text-xl tracking-wide">{gender === 'f' ? "Women's" : "Men's"} Football Leaderboard</h2>
           <p className="text-xs text-zinc-500 mt-0.5">
-            Database: <code className="text-green-400 bg-zinc-900 px-1.5 py-0.5 rounded">footballDB → teams_m</code>
+            Database: <code className="text-green-400 bg-zinc-900 px-1.5 py-0.5 rounded">footballDB → {gender === 'f' ? 'teams_f' : 'teams_m'}</code>
             <span className="ml-3 text-zinc-600">Pts = W×3 + D · GD = GF−GA</span>
           </p>
         </div>
@@ -147,7 +156,7 @@ export default function FootballLeaderboardAdmin() {
 
         {addMode && (
           <div className="p-5 bg-zinc-900/50 border-b border-zinc-800 space-y-3">
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
               {([["Full Name","name","text"],["Short","shortName","text"],["Wins","wins","number"],["Draws","draws","number"],["Losses","losses","number"],["Goals For","goalsFor","number"],["Goals Against","goalsAgainst","number"]] as [string,string,string][]).map(([label,key,type]) => (
                 <div key={key}>
                   <label className="block text-xs text-zinc-500 uppercase font-semibold mb-1">{label}</label>
@@ -156,6 +165,13 @@ export default function FootballLeaderboardAdmin() {
                     className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:border-green-500" />
                 </div>
               ))}
+              <div>
+                <label className="block text-xs text-zinc-500 uppercase font-semibold mb-1">Group</label>
+                <select value={newTeam.group} onChange={e => setNewTeam(p => ({ ...p, group: e.target.value }))}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:border-green-500 font-bold">
+                  <option value="A">Group A</option><option value="B">Group B</option>
+                </select>
+              </div>
             </div>
             <button onClick={handleAdd}
               className="px-5 py-2 bg-green-700 hover:bg-green-600 text-white font-bold rounded-lg text-sm flex items-center gap-1">
@@ -165,34 +181,48 @@ export default function FootballLeaderboardAdmin() {
         )}
 
         {saveMsg && <div className={`px-6 py-2 text-sm font-semibold ${saveMsg.startsWith("✅") ? "bg-green-900/30 text-green-400" : "bg-red-900/30 text-red-400"}`}>{saveMsg}</div>}
-        {error && <div className="p-8 text-center text-red-400">Failed to load from footballDB → teams_m</div>}
+        {error && <div className="p-8 text-center text-red-400">Failed to load from footballDB → {gender === 'f' ? 'teams_f' : 'teams_m'}</div>}
         {!teams && <div className="p-8 text-center text-zinc-500 animate-pulse">Loading...</div>}
         {validTeams.length === 0 && teams && <div className="p-10 text-center text-zinc-500">No teams yet. Add one above.</div>}
 
         {validTeams.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-zinc-800 bg-zinc-900/60 text-zinc-500 text-xs uppercase tracking-wider">
-                  <th className="p-3 text-center w-10">#</th>
-                  <th className="p-3 text-left">Team</th>
-                  <th className="p-3 text-center">M</th>
-                  <th className="p-3 text-center">W</th>
-                  <th className="p-3 text-center">D</th>
-                  <th className="p-3 text-center">L</th>
-                  <th className="p-3 text-center text-green-400">GF</th>
-                  <th className="p-3 text-center text-red-400">GA</th>
-                  <th className="p-3 text-center">GD</th>
-                  <th className="p-3 text-center text-accent">Pts</th>
-                  <th className="p-3 w-20"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {validTeams.map((t, i) => (
-                  <FTeamRow key={t._id} team={t} rank={i} onUpdate={handleUpdate} onDelete={() => handleDelete(t)} />
-                ))}
-              </tbody>
-            </table>
+          <div className="divide-y divide-zinc-800">
+            {["A", "B"].map(gp => {
+               const gpTeams = validTeams.filter(t => (t.group || "A") === gp);
+               return (
+                 <div key={gp} className="p-4">
+                   <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                     <span className="w-2 h-2 rounded-full bg-green-500" /> Group {gp} Standing
+                   </h3>
+                   <div className="overflow-x-auto rounded-xl border border-zinc-800/50">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-zinc-800 bg-zinc-900/60 text-zinc-500 text-xs uppercase tracking-wider">
+                          <th className="p-3 text-center w-10">#</th>
+                          <th className="p-3 text-left">Team</th>
+                          <th className="p-3 text-center">M</th>
+                          <th className="p-3 text-center">W</th>
+                          <th className="p-3 text-center">D</th>
+                          <th className="p-3 text-center">L</th>
+                          <th className="p-3 text-center text-green-400">GF</th>
+                          <th className="p-3 text-center text-red-400">GA</th>
+                          <th className="p-3 text-center">GD</th>
+                          <th className="p-3 text-center text-accent">Pts</th>
+                          <th className="p-3 w-20"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {gpTeams.length === 0 ? (
+                          <tr><td colSpan={11} className="p-6 text-center text-zinc-600 text-xs italic">No teams in Group {gp} yet.</td></tr>
+                        ) : (
+                          gpTeams.map((t, i) => <FTeamRow key={t._id} team={t} rank={i} onUpdate={handleUpdate} onDelete={() => handleDelete(t)} />)
+                        )}
+                      </tbody>
+                    </table>
+                   </div>
+                 </div>
+               );
+            })}
           </div>
         )}
         <div className="px-6 py-3 text-xs text-zinc-600 border-t border-zinc-800/50">

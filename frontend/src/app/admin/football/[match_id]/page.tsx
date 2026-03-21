@@ -102,7 +102,7 @@ export default function FootballAdminMatch() {
         <Link href="/admin/football" className="flex items-center gap-2 text-zinc-400 hover:text-white text-sm font-semibold transition-colors">
           <ArrowLeft className="w-4 h-4" /> Back
         </Link>
-        <span className="text-sm font-bold bg-zinc-800 theme-women:bg-zinc-500/20 theme-women:text-zinc-700 px-3 py-1 rounded tracking-widest">{match.match_id}</span>
+        <span className="text-sm font-bold bg-zinc-800 px-3 py-1 rounded tracking-widest">{match.match_id}</span>
       </div>
 
       {/* Match Title */}
@@ -124,7 +124,7 @@ export default function FootballAdminMatch() {
                       : s === "HALF_TIME"
                       ? "bg-yellow-600 text-white border-yellow-500"
                       : "bg-accent text-white border-accent"
-                    : (gender === 'f' ? "bg-zinc-100 text-zinc-700 border-zinc-300 hover:bg-zinc-200 hover:text-zinc-900" : "bg-zinc-900 text-zinc-500 border-zinc-800 hover:text-white")
+                    : "bg-zinc-900 text-zinc-500 border-zinc-800 hover:text-white"
                 }`}>
                 {s.replace("_", " ")}
               </button>
@@ -141,20 +141,20 @@ export default function FootballAdminMatch() {
             <label className="block text-xs text-zinc-500 uppercase font-semibold mb-1">{team1}</label>
             <div className="flex items-center gap-2">
               <button onClick={() => setScore1(p => Math.max(0, p - 1))}
-                className={`w-10 h-10 rounded-xl font-bold text-lg transition-all ${gender === 'f' ? 'bg-zinc-200 text-zinc-900 hover:bg-red-500 hover:text-white' : 'bg-zinc-800 hover:bg-red-900 text-white'}`}>−</button>
-              <div className={`flex-1 text-center text-4xl font-sports py-2 rounded-xl border ${gender === 'f' ? 'bg-zinc-100 border-zinc-300 text-zinc-900' : 'bg-zinc-900 border-transparent text-white'}`}>{score1}</div>
+                className={`w-10 h-10 rounded-xl font-bold text-lg transition-all bg-zinc-800 hover:bg-red-900 text-white`}>−</button>
+              <div className={`flex-1 text-center text-4xl font-sports py-2 rounded-xl border bg-zinc-900 border-transparent text-white`}>{score1}</div>
               <button onClick={() => setScore1(p => p + 1)}
-                className={`w-10 h-10 rounded-xl font-bold text-lg transition-all ${gender === 'f' ? 'bg-zinc-200 text-zinc-900 hover:bg-accent hover:text-white' : 'bg-zinc-800 hover:bg-accent text-white'}`}>+</button>
+                className={`w-10 h-10 rounded-xl font-bold text-lg transition-all bg-zinc-800 hover:bg-accent text-white`}>+</button>
             </div>
           </div>
           <div>
             <label className="block text-xs text-zinc-500 uppercase font-semibold mb-1">{team2}</label>
             <div className="flex items-center gap-2">
               <button onClick={() => setScore2(p => Math.max(0, p - 1))}
-                className={`w-10 h-10 rounded-xl font-bold text-lg transition-all ${gender === 'f' ? 'bg-zinc-200 text-zinc-900 hover:bg-red-500 hover:text-white' : 'bg-zinc-800 hover:bg-red-900 text-white'}`}>−</button>
-              <div className={`flex-1 text-center text-4xl font-sports py-2 rounded-xl border ${gender === 'f' ? 'bg-zinc-100 border-zinc-300 text-zinc-900' : 'bg-zinc-900 border-transparent text-white'}`}>{score2}</div>
+                className={`w-10 h-10 rounded-xl font-bold text-lg transition-all bg-zinc-800 hover:bg-red-900 text-white`}>−</button>
+              <div className={`flex-1 text-center text-4xl font-sports py-2 rounded-xl border bg-zinc-900 border-transparent text-white`}>{score2}</div>
               <button onClick={() => setScore2(p => p + 1)}
-                className={`w-10 h-10 rounded-xl font-bold text-lg transition-all ${gender === 'f' ? 'bg-zinc-200 text-zinc-900 hover:bg-accent hover:text-white' : 'bg-zinc-800 hover:bg-accent text-white'}`}>+</button>
+                className={`w-10 h-10 rounded-xl font-bold text-lg transition-all bg-zinc-800 hover:bg-accent text-white`}>+</button>
             </div>
           </div>
         </div>
@@ -171,10 +171,10 @@ export default function FootballAdminMatch() {
           {goals.length === 0 && <p className="text-zinc-600 text-sm text-center py-3">No goals yet.</p>}
           {goals.map((g, idx) => (
             <div key={idx} className={`flex items-center gap-3 p-3 rounded-xl text-sm font-medium ${
-              g.team === team1 ? "bg-accent/10 border border-accent/20" : (gender === 'f' ? "bg-zinc-100 border border-zinc-300" : "bg-zinc-800/80 border border-zinc-700/50")
+              g.team === team1 ? "bg-accent/10 border border-accent/20" : "bg-zinc-800/80 border border-zinc-700/50"
             }`}>
               <span className="text-lg">⚽</span>
-              <span className={`font-bold ${g.team === team1 ? "text-accent" : (gender === 'f' ? "text-zinc-900" : "text-zinc-200")}`}>{g.player}</span>
+              <span className={`font-bold ${g.team === team1 ? "text-accent" : "text-zinc-200"}`}>{g.player}</span>
               <span className="text-xs text-zinc-500 flex-1">for {g.team}</span>
               {g.minute && <span className="text-xs text-zinc-500 font-mono">{g.minute}&apos;</span>}
               <button onClick={() => removeGoal(idx)}
@@ -186,13 +186,13 @@ export default function FootballAdminMatch() {
         </div>
 
         {/* Add goal form */}
-        <div className={`p-4 rounded-2xl border space-y-3 ${gender === 'f' ? 'bg-zinc-100/50 border-zinc-300' : 'bg-zinc-900/50 border-zinc-800/50'}`}>
+        <div className={`p-4 rounded-2xl border space-y-3 bg-zinc-900/50 border-zinc-800/50`}>
           <p className="text-xs font-bold text-accent uppercase tracking-wider flex items-center gap-1"><Plus className="w-3 h-3" /> Add Goal</p>
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="block text-xs text-zinc-500 uppercase font-semibold mb-1">Team</label>
               <select value={newGoalTeam} onChange={e => setNewGoalTeam(e.target.value)}
-                className={`w-full rounded-lg px-3 py-2 text-sm focus:border-accent ${gender === 'f' ? 'bg-white text-zinc-900 border border-zinc-300 outline-none' : 'bg-zinc-800 border border-zinc-700'}`}>
+                className={`w-full rounded-lg px-3 py-2 text-sm focus:border-accent bg-zinc-800 border border-zinc-700`}>
                 <option value="">— Select Team —</option>
                 <option value={team1}>{team1}</option>
                 <option value={team2}>{team2}</option>
@@ -203,17 +203,17 @@ export default function FootballAdminMatch() {
               <input type="number" min={1} max={90} placeholder="Optional"
                 value={newGoalMinute}
                 onChange={e => setNewGoalMinute(e.target.value ? Number(e.target.value) : "")}
-                className={`w-full rounded-lg px-3 py-2 text-sm focus:border-accent ${gender === 'f' ? 'bg-white text-zinc-900 border border-zinc-300 outline-none' : 'bg-zinc-800 border border-zinc-700'}`} />
+                className={`w-full rounded-lg px-3 py-2 text-sm focus:border-accent bg-zinc-800 border border-zinc-700`} />
             </div>
           </div>
           <div className="flex gap-2 items-end">
             <div className="flex-1">
               <label className="block text-xs text-zinc-500 uppercase font-semibold mb-1">Player</label>
               <input placeholder="e.g. Lionel Messi" value={newGoalPlayer} onChange={e => setNewGoalPlayer(e.target.value)}
-                className={`w-full rounded-lg px-3 py-2 text-sm focus:border-accent ${gender === 'f' ? 'bg-white text-zinc-900 border border-zinc-300 outline-none' : 'bg-zinc-800 border border-zinc-700'}`} />
+                className={`w-full rounded-lg px-3 py-2 text-sm focus:border-accent bg-zinc-800 border border-zinc-700`} />
             </div>
             <button onClick={addGoal} disabled={!newGoalPlayer.trim() || !newGoalTeam}
-              className={`px-4 py-2 font-bold rounded-lg text-sm transition-colors disabled:opacity-40 flex items-center gap-1 ${gender === 'f' ? 'bg-zinc-800 text-white hover:bg-zinc-900' : 'bg-accent hover:bg-accent/80 text-white'}`}>
+              className={`px-4 py-2 font-bold rounded-lg text-sm transition-colors disabled:opacity-40 flex items-center gap-1 bg-accent hover:bg-accent/80 text-white`}>
               <Plus className="w-4 h-4" /> Add
             </button>
           </div>
@@ -222,13 +222,13 @@ export default function FootballAdminMatch() {
 
       {/* Result (for when completed) */}
       {status === "COMPLETED" && (
-        <div className={`p-5 rounded-3xl border space-y-3 ${gender === 'f' ? 'bg-zinc-100/50 border-zinc-300' : 'glass border-zinc-800'}`}>
+        <div className={`p-5 rounded-3xl border space-y-3 glass border-zinc-800`}>
           <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Result</h3>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-zinc-500 uppercase font-semibold mb-1">Winner</label>
               <select value={winner} onChange={e => setWinner(e.target.value)}
-                className={`w-full rounded-lg px-3 py-2 text-sm focus:border-accent ${gender === 'f' ? 'bg-white text-zinc-900 border border-zinc-300 outline-none' : 'bg-zinc-800 border border-zinc-700'}`}>
+                className={`w-full rounded-lg px-3 py-2 text-sm focus:border-accent bg-zinc-800 border border-zinc-700`}>
                 <option value="">— Draw / No Result —</option>
                 <option value={team1}>{team1}</option>
                 <option value={team2}>{team2}</option>
@@ -238,7 +238,7 @@ export default function FootballAdminMatch() {
               <label className="block text-xs text-zinc-500 uppercase font-semibold mb-1">Final Score</label>
               <input placeholder={`e.g. ${score1}-${score2}`} value={finalScore}
                 onChange={e => setFinalScore(e.target.value)}
-                className={`w-full rounded-lg px-3 py-2 text-sm focus:border-accent ${gender === 'f' ? 'bg-white text-zinc-900 border border-zinc-300 outline-none' : 'bg-zinc-800 border border-zinc-700'}`} />
+                className={`w-full rounded-lg px-3 py-2 text-sm focus:border-accent bg-zinc-800 border border-zinc-700`} />
             </div>
           </div>
         </div>

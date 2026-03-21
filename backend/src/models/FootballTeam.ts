@@ -12,6 +12,7 @@ const FootballTeamSchema = new Schema({
   goalsAgainst:   { type: Number, default: 0 },
   goalDifference: { type: Number, default: 0 },
   points:         { type: Number, default: 0 },
+  group:          { type: String, enum: ["A", "B"], default: "A" },
 }, { timestamps: true, strict: false });
 
 export function getFootballTeamModel(conn: Connection, gender: "m" | "f" = "m") {

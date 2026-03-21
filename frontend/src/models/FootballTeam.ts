@@ -13,11 +13,13 @@ const FootballTeamSchema = new Schema(
     goalsAgainst: { type: Number, default: 0 },
     goalDifference: { type: Number, default: 0 },
     points: { type: Number, default: 0 },
+    group: { type: String, enum: ["A", "B"], default: "A" },
   },
   { timestamps: true }
 );
 
 export function getFootballTeamModel(conn: Connection, gender: "m" | "f" = "m") {
+  // Matches footballDB → teams_m collection exactly
   const modelName = gender === "f" ? "FootballTeamF" : "FootballTeamM";
   const collectionName = gender === "f" ? "teams_f" : "teams_m";
   return conn.models[modelName] || conn.model(modelName, FootballTeamSchema, collectionName);

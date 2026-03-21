@@ -20,6 +20,7 @@ const TeamSchema = new Schema(
     losses: { type: Number, default: 0 },
     nrr: { type: Number, default: 0.0 },
     points: { type: Number, default: 0 },
+    group: { type: String, enum: ["A", "B"], default: "A" },
   },
   { timestamps: true }
 );

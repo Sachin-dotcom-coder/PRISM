@@ -14,15 +14,18 @@ const BattingStatsSchema = new Schema({
   sixes: { type: Number, default: 0 },
   strikeRate: { type: Number, default: 0.0 },
   status: { type: String, default: "not out" },
+  isOnStrike: { type: Boolean, default: false },
 }, { strict: false });
 
 const BowlingStatsSchema = new Schema({
   bowler: { type: String },
   overs: { type: Number, default: 0 },
+  balls: { type: Number, default: 0 },
   maidens: { type: Number, default: 0 },
   runs: { type: Number, default: 0 },
   wickets: { type: Number, default: 0 },
   economyRates: { type: String, default: "0.0" },
+  isCurrentBowler: { type: Boolean, default: false },
 }, { strict: false });
 
 const InningsSchema = new Schema({
