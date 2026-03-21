@@ -60,27 +60,7 @@ export default function Navbar() {
         </button>
       </nav>
 
-      {/* --- Live Score Ticker (Global) --- */}
-      <div
-        className="fixed top-24 left-0 w-full bg-[rgba(20,20,20,0.9)] py-4 z-40 overflow-hidden border-y-2 border-white"
-        style={{
-          WebkitMaskImage: "linear-gradient(to right, transparent, black 5%, black 95%, transparent)",
-          maskImage: "linear-gradient(to right, transparent, black 5%, black 95%, transparent)",
-        }}
-      >
-         <div className="marquee-content inline-block text-sm md:text-base tracking-widest font-mono font-bold whitespace-nowrap flex items-center">
-            {/* Duplicate content to create seamless infinite scroll */}
-            <span className="mx-8 text-white">FOOTBALL : ECE VS CSE | 78' | 2 - <span className="text-[#FFBF00] drop-shadow-[0_0_8px_rgba(255,191,0,0.8)]">1</span></span>
-            <span className="mx-8 text-white">CRICKET : AI vs MECH | 14.2 Ov | <span className="text-[#FFBF00] drop-shadow-[0_0_8px_rgba(255,191,0,0.8)]">134/4</span></span>
-            <span className="mx-8 text-white">KABADDI : CHE vs EEE | 2nd Half 14:12 | 42 - <span className="text-[#FFBF00] drop-shadow-[0_0_8px_rgba(255,191,0,0.8)]">38</span></span>
-            <span className="mx-8 text-white">FOOTBALL : ECE VS CSE | 78' | 2 - <span className="text-[#FFBF00] drop-shadow-[0_0_8px_rgba(255,191,0,0.8)]">1</span></span>
-            <span className="mx-8 text-white">CRICKET : AI vs MECH | 14.2 Ov | <span className="text-[#FFBF00] drop-shadow-[0_0_8px_rgba(255,191,0,0.8)]">134/4</span></span>
-            <span className="mx-8 text-white">KABADDI : CHE vs EEE | 2nd Half 14:12 | 42 - <span className="text-[#FFBF00] drop-shadow-[0_0_8px_rgba(255,191,0,0.8)]">38</span></span>
-            <span className="mx-8 text-white">FOOTBALL : ECE VS CSE | 78' | 2 - <span className="text-[#FFBF00] drop-shadow-[0_0_8px_rgba(255,191,0,0.8)]">1</span></span>
-            <span className="mx-8 text-white">CRICKET : AI vs MECH | 14.2 Ov | <span className="text-[#FFBF00] drop-shadow-[0_0_8px_rgba(255,191,0,0.8)]">134/4</span></span>
-            <span className="mx-8 text-white">KABADDI : CHE vs EEE | 2nd Half 14:12 | 42 - <span className="text-[#FFBF00] drop-shadow-[0_0_8px_rgba(255,191,0,0.8)]">38</span></span>
-         </div>
-      </div>
+  
 
       {/* Full-page overlay */}
       <AnimatePresence>
@@ -138,7 +118,7 @@ export default function Navbar() {
               </div>
 
               {/* Navigation links */}
-<<<<<<< Updated upstream
+
               <div className="mt-8 flex gap-12 flex-wrap justify-center">
                 <Link href="/" onClick={() => setIsOpen(false)} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-[#FFBF00] transition-colors">Home</Link>
                 <Link href="/#teams" onClick={() => setIsOpen(false)} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-[#FFBF00] transition-colors">Teams</Link>
@@ -146,17 +126,6 @@ export default function Navbar() {
                 <Link href="/#leaderboard" onClick={() => setIsOpen(false)} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-[#FFBF00] transition-colors">Leaderboard</Link>
                 <Link href="/#about" onClick={() => setIsOpen(false)} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-[#FFBF00] transition-colors">About Prism</Link>
                 <Link href="#" onClick={() => setIsOpen(false)} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-[#FFBF00] transition-colors">Contact</Link>
-=======
-              <div className="mt-8 flex flex-col items-center gap-6">
-                <div className="flex gap-12 flex-wrap justify-center">
-                  <Link href="/" onClick={() => setIsOpen(false)} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-[#FFBF00] transition-colors">Home</Link>
-                  <Link href="/#teams" onClick={() => setIsOpen(false)} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-[#FFBF00] transition-colors">Teams</Link>
-                  <Link href="/#scores" onClick={() => setIsOpen(false)} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-[#FFBF00] transition-colors">Live Score</Link>
-                  <Link href="/#leaderboard" onClick={() => setIsOpen(false)} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-[#FFBF00] transition-colors">Leaderboard</Link>
-                  <Link href="/#about" onClick={() => setIsOpen(false)} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-[#FFBF00] transition-colors">About Prism</Link>
-                  <Link href="#" onClick={() => setIsOpen(false)} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-[#FFBF00] transition-colors">Contact</Link>
-                </div>
->>>>>>> Stashed changes
               </div>
 
               {/* Admin link */}
