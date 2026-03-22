@@ -1,7 +1,11 @@
 export const getLeaderboardStandings = async (req: Request, res: Response) => {
   try {
+    const gender = req.query.gender ? String(req.query.gender) : undefined;
     // Only completed events
-    const events = await AthleticsEvent.find({ event_status: "completed" });
+    const events = await AthleticsEvent.find({
+      event_status: "completed",
+      ...(gender ? { gender } : {})
+    });
     // Get group info for each team from leaderboard
     const leaderboardEntries = await AthleticsLeaderboard.find();
     const deptToGroup: Record<string, string> = {};
@@ -52,6 +56,7 @@ const computeStats = async (
   const events = await AthleticsEvent.find({
     event_name,
     event_status: "completed",
+    ...(category === "boys" ? { gender: "men" } : category === "girls" ? { gender: "women" } : {}),
   });
 
   let best_performance = 0;
@@ -64,8 +69,8 @@ const computeStats = async (
     );
     if (participant) {
       participations++;
-      if (participant.best_performance > best_performance) {
-        best_performance = participant.best_performance;
+      if (participant.performance > best_performance) {
+        best_performance = participant.performance;
         rank = participant.rank ?? null;
       }
     }

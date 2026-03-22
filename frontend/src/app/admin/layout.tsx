@@ -28,6 +28,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: `${genderLabel} Volleyball`, href: "/admin/volleyball", icon: Activity },
     { name: `${genderLabel} Handball`, href: "/admin/handball", icon: Activity },
     { name: `${genderLabel} Kho-Kho`, href: "/admin/kho-kho", icon: Activity },
+    { name: `${genderLabel} Athletics`, href: "/admin/athletics", icon: Activity },
     { name: "Homepage LB", href: "/admin/leaderboard", icon: Trophy },
     { name: "Cricket LB", href: "/admin/leaderboard/cricket", icon: Database },
     { name: "Football LB", href: "/admin/leaderboard/football", icon: Database },
