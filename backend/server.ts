@@ -34,7 +34,6 @@ app.use(express.json());
 
 app.use("/api/matches", matchRoutes);
 app.use("/api/volleyball", volleyballMatchRoutes);
-app.use("/api/badminton", badmintonRoutes);
 app.use("/api/tabletennis", TTRoutes);
 app.use("/api/handball", handballRoutes);
 app.use("/api/kho-kho", khoKhoRoutes);
