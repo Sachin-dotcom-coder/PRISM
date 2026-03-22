@@ -3,7 +3,6 @@ import { ILawnTennisMatch, IGame } from '../types';
 import GameInput from './GameInput';
 import { Plus, Save, X } from 'lucide-react';
 import { createMatch, updateMatch } from '../services/lawnTennisApi';
-import { useGender } from '@/app/components/Providers';
 
 interface MatchFormProps {
   initialData?: ILawnTennisMatch | null;
@@ -17,13 +16,13 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
   const [formData, setFormData] = useState<ILawnTennisMatch>({
     match_id: `M${Date.now() % 1000000}`,
     match_type: 'singles',
-    category: '',
-    stage: '',
+    category: 'boys',
+    stage: 'league',
     dept_name1: '',
     dept_name2: '',
     games: [],
     winner_dept: '',
-    status: 'completed',
+    status: 'scheduled',
     gender: gender
   });
   
@@ -60,7 +59,7 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
       tie_id: formData.games.length + 1,
       score_dept1: 0,
       score_dept2: 0,
-      status: "scheduled",
+      status: "completed",
     };
     setFormData(prev => ({ ...prev, games: [...prev.games, newGame] }));
   };
@@ -74,7 +73,8 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
       const payload = { ...formData, gender };
       delete payload._id;
 
-      if (initialData?._id) {
+      // Update if we have initialData (editing existing match)
+      if (initialData && initialData.match_id) {
         await updateMatch(initialData.match_id, payload);
       } else {
         await createMatch(payload);
@@ -112,7 +112,29 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
 
         <div>
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Category</label>
-          <input required type="text" name="category" value={formData.category} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white" placeholder="e.g. Doubles, Open" />
+          <select required name="category" value={formData.category} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white">
+            <option value="boys">Boys</option>
+            <option value="girls">Girls</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Stage</label>
+          <select required name="stage" value={formData.stage} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white">
+            <option value="league">League</option>
+            <option value="quarter_final">Quarter Final</option>
+            <option value="semi_final">Semi Final</option>
+            <option value="final">Final</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Status</label>
+          <select required name="status" value={formData.status} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white">
+            <option value="scheduled">Scheduled</option>
+            <option value="ongoing">Ongoing</option>
+            <option value="completed">Completed</option>
+          </select>
         </div>
 
         <div>
@@ -124,9 +146,10 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Dept Name 2</label>
           <input required type="text" name="dept_name2" value={formData.dept_name2} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white" placeholder="e.g. MECH" />
         </div>
+
         <div>
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Winner Dept</label>
-          <input type="text" name="winner_dept" value={formData.winner_dept} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white" placeholder="e.g. CS" />
+          <input type="text" name="winner_dept" value={formData.winner_dept} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white" placeholder="e.g. CS (leave blank if not done)" />
         </div>
       </div>
 
