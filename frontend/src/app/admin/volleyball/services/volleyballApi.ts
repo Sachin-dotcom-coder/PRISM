@@ -48,3 +48,27 @@ export const deleteMatch = async (match_id: number): Promise<void> => {
   });
   if (!res.ok) throw new Error(`Failed to delete match ${match_id}`);
 };
+
+// Add these to volleyballApi.ts
+export const getLeaderboardEntries = async () => {
+  const res = await fetch(`${BASE_URL}/volleyball-leaderboard`);
+  return res.json();
+};
+
+export const getLeaderboardStandings = async (category: string) => {
+  const res = await fetch(`${BASE_URL}/volleyball-leaderboard/standings?category=${category}`);
+  return res.json();
+};
+
+export const createLeaderboardEntry = async (data: any) => {
+  const res = await fetch(`${BASE_URL}/volleyball-leaderboard`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return res.json();
+};
+
+export const deleteLeaderboardEntry = async (id: string) => {
+  await fetch(`${BASE_URL}/volleyball-leaderboard/${id}`, { method: "DELETE" });
+};
