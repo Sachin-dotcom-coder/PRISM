@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import useSWR from "swr";
 import { useParams } from "next/navigation";
 import { ArrowLeft, Save, Plus, Trash2, Pencil, Check, X } from "lucide-react";
@@ -193,6 +193,10 @@ export default function AdminMatchUpdater() {
   const [saveMsg, setSaveMsg] = useState("");
   const [activeTeam, setActiveTeam] = useState<0 | 1>(0);
   const [status, setStatus] = useState("UPCOMING");
+  const [winners, setWinners] = useState("");
+  const isAddingBallRef = useRef(false); // Synchronous lock to prevent double additions
+  const lastBallTimeRef = useRef(0); // Track last ball addition time
+  const [isProcessingBall, setIsProcessingBall] = useState(false); // For UI feedback only
   const [batters, setBatters] = useState<Batter[]>([]);
   const [bowlers, setBowlers] = useState<Bowler[]>([]);
   const [newBatter, setNewBatter] = useState<Batter>(emptyBatter());
@@ -234,23 +238,30 @@ export default function AdminMatchUpdater() {
   };
 
   const addBallEvent = () => {
-    if (!selectedEvent || inningsOver) return;
-    const logic = BALL_LOGIC[selectedEvent];
-    if (!logic) return;
+    // Multiple layers of protection against duplicate ball additions
+    const now = Date.now();
+    if (!selectedEvent || inningsOver || isAddingBallRef.current || (now - lastBallTimeRef.current < 500)) return;
     
-    // 1. Update Balls State
+    isAddingBallRef.current = true;
+    lastBallTimeRef.current = now;
+    
+    const logic = BALL_LOGIC[selectedEvent];
+    if (!logic) {
+      isAddingBallRef.current = false;
+      return;
+    }
+    
+    // 1. Calculate new ball
     const newBall = { event: selectedEvent, ...logic };
-    setBalls(prev => [...prev, newBall]);
+    const newBalls = [...balls, newBall];
 
     // Calculate next stats locally to avoid stale state in rotation logic
     const nextTotalLegal = totalLegal + (logic.countsAsBall ? 1 : 0);
 
-    // 2. Update Bowlers Table (Current Bowler)
-    setBowlers(prev => {
-      const bowlerIdx = prev.findIndex(b => b.isCurrentBowler);
-      if (bowlerIdx === -1) return prev;
-
-      const newBowlers = [...prev];
+    // 2. Calculate new bowlers
+    let newBowlers = [...bowlers];
+    const bowlerIdx = newBowlers.findIndex(b => b.isCurrentBowler);
+    if (bowlerIdx !== -1) {
       const b = { ...newBowlers[bowlerIdx] };
       
       if (logic.countsAsBall) {
@@ -261,15 +272,12 @@ export default function AdminMatchUpdater() {
       if (logic.isWicket) b.wickets += 1;
       b.economyRates = calcEco(b.runs, b.overs);
       newBowlers[bowlerIdx] = b;
-      return newBowlers;
-    });
+    }
 
-    // 3. Update Batters & Strike Rotation (Runs + Over Complete)
-    setBatters(prev => {
-      const strikerIdx = prev.findIndex(b => b.isOnStrike);
-      if (strikerIdx === -1) return prev;
-      
-      let newBatters = [...prev];
+    // 3. Calculate new batters
+    let newBatters = [...batters];
+    const strikerIdx = newBatters.findIndex(b => b.isOnStrike);
+    if (strikerIdx !== -1) {
       const s = { ...newBatters[strikerIdx] };
       
       if (logic.countsAsBall) s.balls += 1;
@@ -298,20 +306,26 @@ export default function AdminMatchUpdater() {
 
       if (shouldRotate) {
         const currentStrikerIdx = newBatters.findIndex(b => b.isOnStrike); 
-        const nonStrikerIdx = newBatters.findIndex((b, idx) => b.status === "not out" && idx !== currentStrikerIdx && !b.isOnStrike);
-        
-        if (currentStrikerIdx !== -1 && nonStrikerIdx !== -1) {
-          const finalBatters = [...newBatters];
-          finalBatters[currentStrikerIdx] = { ...finalBatters[currentStrikerIdx], isOnStrike: false };
-          finalBatters[nonStrikerIdx] = { ...finalBatters[nonStrikerIdx], isOnStrike: true };
-          return finalBatters;
+        const nextBatterIdx = newBatters.findIndex((b, idx) => idx !== currentStrikerIdx && b.status === "not out");
+        if (nextBatterIdx !== -1) {
+          newBatters[currentStrikerIdx] = { ...newBatters[currentStrikerIdx], isOnStrike: false };
+          newBatters[nextBatterIdx] = { ...newBatters[nextBatterIdx], isOnStrike: true };
         }
       }
-      
-      return newBatters;
-    });
+    }
 
+    // Update local state
+    setBalls(newBalls);
+    setBowlers(newBowlers);
+    setBatters(newBatters);
     setSelectedEvent("");
+    setIsProcessingBall(true);
+
+    // Auto-save to database
+    performAutoSave(newBalls, newBatters, newBowlers, newBalls.length).finally(() => {
+      isAddingBallRef.current = false; // Unlock after save completes
+      setIsProcessingBall(false);
+    });
   };
 
   const undoLastBall = () => setBalls(prev => prev.slice(0, -1));
@@ -320,59 +334,39 @@ export default function AdminMatchUpdater() {
   const loadInnings = useCallback((matchData: any, teamIdx: number) => {
     if (!matchData) return;
     setStatus(matchData.status || "UPCOMING");
+    setWinners(matchData.winners || "");
+
     const inn = matchData.innings?.[teamIdx];
     if (inn) {
-      const dbRuns     = inn.runs     || 0;
-      const dbWickets  = inn.wickets  || 0;
-      const dbOvers    = inn.overs    || 0;
-      const intOvers   = Math.floor(dbOvers);
+      const dbRuns = inn.runs || 0;
+      const dbWickets = inn.wickets || 0;
+      const dbOvers = inn.overs || 0;
+      const intOvers = Math.floor(dbOvers);
       const ballsInOver = Math.round((dbOvers - intOvers) * 10);
-      const dbLegal    = intOvers * 6 + ballsInOver;
+      const dbLegal = intOvers * 6 + ballsInOver;
 
-      setBaseRuns(dbRuns);
-      setBaseWickets(dbWickets);
-      setBaseLegalBalls(dbLegal);
-      
-      // Mark current bowler from match-level data
-      const dbBowlers = (inn.bowlers || []).map((b: any) => ({
-          ...b,
-          isCurrentBowler: b.bowler === matchData.currentBowler
-      }));
-      
-      setBatters(inn.batters || []);
-      setBowlers(dbBowlers);
+      // Map strings back to ball objects using BALL_LOGIC and calculate their contribution
+      let loadedRuns = 0;
+      let loadedWickets = 0;
+      let loadedLegal = 0;
+
+      const loadedBalls = (matchData.recent_balls || []).map((ev: string) => {
+        const logic = BALL_LOGIC[ev] || { runs: 0, isWicket: false, countsAsBall: true };
+        loadedRuns += logic.runs;
+        if (logic.isWicket) loadedWickets += 1;
+        if (logic.countsAsBall) loadedLegal += 1;
+        return { event: ev, ...logic };
+      });
+
+      // Synchronize state
+      setBaseRuns(dbRuns - loadedRuns);
+      setBaseWickets(dbWickets - loadedWickets);
+      setBaseLegalBalls(dbLegal - loadedLegal);
+      setBalls(loadedBalls);
     } else {
       setBaseRuns(0); setBaseWickets(0); setBaseLegalBalls(0);
       setBatters([]); setBowlers([]);
-    }
-    
-    // Load recent balls from DB into the buffer if they exist
-    // If totalLegal % 6 === 0, it means the over is done, 
-    // but the user wants it to only be written over if the over is done.
-    // For now, let's load them and allow the user to see them.
-    if (matchData.recent_balls && matchData.recent_balls.length > 0) {
-        // Map strings back to ball objects using BALL_LOGIC
-        const loadedBalls = matchData.recent_balls.map((ev: string) => ({
-            event: ev,
-            ...(BALL_LOGIC[ev] || { runs: 0, isWicket: false, countsAsBall: true })
-        }));
-        setBalls(loadedBalls);
-        // Base values already include these runs/wickets if they were saved in innings
-        // So we need to subtract them from base to avoid double counting if we are using session buffer
-        // Actually, the current logic adds balls ON TOP of base.
-        // If we want balls to be persistent 'This Over', we should either:
-        // A) baseValues = match stats MINUS current over balls
-        // B) totalValues = baseValues (which is match stats)
-        // Let's go with B and only use 'balls' for visual display of the current over.
-        // But addBallEvent updates batters/bowlers which then get saved.
-        // So 'balls' should only be the ones NOT YET saved? 
-        // No, the user wants 'This Over' section to stay.
-        
-        // Let's refine: balls = latest balls from recent_balls in DB.
-        // When handleSave is called, we save latest batters/bowlers.
-        // 'base' values in this component are a bit redundant if we update batters/bowlers directly.
-    } else {
-        setBalls([]);
+      setBalls([]);
     }
     setSelectedEvent("");
   }, []);
@@ -413,7 +407,7 @@ export default function AdminMatchUpdater() {
       const res = await fetch(`/api/matches?gender=${gender}`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          match_id: match.match_id, status,
+          match_id: match.match_id, status, winners,
           innings: updatedInnings,
           recent_balls: isOverComplete ? [] : balls.map(b => b.event),
           striker: currentStriker,
@@ -433,9 +427,58 @@ export default function AdminMatchUpdater() {
     finally { setIsSaving(false); }
   };
 
+  // Auto-save function for ball events (called immediately after ball is added)
+  const performAutoSave =async (ballsData: typeof balls, battersData: typeof batters, bowlersData: typeof bowlers, ballsCount: number) => {
+    const recentEvents = ballsData.slice(-6).map(b => b.event);
+
+    const updatedInnings = [...(match.innings || [])];
+    while (updatedInnings.length <= activeTeam) {
+      updatedInnings.push({ team: teamNames[updatedInnings.length], runs: 0, wickets: 0, overs: 0, batters: [], bowlers: [], fow: [] });
+    }
+    
+    const newTotalRunsForSave = baseRuns + ballsData.reduce((s, b) => s + b.runs, 0);
+    const newTotalWicketsForSave = baseWickets + ballsData.filter(b => b.isWicket).length;
+    const newTotalLegalForSave = baseLegalBalls + ballsData.filter(b => b.countsAsBall).length;
+    const newTotalOversForSave = parseFloat(`${Math.floor(newTotalLegalForSave / 6)}.${newTotalLegalForSave % 6}`);
+    const isOverCompleteForSave = newTotalLegalForSave > 0 && newTotalLegalForSave % 6 === 0;
+
+    updatedInnings[activeTeam] = {
+      ...updatedInnings[activeTeam],
+      team: teamNames[activeTeam],
+      runs: newTotalRunsForSave,
+      wickets: newTotalWicketsForSave,
+      overs: newTotalOversForSave,
+      batters: battersData,
+      bowlers: bowlersData,
+    };
+
+    const currentStriker = battersData.find(b => b.isOnStrike)?.batter || "";
+    const currentNonStriker = battersData.find(b => b.status === "not out" && !b.isOnStrike)?.batter || "";
+    const activeBowler = bowlersData.find(b => b.isCurrentBowler)?.bowler || "";
+
+    try {
+      await fetch(`/api/matches?gender=${gender}`, {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          match_id: match.match_id, status, winners,
+          innings: updatedInnings,
+          recent_balls: isOverCompleteForSave ? [] : ballsData.map(b => b.event),
+          striker: currentStriker,
+          nonStriker: currentNonStriker,
+          currentBowler: activeBowler,
+        }),
+      });
+      mutate();
+    } catch (e: any) { 
+      console.error("Auto-save error:", e.message);
+    }
+  };
+
   const addBatter = () => {
     if (!newBatter.batter.trim()) return;
-    setBatters(p => [...p, { ...newBatter, strikeRate: parseFloat(calcSR(newBatter.runs, newBatter.balls)) }]);
+    // Auto-strike first batter (opener)
+    const isFirstBatter = batters.length === 0;
+    setBatters(p => [...p, { ...newBatter, strikeRate: parseFloat(calcSR(newBatter.runs, newBatter.balls)), isOnStrike: isFirstBatter }]);
     setNewBatter(emptyBatter());
   };
   const addBowler = () => {
@@ -466,6 +509,43 @@ export default function AdminMatchUpdater() {
             </select>
           </div>
         </div>
+
+        {/* Winner selection - shown when match is completed */}
+        {status === "COMPLETED" && (
+          <div className="mb-4 p-4 bg-zinc-900/50 rounded-lg border border-zinc-700/50">
+            <label className="block text-xs font-semibold text-zinc-400 uppercase mb-2">Match Winner</label>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => setWinners(team1Short)}
+                className={`py-2 px-3 rounded-lg font-bold transition-all text-sm ${
+                  winners === team1Short
+                    ? "bg-accent text-white shadow-neon"
+                    : "bg-zinc-800 text-zinc-300 hover:border-zinc-600 border border-zinc-700"
+                }`}>
+                {team1Short} Wins
+              </button>
+              <button
+                onClick={() => setWinners("")}
+                className={`py-2 px-3 rounded-lg font-bold transition-all text-sm ${
+                  winners === ""
+                    ? "bg-yellow-600 text-white"
+                    : "bg-zinc-800 text-zinc-300 hover:border-zinc-600 border border-zinc-700"
+                }`}>
+                Draw / No Result
+              </button>
+              <button
+                onClick={() => setWinners(team2Short)}
+                className={`py-2 px-3 rounded-lg font-bold transition-all text-sm ${
+                  winners === team2Short
+                    ? "bg-accent text-white shadow-neon"
+                    : "bg-zinc-800 text-zinc-300 hover:border-zinc-600 border border-zinc-700"
+                }`}>
+                {team2Short} Wins
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="flex gap-2">
           {[0, 1].map(i => (
             <button key={i} onClick={() => setActiveTeam(i as 0 | 1)}
@@ -544,13 +624,13 @@ export default function AdminMatchUpdater() {
         <div className="flex gap-3">
           <button
             onClick={addBallEvent}
-            disabled={!selectedEvent || inningsOver}
+            disabled={!selectedEvent || inningsOver || isProcessingBall}
             className="flex-1 py-3 bg-accent hover:bg-accent/80 text-white font-bold uppercase tracking-wider rounded-xl disabled:opacity-40 transition-all">
-            ✚ Add Ball
+            {isProcessingBall ? "⏳ Adding..." : "✚ Add Ball (Auto-saves)"}
           </button>
           <button
             onClick={undoLastBall}
-            disabled={balls.length === 0}
+            disabled={balls.length === 0 || isProcessingBall}
             className="px-5 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold rounded-xl disabled:opacity-40 transition-all text-sm">
             ↩ Undo
           </button>
@@ -568,6 +648,32 @@ export default function AdminMatchUpdater() {
           Batting Scorecard — {teamNames[activeTeam]}
           <span className="ml-2 text-zinc-600 font-normal normal-case">({batters.length} batters)</span>
         </h3>
+
+        {/* Strike Selector (if batters exist) */}
+        {batters.length > 0 && (
+          <div className="p-3 bg-zinc-900/50 rounded-lg border border-zinc-700/50">
+            <div className="text-xs text-zinc-400 font-semibold uppercase mb-2">Striker (Click to Change)</div>
+            <div className="flex flex-wrap gap-2">
+              {batters.filter(b => b.status === "not out").map((batter, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setBatters(b => b.map(bat => ({
+                      ...bat,
+                      isOnStrike: bat.batter === batter.batter
+                    })));
+                  }}
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                    batter.isOnStrike
+                      ? "bg-accent text-white shadow-neon"
+                      : "bg-zinc-800 text-zinc-300 hover:border-zinc-600 border border-zinc-700"
+                  }`}>
+                  {batter.batter} {batter.isOnStrike && "⭐"}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="overflow-x-auto rounded-xl border border-zinc-800">
           <table className="w-full text-sm">
@@ -633,6 +739,32 @@ export default function AdminMatchUpdater() {
           <span className="ml-2 text-zinc-600 font-normal normal-case">({bowlers.length} bowlers)</span>
         </h3>
 
+        {/* Current Bowler Selector */}
+        {bowlers.length > 0 && (
+          <div className="p-3 bg-zinc-900/50 rounded-lg border border-zinc-700/50">
+            <div className="text-xs text-zinc-400 font-semibold uppercase mb-2">Current Bowler (Click to Change)</div>
+            <div className="flex flex-wrap gap-2">
+              {bowlers.map((bowler, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setBowlers(b => b.map(bowl => ({
+                      ...bowl,
+                      isCurrentBowler: bowl.bowler === bowler.bowler
+                    })));
+                  }}
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                    bowler.isCurrentBowler
+                      ? "bg-accent text-white shadow-neon"
+                      : "bg-zinc-800 text-zinc-300 hover:border-zinc-600 border border-zinc-700"
+                  }`}>
+                  {bowler.bowler} {bowler.isCurrentBowler && "🎯"}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="overflow-x-auto rounded-xl border border-zinc-800">
           <table className="w-full text-sm">
             <thead>
@@ -697,8 +829,11 @@ export default function AdminMatchUpdater() {
       )}
       <button onClick={handleSave} disabled={isSaving}
         className="w-full py-4 bg-accent hover:bg-accent/80 text-white font-bold tracking-widest uppercase rounded-xl flex justify-center items-center gap-2 transition-all hover:shadow-neon disabled:opacity-50">
-        {isSaving ? "Saving..." : <><Save className="w-5 h-5" /> Save Scorecard to Database</>}
+        {isSaving ? "Saving..." : <><Save className="w-5 h-5" /> Save Final Match Data to Database</>}
       </button>
+      <div className="text-xs text-zinc-600 text-center italic">
+        💡 Balls are auto-saved to database immediately. Use this button to save final match status and winners.
+      </div>
     </div>
   );
 }
