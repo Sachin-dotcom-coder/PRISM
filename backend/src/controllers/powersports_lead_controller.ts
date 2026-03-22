@@ -4,8 +4,12 @@ import { Request, Response } from "express";
 
 export const getLeaderboardStandings = async (req: Request, res: Response) => {
   try {
+    const gender = req.query.gender ? String(req.query.gender) : undefined;
     // Only completed events
-    const events = await PowersportsEvent.find({ event_status: "completed" });
+    const events = await PowersportsEvent.find({
+      event_status: "completed",
+      ...(gender ? { gender } : {})
+    });
     const leaderboardEntries = await PowersportsLeaderboard.find();
     const deptToGroup: Record<string, string> = {};
     leaderboardEntries.forEach(entry => {
@@ -15,15 +19,19 @@ export const getLeaderboardStandings = async (req: Request, res: Response) => {
     const standings: Record<string, { dept_name: string; group: string; points: number; participations: number }> = {};
 
     for (const event of events) {
-      for (const participant of event.participants || []) {
-        const dept = participant.department;
+      const departments = [event.department_1, event.department_2].filter(Boolean);
+      for (const dept of departments) {
         const group = deptToGroup[dept] || "Unknown";
         if (!standings[dept]) standings[dept] = { dept_name: dept, group, points: 0, participations: 0 };
         standings[dept].participations++;
-        // Award points for rank (e.g., 1st=5, 2nd=3, 3rd=1)
-        if (participant.rank === 1) standings[dept].points += 5;
-        else if (participant.rank === 2) standings[dept].points += 3;
-        else if (participant.rank === 3) standings[dept].points += 1;
+      }
+
+      if (event.winner) {
+        const group = deptToGroup[event.winner] || "Unknown";
+        if (!standings[event.winner]) {
+          standings[event.winner] = { dept_name: event.winner, group, points: 0, participations: 0 };
+        }
+        standings[event.winner].points += 5;
       }
     }
 

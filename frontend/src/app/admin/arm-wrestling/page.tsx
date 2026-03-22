@@ -1,128 +1,54 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  Medal,
-  Pencil,
-  Plus,
-  RefreshCw,
-  Save,
-  Timer,
-  Trash2
-} from "lucide-react";
-import CategorySelector from "./components/CategorySelector";
-import EventSelector from "./components/EventSelector";
-import ParticipantForm from "./components/ParticipantForm";
-import { createEvent, deleteEvent, getEvent, getEvents, updateEvent } from "./services/athleticsApi";
+import { ArrowLeft, Medal, Pencil, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
 import { useGender } from "@/app/components/Providers";
+import { createEvent, deleteEvent, getEvent, getEvents, updateEvent } from "./services/armWrestlingApi";
 import {
-  AthleticsCategory,
-  AthleticsEventType,
-  AthleticsGender,
-  AthleticsEventName,
-  IAthleticsEvent,
-  IParticipant,
-  getEventMeta,
-  getEventOptions
+  ARM_WRESTLING_CATEGORY_OPTIONS,
+  ArmWrestlingGender,
+  IArmWrestlingEvent
 } from "./types";
 
-const emptyParticipant = (): IParticipant => ({
-  participant_name: "",
-  department: "",
-  performance: "",
-  rank: null
+const buildInitialForm = (gender: ArmWrestlingGender): IArmWrestlingEvent => ({
+  event_id: Math.floor(Date.now() % 1000000),
+  event_name: "right_hand",
+  category: "below_63",
+  event_date: new Date().toISOString().slice(0, 10),
+  venue: "",
+  department_1: "",
+  department_2: "",
+  winner: null,
+  event_status: "scheduled",
+  gender
 });
 
-const ensureParticipantSlots = (participants: IParticipant[], count: number) => {
-  const next = [...participants];
-  while (next.length < count) {
-    next.push(emptyParticipant());
-  }
-  return next;
-};
-
-const initialEventNameFor = (category: AthleticsCategory, gender: AthleticsGender): AthleticsEventName =>
-  getEventOptions(category, gender)[0].value;
-
-const buildInitialForm = (
-  category: AthleticsCategory,
-  gender: AthleticsGender
-): IAthleticsEvent => {
-  const eventName = initialEventNameFor(category, gender);
-  const meta = getEventMeta(eventName)!;
-
-  return {
-    event_id: Math.floor(Date.now() % 1000000),
-    event_name: eventName,
-    event_type: meta.eventType,
-    event_date: new Date().toISOString().slice(0, 10),
-    venue: "",
-    participants: [emptyParticipant()],
-    winner: null,
-    event_status: "scheduled",
-    gender
-  };
-};
-
-const rankParticipants = (
-  participants: IParticipant[],
-  eventType: AthleticsEventType
-) => {
-  const sorted = [...participants].sort((a, b) => {
-    if (a.performance === b.performance) {
-      return a.participant_name.localeCompare(b.participant_name);
-    }
-
-    return eventType === "run"
-      ? a.performance - b.performance
-      : b.performance - a.performance;
-  });
-
-  return sorted.map((participant, index, arr) => {
-    let rank = index + 1;
-
-    if (index > 0 && participant.performance === arr[index - 1].performance) {
-      rank = arr[index - 1].rank ?? rank;
-    }
-
-    return { ...participant, rank };
-  });
-};
-
-export default function AthleticsAdminPage() {
+export default function ArmWrestlingAdminPage() {
   const { gender: globalGender } = useGender();
-  const gender: AthleticsGender = globalGender === "f" ? "women" : "men";
-  const [category, setCategory] = useState<AthleticsCategory>("throw");
-  const [events, setEvents] = useState<IAthleticsEvent[]>([]);
+  const gender: ArmWrestlingGender = globalGender === "f" ? "women" : "men";
+
+  const [events, setEvents] = useState<IArmWrestlingEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingEventId, setEditingEventId] = useState<number | null>(null);
-  const [formData, setFormData] = useState<IAthleticsEvent>(() => buildInitialForm("throw", gender));
+  const [formData, setFormData] = useState<IArmWrestlingEvent>(() => buildInitialForm(gender));
 
-  const eventOptions = useMemo(() => getEventOptions(category, gender), [category, gender]);
-  const filteredEvents = useMemo(
-    () => events.filter((event) => eventOptions.some((option) => option.value === event.event_name)),
-    [events, eventOptions]
-  );
-
-  const resetForm = (nextCategory = category, nextGender = gender) => {
-    setFormData(buildInitialForm(nextCategory, nextGender));
+  const resetForm = (nextGender = gender) => {
+    setFormData(buildInitialForm(nextGender));
     setEditingEventId(null);
   };
 
   const fetchEvents = async (activeGender = gender) => {
     setLoading(true);
     setError("");
-
     try {
       const data = await getEvents(activeGender);
       setEvents(data);
     } catch (err: any) {
-      setError(err.message || "Failed to load athletics events");
+      setError(err.message || "Failed to load arm wrestling events");
     } finally {
       setLoading(false);
     }
@@ -130,48 +56,11 @@ export default function AthleticsAdminPage() {
 
   useEffect(() => {
     fetchEvents(gender);
+    setFormData((prev) => ({ ...prev, gender }));
   }, [gender]);
 
-  useEffect(() => {
-    const nextOptions = getEventOptions(category, gender);
-    if (!nextOptions.some((option) => option.value === formData.event_name)) {
-      const fallback = nextOptions[0];
-      setFormData((prev) => ({
-        ...prev,
-        event_name: fallback.value,
-        event_type: fallback.eventType,
-        gender
-      }));
-      return;
-    }
-
-    setFormData((prev) => ({ ...prev, gender }));
-  }, [category, gender, formData.event_name]);
-
-  const handleCategoryChange = (value: AthleticsCategory) => {
-    setCategory(value);
-    if (!showForm) {
-      return;
-    }
-    resetForm(value, gender);
-  };
-
-  const handleEventNameChange = (eventName: AthleticsEventName) => {
-    const meta = getEventMeta(eventName);
-    if (!meta) return;
-
-    setFormData((prev) => ({
-      ...prev,
-      event_name: eventName,
-      event_type: meta.eventType,
-      winner: prev.participants.some((participant) => participant.participant_name === prev.winner)
-        ? prev.winner
-        : null
-    }));
-  };
-
   const handleAddNew = () => {
-    resetForm(category, gender);
+    resetForm(gender);
     setShowForm(true);
   };
 
@@ -179,14 +68,11 @@ export default function AthleticsAdminPage() {
     try {
       setError("");
       const data = await getEvent(eventId, gender);
-      const nextCategory = data.event_type === "throw" ? "throw" : "run_jump";
-
-      setCategory(nextCategory);
       setEditingEventId(eventId);
       setFormData({
         ...data,
-        event_date: data.event_date ? new Date(data.event_date).toISOString().slice(0, 10) : "",
-        participants: data.participants.length > 0 ? data.participants : [emptyParticipant()]
+        category: data.category || "below_63",
+        event_date: data.event_date ? new Date(data.event_date).toISOString().slice(0, 10) : ""
       });
       setShowForm(true);
     } catch (err: any) {
@@ -195,13 +81,12 @@ export default function AthleticsAdminPage() {
   };
 
   const handleDelete = async (eventId: number) => {
-    if (!confirm("Delete this athletics event from MongoDB?")) return;
-
+    if (!confirm("Delete this arm wrestling event from MongoDB?")) return;
     try {
       await deleteEvent(eventId, gender);
       await fetchEvents(gender);
     } catch (err: any) {
-      setError(err.message || "Failed to delete athletics event");
+      setError(err.message || "Failed to delete arm wrestling event");
     }
   };
 
@@ -209,44 +94,25 @@ export default function AthleticsAdminPage() {
     if (!Number.isFinite(formData.event_id)) {
       return "Event ID must be numeric.";
     }
-
-    if (formData.participants.length === 0) {
-      return "At least one participant is required.";
+    if (!formData.department_1.trim() || !formData.department_2.trim()) {
+      return "Department 1 and Department 2 are required.";
     }
-
-    for (const participant of formData.participants) {
-      if (!participant.participant_name.trim() || !participant.department.trim()) {
-        return "Participant name and department are required.";
-      }
-
-      if (
-        String(participant.performance).trim() === "" ||
-        !Number.isFinite(Number(participant.performance))
-      ) {
-        return "Performance must be numeric.";
-      }
+    if (formData.department_1.trim() === formData.department_2.trim()) {
+      return "Department 1 and Department 2 must be different.";
     }
-
     if (
       formData.winner &&
-      !formData.participants.some(
-        (participant) => participant.participant_name.trim() === formData.winner
-      )
+      formData.winner.trim() !== formData.department_1.trim() &&
+      formData.winner.trim() !== formData.department_2.trim()
     ) {
-      return "Winner must match one of the participant names.";
+      return "Winner must match Department 1 or Department 2.";
     }
-
-    if (!formData.gender) {
-      return "Gender is required.";
-    }
-
     return "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const validationError = validateForm();
-
     if (validationError) {
       setError(validationError);
       return;
@@ -256,19 +122,11 @@ export default function AthleticsAdminPage() {
     setError("");
 
     try {
-      const rankedParticipants = rankParticipants(
-        formData.participants.map((participant) => ({
-          ...participant,
-          participant_name: participant.participant_name.trim(),
-          department: participant.department.trim(),
-          performance: Number(participant.performance)
-        })),
-        formData.event_type
-      );
-
-      const payload: IAthleticsEvent = {
+      const payload: IArmWrestlingEvent = {
         ...formData,
-        participants: rankedParticipants,
+        department_1: formData.department_1.trim(),
+        department_2: formData.department_2.trim(),
+        winner: formData.winner?.trim() ? formData.winner.trim() : null,
         gender,
         event_date: formData.event_date ? new Date(formData.event_date).toISOString() : undefined
       };
@@ -280,10 +138,10 @@ export default function AthleticsAdminPage() {
       }
 
       setShowForm(false);
-      resetForm(category, gender);
+      resetForm(gender);
       await fetchEvents(gender);
     } catch (err: any) {
-      setError(err.message || "Failed to save athletics event");
+      setError(err.message || "Failed to save arm wrestling event");
     } finally {
       setSaving(false);
     }
@@ -304,10 +162,10 @@ export default function AthleticsAdminPage() {
               Admin Module
             </div>
             <h1 className="mt-2 text-3xl font-black uppercase tracking-[0.18em] text-white">
-              {gender === "men" ? "Men's Athletics" : "Women's Athletics"}
+              {gender === "men" ? "Men's Arm Wrestling" : "Women's Arm Wrestling"}
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-zinc-400">
-              Final-result entry for throw, jump, and running events stored in MongoDB.
+              Manual department-vs-department arm wrestling event entry stored in MongoDB.
             </p>
           </div>
         </div>
@@ -332,8 +190,6 @@ export default function AthleticsAdminPage() {
         </div>
       </div>
 
-      <CategorySelector category={category} setCategory={handleCategoryChange} />
-
       {showForm && (
         <form
           onSubmit={handleSubmit}
@@ -345,14 +201,14 @@ export default function AthleticsAdminPage() {
                 Event Form
               </div>
               <h2 className="mt-2 text-2xl font-black uppercase tracking-wider text-white">
-                {editingEventId !== null ? "Edit Athletics Event" : "Create Athletics Event"}
+                {editingEventId !== null ? "Edit Arm Wrestling Event" : "Create Arm Wrestling Event"}
               </h2>
             </div>
             <button
               type="button"
               onClick={() => {
                 setShowForm(false);
-                resetForm(category, gender);
+                resetForm(gender);
                 setError("");
               }}
               className="rounded-xl border border-zinc-800 px-4 py-3 text-sm font-black uppercase tracking-wider text-zinc-400 transition-all hover:text-white"
@@ -383,19 +239,12 @@ export default function AthleticsAdminPage() {
               />
             </div>
 
-            <EventSelector
-              category={category}
-              gender={gender}
-              eventName={formData.event_name}
-              setEventName={handleEventNameChange}
-            />
-
             <div>
               <label className="mb-1 block text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
-                Event Type
+                Event Name
               </label>
               <input
-                value={formData.event_type}
+                value={formData.event_name}
                 readOnly
                 className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm font-semibold uppercase text-zinc-400 outline-none"
               />
@@ -410,6 +259,45 @@ export default function AthleticsAdminPage() {
                 readOnly
                 className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm font-semibold uppercase text-zinc-400 outline-none"
               />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
+                Categories
+              </label>
+              <select
+                value={formData.category}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, category: e.target.value as IArmWrestlingEvent["category"] }))
+                }
+                className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 text-sm text-white outline-none transition-all focus:border-[#FFBF00]"
+              >
+                {ARM_WRESTLING_CATEGORY_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
+                Event Status
+              </label>
+              <select
+                value={formData.event_status}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    event_status: e.target.value as IArmWrestlingEvent["event_status"]
+                  }))
+                }
+                className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 text-sm text-white outline-none transition-all focus:border-[#FFBF00]"
+              >
+                <option value="scheduled">Scheduled</option>
+                <option value="ongoing">Ongoing</option>
+                <option value="completed">Completed</option>
+              </select>
             </div>
 
             <div>
@@ -437,22 +325,26 @@ export default function AthleticsAdminPage() {
 
             <div>
               <label className="mb-1 block text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
-                Event Status
+                Dept Name 1
               </label>
-              <select
-                value={formData.event_status}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    event_status: e.target.value as IAthleticsEvent["event_status"]
-                  }))
-                }
+              <input
+                value={formData.department_1}
+                onChange={(e) => setFormData((prev) => ({ ...prev, department_1: e.target.value }))}
+                placeholder="e.g. CS"
                 className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 text-sm text-white outline-none transition-all focus:border-[#FFBF00]"
-              >
-                <option value="scheduled">Scheduled</option>
-                <option value="ongoing">Ongoing</option>
-                <option value="completed">Completed</option>
-              </select>
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
+                Dept Name 2
+              </label>
+              <input
+                value={formData.department_2}
+                onChange={(e) => setFormData((prev) => ({ ...prev, department_2: e.target.value }))}
+                placeholder="e.g. MECH"
+                className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 text-sm text-white outline-none transition-all focus:border-[#FFBF00]"
+              />
             </div>
 
             <div className="xl:col-span-2">
@@ -468,89 +360,15 @@ export default function AthleticsAdminPage() {
                     winner: e.target.value.trim() ? e.target.value : null
                   }))
                 }
-                placeholder="Type winner name manually"
+                placeholder="Type winner department manually"
                 className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 text-sm text-white outline-none transition-all focus:border-[#FFBF00]"
               />
             </div>
           </div>
-
-          <div className="grid gap-4 border-t border-zinc-800 pt-6 md:grid-cols-3">
-            <div>
-              <label className="mb-1 block text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
-                Dept Name 1
-              </label>
-              <input
-                type="text"
-                value={ensureParticipantSlots(formData.participants, 2)[0].department}
-                onChange={(e) =>
-                  setFormData((prev) => {
-                    const participants = ensureParticipantSlots(prev.participants, 2);
-                    participants[0] = { ...participants[0], department: e.target.value };
-                    return { ...prev, participants };
-                  })
-                }
-                placeholder="e.g. CS"
-                className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 text-sm text-white outline-none transition-all focus:border-[#FFBF00]"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
-                Dept Name 2
-              </label>
-              <input
-                type="text"
-                value={ensureParticipantSlots(formData.participants, 2)[1].department}
-                onChange={(e) =>
-                  setFormData((prev) => {
-                    const participants = ensureParticipantSlots(prev.participants, 2);
-                    participants[1] = { ...participants[1], department: e.target.value };
-                    return { ...prev, participants };
-                  })
-                }
-                placeholder="e.g. MECH"
-                className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 text-sm text-white outline-none transition-all focus:border-[#FFBF00]"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
-                Departments
-              </label>
-              <input
-                type="text"
-                readOnly
-                value={`${ensureParticipantSlots(formData.participants, 2)[0].department || "Team 1"} vs ${ensureParticipantSlots(formData.participants, 2)[1].department || "Team 2"}`}
-                className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm font-semibold text-zinc-400 outline-none"
-              />
-            </div>
-          </div>
-
-          <ParticipantForm
-            participants={formData.participants}
-            eventType={formData.event_type}
-            onChange={(participants) =>
-              setFormData((prev) => {
-                const nextWinner =
-                  prev.winner &&
-                  participants.some(
-                    (participant) => participant.participant_name.trim() === prev.winner
-                  )
-                    ? prev.winner
-                    : null;
-
-                return {
-                  ...prev,
-                  participants,
-                  winner: nextWinner
-                };
-              })
-            }
-          />
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800 pt-5">
             <div className="text-sm text-zinc-500">
-              Data flow: UI to API to backend to MongoDB to response to UI refresh.
+              Only departments, category, and winner are stored. No score fields.
             </div>
             <button
               type="submit"
@@ -571,11 +389,11 @@ export default function AthleticsAdminPage() {
               Event Results
             </div>
             <h2 className="mt-2 text-2xl font-black uppercase tracking-wider text-white">
-              {category === "throw" ? "Throw Events" : "Run & Jump Events"}
+              Arm Wrestling Events
             </h2>
           </div>
           <div className="text-sm text-zinc-400">
-            Filtering MongoDB athletics events by <span className="font-black uppercase text-white">{gender}</span>
+            Filtering MongoDB arm wrestling events by <span className="font-black uppercase text-white">{gender}</span>
           </div>
         </div>
 
@@ -590,11 +408,11 @@ export default function AthleticsAdminPage() {
             <thead>
               <tr className="bg-zinc-900 text-xs font-black uppercase tracking-[0.2em] text-zinc-500">
                 <th className="p-4 text-left">Event</th>
-                <th className="p-4 text-left">Type</th>
+                <th className="p-4 text-left">Category</th>
                 <th className="p-4 text-left">Date / Venue</th>
+                <th className="p-4 text-left">Departments</th>
                 <th className="p-4 text-left">Winner</th>
                 <th className="p-4 text-left">Status</th>
-                <th className="p-4 text-left">Participants</th>
                 <th className="p-4 text-right">Actions</th>
               </tr>
             </thead>
@@ -602,32 +420,31 @@ export default function AthleticsAdminPage() {
               {loading ? (
                 <tr>
                   <td colSpan={7} className="p-10 text-center text-[#FFBF00]">
-                    Loading athletics events...
+                    Loading arm wrestling events...
                   </td>
                 </tr>
-              ) : filteredEvents.length === 0 ? (
+              ) : events.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="p-10 text-center text-zinc-500">
-                    No athletics events found for this category and gender.
+                    No arm wrestling events found for this gender.
                   </td>
                 </tr>
               ) : (
-                filteredEvents.map((event) => (
+                events.map((event) => (
                   <tr key={`${event.event_id}-${event.gender}`} className="align-top hover:bg-zinc-900/40">
                     <td className="p-4">
-                      <div className="font-black uppercase tracking-wider text-white">
-                        {event.event_name.replaceAll("_", " ")}
-                      </div>
+                      <div className="font-black uppercase tracking-wider text-white">{event.event_name}</div>
                       <div className="mt-1 text-xs font-mono text-zinc-500">ID #{event.event_id}</div>
                     </td>
-                    <td className="p-4">
-                      <span className="rounded-full bg-zinc-900 px-3 py-1 text-xs font-black uppercase tracking-wider text-[#FFBF00]">
-                        {event.event_type}
-                      </span>
+                    <td className="p-4 text-zinc-300">
+                      {(event.category || "below_63").replace("_", " ")}
                     </td>
                     <td className="p-4 text-zinc-300">
                       <div>{event.event_date ? new Date(event.event_date).toLocaleDateString() : "-"}</div>
                       <div className="mt-1 text-xs text-zinc-500">{event.venue || "-"}</div>
+                    </td>
+                    <td className="p-4 font-semibold text-white">
+                      {event.department_1} <span className="text-zinc-500">vs</span> {event.department_2}
                     </td>
                     <td className="p-4">
                       <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-3 py-1 text-sm font-semibold text-white">
@@ -639,26 +456,6 @@ export default function AthleticsAdminPage() {
                       <span className="rounded-full border border-zinc-800 px-3 py-1 text-xs font-black uppercase tracking-wider text-zinc-300">
                         {event.event_status}
                       </span>
-                    </td>
-                    <td className="p-4">
-                      <div className="space-y-2">
-                        {event.participants.map((participant) => (
-                          <div
-                            key={`${participant.participant_name}-${participant.department}`}
-                            className="rounded-xl bg-black/50 px-3 py-2"
-                          >
-                            <div className="font-semibold text-white">
-                              {participant.participant_name} <span className="text-zinc-500">({participant.department})</span>
-                            </div>
-                            <div className="mt-1 flex items-center gap-3 text-xs text-zinc-400">
-                              <span className="inline-flex items-center gap-1">
-                                <Timer className="h-3.5 w-3.5" />
-                                {participant.performance}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
                     </td>
                     <td className="p-4">
                       <div className="flex justify-end gap-2">
