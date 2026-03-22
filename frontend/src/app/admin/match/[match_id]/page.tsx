@@ -19,11 +19,16 @@ function incrementOvers(current: number): number {
 function calcSR(runs: number, balls: number) {
   return balls === 0 ? "0.0" : ((runs / balls) * 100).toFixed(1);
 }
-function calcEco(runs: number, overs: number) {
-  const int = Math.floor(overs);
-  const balls = Math.round((overs - int) * 10);
-  const total = int * 6 + balls;
-  return total === 0 ? "0.0" : ((runs / total) * 6).toFixed(1);
+function calcEco(runs: number, overs: number, ballsOverride?: number) {
+  // ballsOverride: explicit ball count (avoids floating-point issues with overs)
+  const totalBalls = ballsOverride !== undefined && ballsOverride > 0
+    ? ballsOverride
+    : (() => {
+        const intO = Math.floor(overs);
+        const partBalls = Math.round((overs - intO) * 10);
+        return intO * 6 + partBalls;
+      })();
+  return totalBalls === 0 ? "0.0" : ((runs * 6) / totalBalls).toFixed(1);
 }
 
 /* ── Types ─────────────────────────────────────────────── */
@@ -120,7 +125,7 @@ function BowlerRow({ bowler, onUpdate, onDelete }: { bowler: Bowler; onUpdate: (
   }, [bowler, editing]);
 
   const { gender } = useGender();
-  const save = () => { onUpdate({ ...draft, economyRates: calcEco(draft.runs, draft.overs) }); setEditing(false); };
+  const save = () => { onUpdate({ ...draft, economyRates: calcEco(draft.runs, draft.overs, draft.balls) }); setEditing(false); };
   const cancel = () => { setDraft({ ...bowler }); setEditing(false); };
   const f = (field: keyof Bowler, val: string | number) => setDraft(p => ({ ...p, [field]: val }));
 
@@ -270,7 +275,7 @@ export default function AdminMatchUpdater() {
       }
       b.runs += logic.runs;
       if (logic.isWicket) b.wickets += 1;
-      b.economyRates = calcEco(b.runs, b.overs);
+      b.economyRates = calcEco(b.runs, b.overs, b.balls);
       newBowlers[bowlerIdx] = b;
     }
 

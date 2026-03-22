@@ -35,7 +35,6 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-10">
           <Link href="/" className="text-sm font-bold tracking-[0.2em] uppercase text-gray-100 hover:text-[#FFBF00] transition-colors drop-shadow-none">Home</Link>
           <Link href="/#teams" className="text-sm font-bold tracking-[0.2em] uppercase text-gray-100 hover:text-[#FFBF00] transition-colors drop-shadow-none">Teams</Link>
-          <Link href="/#scores" className="text-sm font-bold tracking-[0.2em] uppercase text-gray-100 hover:text-[#FFBF00] transition-colors drop-shadow-none">Live Score</Link>
           <Link href="/#leaderboard" className="text-sm font-bold tracking-[0.2em] uppercase text-gray-100 hover:text-[#FFBF00] transition-colors drop-shadow-none">Leaderboard</Link>
           <Link href="/#about" className="text-sm font-bold tracking-[0.2em] uppercase text-gray-100 hover:text-[#FFBF00] transition-colors drop-shadow-none">About Prism</Link>
           <Link href="/admin/leaderboard" className="text-sm font-bold tracking-[0.2em] uppercase text-gray-100 hover:text-[#FFBF00] transition-colors drop-shadow-none">Admin</Link>

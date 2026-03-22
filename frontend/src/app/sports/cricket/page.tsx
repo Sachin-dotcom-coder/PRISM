@@ -145,7 +145,7 @@ function ScorecardContent({ match, isLive = false }: { match: any, isLive?: bool
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-[#FFBF00] opacity-[0.02] blur-[100px] pointer-events-none rounded-full"></div>
 
         <div className="flex justify-between items-center mb-5 border-b border-[#1A1A1A] pb-3">
-          <div className="flex gap-4">
+          <div className="flex gap-4 items-center">
             {[1, 2].map((num) => {
               const hasInning = match.innings?.some((i: any) => i.inning_number === num) || !!match.innings?.[num - 1];
               if (!hasInning) return null;
@@ -160,6 +160,9 @@ function ScorecardContent({ match, isLive = false }: { match: any, isLive?: bool
                 </button>
               );
             })}
+            {match.stage && (
+              <span className="text-[10px] font-black bg-[#FFBF00]/10 border border-[#FFBF00]/20 text-[#FFBF00] px-2 py-0.5 rounded-full uppercase tracking-widest">{match.stage}</span>
+            )}
           </div>
           {isLive && (
             <div className="flex items-center gap-2">
@@ -294,7 +297,7 @@ function ScorecardContent({ match, isLive = false }: { match: any, isLive?: bool
                     <td className="py-4 px-3 text-right text-gray-400 font-medium">{bowler.runs || 0}</td>
                     <td className="py-4 px-3 text-right font-black text-[#FFBF00] text-xl md:text-2xl">{bowler.wickets || 0}</td>
                     <td className="py-4 px-4 text-right text-gray-500">
-                      {bowler.overs > 0 ? (bowler.runs / bowler.overs).toFixed(2) : "0.00"}
+                      {bowler.economyRates ?? (bowler.overs > 0 ? (bowler.runs / bowler.overs).toFixed(2) : "0.00")}
                     </td>
                   </tr>
                 ))}
@@ -453,9 +456,14 @@ function Fixtures({ gender }: { gender: "m" | "f" }) {
                 className="bg-[#000000] border border-[#1A1A1A] border-l-8 border-l-[#FFBF00] p-6 rounded-xl cursor-pointer transition-transform duration-300 hover:scale-[1.03] hover:shadow-[0_0_15px_rgba(255,191,0,0.1)] group"
               >
                 <div className="flex justify-between items-start mb-4">
-                  <span className="text-sm font-bold bg-[#111] text-[#FFBF00] px-3 py-1 rounded tracking-widest uppercase border border-[#333]">
-                    Group {group}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold bg-[#111] text-[#FFBF00] px-3 py-1 rounded tracking-widest uppercase border border-[#333]">
+                      {match.stage || "Group"}
+                    </span>
+                    {match.stage !== "Group" && match.stage && (
+                      <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{match.group ? `Group ${match.group}` : ""}</span>
+                    )}
+                  </div>
                   <span className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">
                     Match {match.match_id || (index + 1)}
                   </span>
@@ -524,7 +532,15 @@ function Fixtures({ gender }: { gender: "m" | "f" }) {
             </button>
             <div className="mb-8">
               <h2 className="text-[#FFBF00] font-black text-4xl uppercase tracking-tighter mb-2">Match Details</h2>
-              <p className="text-gray-500 font-bold tracking-widest uppercase text-sm">{selectedMatch.match_id} • Group {selectedMatch.group}</p>
+              <div className="flex items-center gap-3">
+                <p className="text-gray-500 font-bold tracking-widest uppercase text-sm">{selectedMatch.match_id}</p>
+                {selectedMatch.stage && (
+                  <span className="text-xs font-black bg-[#FFBF00]/10 border border-[#FFBF00]/30 text-[#FFBF00] px-3 py-1 rounded-full uppercase tracking-widest">{selectedMatch.stage}</span>
+                )}
+                {selectedMatch.group && selectedMatch.stage === "Group" && (
+                  <span className="text-xs font-black bg-zinc-900 border border-zinc-700 text-gray-400 px-3 py-1 rounded-full uppercase tracking-widest">Group {selectedMatch.group}</span>
+                )}
+              </div>
             </div>
             <ScorecardContent match={selectedMatch} isLive={selectedMatch.status === "LIVE"} />
           </div>

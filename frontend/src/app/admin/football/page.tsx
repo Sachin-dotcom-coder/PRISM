@@ -102,7 +102,8 @@ export default function FootballAdminPage() {
     team1: "", 
     team2: "",
     date: new Date().toISOString().split('T')[0],
-    startTime: "04:30 PM"
+    startTime: "04:30 PM",
+    stage: "Group"
   });
 
   const [saveMsg, setSaveMsg] = useState("");
@@ -121,7 +122,8 @@ export default function FootballAdminPage() {
       score: { team1: 0, team2: 0 }, 
       teams: { team1: newMatch.team1, team2: newMatch.team2 },
       date: newMatch.date,
-      startTime: newMatch.startTime
+      startTime: newMatch.startTime,
+      stage: newMatch.stage
     };
     try {
       const res = await fetch(MATCHES_API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -132,7 +134,8 @@ export default function FootballAdminPage() {
         team1: "", 
         team2: "",
         date: new Date().toISOString().split('T')[0],
-        startTime: "04:30 PM"
+        startTime: "04:30 PM",
+        stage: "Group"
       });
       mutateMatches();
     } catch { setCreateError("Network error."); }
@@ -198,7 +201,7 @@ export default function FootballAdminPage() {
                  {validTeams.filter(t=>t.name!==newMatch.team1).map(t=><option key={t._id} value={t.name}>{t.name}</option>)}
                </select>
              </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                <div>
                   <label className="label-sm">Match Date</label>
                   <input type="date" value={newMatch.date} onChange={e=>setNewMatch({...newMatch, date: e.target.value})} className="input-field" />
@@ -206,6 +209,14 @@ export default function FootballAdminPage() {
                <div>
                   <label className="label-sm">Start Time</label>
                   <input placeholder="e.g. 04:30 PM" value={newMatch.startTime} onChange={e=>setNewMatch({...newMatch, startTime: e.target.value})} className="input-field" />
+               </div>
+               <div>
+                  <label className="label-sm">Stage</label>
+                  <select value={newMatch.stage} onChange={e=>setNewMatch({...newMatch, stage: e.target.value})} className="input-field">
+                    <option value="Group">Group Stage</option>
+                    <option value="Semi-Final">Semi-Final</option>
+                    <option value="Final">Final</option>
+                  </select>
                </div>
              </div>
              {createError && <p className="text-red-500 text-sm">{createError}</p>}
@@ -217,9 +228,10 @@ export default function FootballAdminPage() {
               validMatches.map(m => (
                 <div key={m.match_id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-zinc-900/30 transition-all">
                   <div>
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="flex items-center gap-2 mb-2">
                       <span className="text-[10px] font-black bg-zinc-800 px-2 py-0.5 rounded text-green-500 tracking-tighter">{m.match_id}</span>
                       <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${m.status.includes('HALF') ? 'bg-green-500/10 border-green-500 text-green-500 animate-pulse' : 'bg-background border-zinc-800 text-zinc-500'}`}>{m.status.replace('_',' ')}</span>
+                      {m.stage && <span className="text-[10px] font-black px-2 py-0.5 rounded-full border bg-[#FFBF00]/10 border-[#FFBF00]/30 text-[#FFBF00]">{m.stage}</span>}
                     </div>
                     <h3 className="font-sports text-xl uppercase tracking-tighter">{m.teams.team1} <span className="text-zinc-600 font-normal lowercase italic px-1">vs</span> {m.teams.team2}</h3>
                     <p className="text-xs text-zinc-500 mt-1 font-bold">LIVE SCORE: <span className="text-zinc-300">{m.score?.team1 ?? 0} − {m.score?.team2 ?? 0}</span></p>

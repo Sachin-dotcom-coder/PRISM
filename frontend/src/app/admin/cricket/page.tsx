@@ -100,7 +100,8 @@ export default function CricketAdminPage() {
     date: new Date().toISOString().split("T")[0],
     startTime: "14:00",
     tossWinner: "",
-    tossDecision: "Bat"
+    tossDecision: "Bat",
+    stage: "Group"
   });
 
   // LB Form State
@@ -114,11 +115,21 @@ export default function CricketAdminPage() {
   const handleCreateMatch = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreateError("");
+
+    // Derive batting/bowling teams from toss
+    const tossWinner = newMatch.tossWinner || newMatch.team1;
+    const otherTeam = tossWinner === newMatch.team1 ? newMatch.team2 : newMatch.team1;
+    const battingTeam = newMatch.tossDecision === "Bat" ? tossWinner : otherTeam;
+    const bowlingTeam = battingTeam === newMatch.team1 ? newMatch.team2 : newMatch.team1;
+
     const payload = {
       match_id: newMatch.match_id,
       date: newMatch.date,
       startTime: newMatch.startTime,
+      stage: newMatch.stage,
       toss: { winner: newMatch.tossWinner, decision: newMatch.tossDecision },
+      batting_team: battingTeam,
+      bowling_team: bowlingTeam,
       teams: {
         team1: { name: newMatch.team1, shortName: newMatch.team1Short, players: [] },
         team2: { name: newMatch.team2, shortName: newMatch.team2Short, players: [] }
@@ -128,7 +139,7 @@ export default function CricketAdminPage() {
       const res = await fetch(MATCHES_API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       if (!res.ok) { const data = await res.json(); setCreateError(data.error || "Failed"); return; }
       setIsCreatingMatch(false);
-      setNewMatch({ match_id: `CRIC${Math.floor(Math.random() * 1000)}`, team1: "", team1Short: "", team2: "", team2Short: "", date: new Date().toISOString().split("T")[0], startTime: "14:00", tossWinner: "", tossDecision: "Bat" });
+      setNewMatch({ match_id: `CRIC${Math.floor(Math.random() * 1000)}`, team1: "", team1Short: "", team2: "", team2Short: "", date: new Date().toISOString().split("T")[0], startTime: "14:00", tossWinner: "", tossDecision: "Bat", stage: "Group" });
       mutateMatches();
     } catch { setCreateError("Network error."); }
   };
@@ -195,6 +206,11 @@ export default function CricketAdminPage() {
                <select value={newMatch.tossDecision} onChange={e => setNewMatch({...newMatch, tossDecision: e.target.value})} className="input-field">
                  <option value="Bat">Bat</option><option value="Bowl">Bowl</option>
                </select>
+               <select value={newMatch.stage} onChange={e => setNewMatch({...newMatch, stage: e.target.value})} className="input-field">
+                 <option value="Group">Group Stage</option>
+                 <option value="Semi-Final">Semi-Final</option>
+                 <option value="Final">Final</option>
+               </select>
                <div className="flex gap-2">
                  <select required value={newMatch.team1} onChange={e => {
                    const s = validTeams.find(t => t.name === e.target.value);
@@ -225,6 +241,7 @@ export default function CricketAdminPage() {
                   <div className="flex items-center gap-3 mb-1">
                     <span className="text-xs font-bold bg-zinc-800 px-2 py-0.5 rounded text-accent">{m.match_id}</span>
                     <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${m.status==='LIVE' ? 'bg-red-500/10 border-red-500/50 text-red-500 animate-pulse' : 'bg-zinc-900 border-zinc-800 text-zinc-500'}`}>{m.status}</span>
+                    {m.stage && <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border bg-accent/10 border-accent/30 text-accent">{m.stage}</span>}
                   </div>
                   <h3 className="font-sports text-xl tracking-wide">{m.teams.team1.shortName} <span className="text-zinc-600">vs</span> {m.teams.team2.shortName}</h3>
                   <p className="text-xs text-zinc-500 mt-1">{m.date} · {m.startTime}</p>

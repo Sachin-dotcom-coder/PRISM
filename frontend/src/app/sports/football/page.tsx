@@ -278,7 +278,9 @@ function Fixtures({ matches, error, isLoading }: { matches: any, error: any, isL
                 className={`bg-[#000000] border border-[#1A1A1A] border-l-8 border-l-[#FFBF00] p-6 rounded-r-xl transition-all duration-300 hover:shadow-[0_0_15px_rgba(255,191,0,0.1)] group ${isCompleted ? "cursor-pointer hover:scale-[1.03]" : ""}`}
               >
                 <div className="flex justify-between items-start mb-4">
-                  <span className="text-sm font-bold bg-[#111] text-[#FFBF00] px-3 py-1 rounded tracking-widest uppercase border border-[#333]">Group {group}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold bg-[#111] text-[#FFBF00] px-3 py-1 rounded tracking-widest uppercase border border-[#333]">{match.stage || "Group"}</span>
+                  </div>
                   <div className="flex items-center gap-2">
                     {isCompleted && <span className="text-[10px] text-[#FFBF00] font-bold uppercase tracking-widest opacity-60">Tap to expand</span>}
                     <span className="text-xs text-gray-500 font-bold uppercase tracking-widest">Match {match.match_id || (index+1)}</span>
@@ -342,8 +344,11 @@ function Fixtures({ matches, error, isLoading }: { matches: any, error: any, isL
               {/* Header */}
               <div className="bg-[#111] border-b border-[#1A1A1A] p-5 flex justify-between items-center">
                 <div>
-                  <span className="text-[#FFBF00] text-xs font-black uppercase tracking-widest">Full Time</span>
-                  <p className="text-xs text-gray-500 mt-0.5">{m.match_id}</p>
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-[#FFBF00] text-xs font-black uppercase tracking-widest">Full Time</span>
+                    {m.stage && <span className="text-[10px] font-black bg-[#FFBF00]/10 border border-[#FFBF00]/20 text-[#FFBF00] px-2 py-0.5 rounded-full uppercase tracking-widest">{m.stage}</span>}
+                  </div>
+                  <p className="text-xs text-gray-500">{m.match_id}</p>
                 </div>
                 <button onClick={() => setExpandedMatch(null)} className="text-gray-500 hover:text-white text-2xl font-bold leading-none">×</button>
               </div>
