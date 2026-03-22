@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from "mongoose";
 
-export interface IBadmintonLeaderboard extends Document {
+export interface IKhoKhoLeaderboard extends Document {
   leaderboard_id: number;
   dept_name: string;
   category: "boys" | "girls";
@@ -9,7 +9,7 @@ export interface IBadmintonLeaderboard extends Document {
   updatedAt: Date;
 }
 
-const BadmintonLeaderboardSchema: Schema<IBadmintonLeaderboard> = new Schema(
+const KhoKhoLeaderboardSchema: Schema<IKhoKhoLeaderboard> = new Schema(
   {
     leaderboard_id: {
       type: Number,
@@ -35,14 +35,10 @@ const BadmintonLeaderboardSchema: Schema<IBadmintonLeaderboard> = new Schema(
   }
 );
 
-// A department can only be registered once per category combination
-BadmintonLeaderboardSchema.index(
+// A department can only be registered once per category
+KhoKhoLeaderboardSchema.index(
   { dept_name: 1, category: 1 },
   { unique: true }
 );
 
-export default mongoose.models.BadmintonLeaderboard ||
-  mongoose.model<IBadmintonLeaderboard>(
-    "BadmintonLeaderboard",
-    BadmintonLeaderboardSchema
-  );
+export default mongoose.model<IKhoKhoLeaderboard>("KhoKhoLeaderboard", KhoKhoLeaderboardSchema);

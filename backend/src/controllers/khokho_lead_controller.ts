@@ -1,15 +1,18 @@
-import BadmintonMatch from "../models/badminton_model";
+import KhoKhoMatch from "../models/khokho_model";
+import KhoKhoLeaderboard from "../models/khokho_lead_model";
+import { Request, Response } from "express";
+
 export const getLeaderboardStandings = async (req: Request, res: Response) => {
   try {
     // Only completed matches
-    const matches = await BadmintonMatch.find({ match_status: "completed" });
+    const matches = await KhoKhoMatch.find({ match_status: "completed" });
     // Get group info for each team from leaderboard
-    const leaderboardEntries = await BadmintonLeaderboard.find();
+    const leaderboardEntries = await KhoKhoLeaderboard.find();
     
     // Key by category_deptName to avoid mixing boys and girls from same dept
     const deptCategoryMap: Record<string, { group: string }> = {};
     leaderboardEntries.forEach(entry => {
-      deptCategoryMap[`${entry.category}_${entry.dept_name}`] = { group: entry.group || "A" };
+      deptCategoryMap[`${entry.category}_${entry.dept_name}`] = { group: entry.group };
     });
 
     const standings: Record<string, { dept_name: string; group: string; category: string; wins: number; losses: number; matches: number }> = {};
@@ -49,106 +52,87 @@ export const getLeaderboardStandings = async (req: Request, res: Response) => {
       grouped[entry.group].push(entry);
     });
     
-    // Sort each group by wins desc, then losses asc
+    // Sort each group by wins desc, then matches desc
     Object.keys(grouped).forEach(group => {
-      grouped[group].sort((a, b) => b.wins - a.wins || Math.abs(a.losses) - Math.abs(b.losses) || b.matches - a.matches);
+      grouped[group].sort((a, b) => b.wins - a.wins || b.matches - a.matches);
     });
     res.status(200).json(grouped);
   } catch (error) {
     res.status(500).json({ message: "Failed to compute standings", error: (error as Error).message || error });
   }
 };
-import { Request, Response } from "express";
-import BadmintonLeaderboard from "../models/badminton_lead_model";
 
 export const createLeaderboardEntry = async (req: Request, res: Response) => {
   try {
-    const { leaderboard_id, dept_name, category } = req.body;
-
-    if (
-      leaderboard_id === undefined ||
-      !dept_name ||
-      !category
-    ) {
-      res.status(400).json({ message: "leaderboard_id, dept_name, and category are required." });
+    const { leaderboard_id, dept_name, category, group } = req.body;
+    if (!leaderboard_id || !dept_name || !category || !group) {
+      res.status(400).json({ message: "Missing required fields." });
       return;
     }
-
-    const entry = await BadmintonLeaderboard.create(req.body);
-    res.status(201).json(entry);
-  } catch (error) {
-    const err = error as any;
-    if (err.code === 11000) {
-      res.status(400).json({ message: "leaderboard_id must be unique, or this dept+category combination already exists." });
+    const entry = new KhoKhoLeaderboard({ leaderboard_id, dept_name, category, group });
+    await entry.save();
+    res.status(201).json({ message: "Leaderboard entry created.", data: entry });
+  } catch (error: any) {
+    if (error.code === 11000) {
+      res.status(400).json({ message: "Duplicate leaderboard_id or department/category." });
       return;
     }
-    res.status(500).json({
-      message: "Failed to create leaderboard entry",
-      error: (error as Error).message || error,
-    });
+    res.status(500).json({ message: "Failed to create entry", error: error.message });
   }
 };
 
 export const getAllLeaderboardEntries = async (req: Request, res: Response) => {
   try {
-    const entries = await BadmintonLeaderboard.find();
-    res.status(200).json(entries);
+    const entries = await KhoKhoLeaderboard.find();
+    res.status(200).json({ data: entries });
   } catch (error) {
-    res.status(500).json({
-      message: "Failed to fetch leaderboard entries",
-      error: (error as Error).message || error,
-    });
+    res.status(500).json({ message: "Failed to fetch entries", error: (error as Error).message || error });
   }
 };
 
 export const getLeaderboardEntryById = async (req: Request, res: Response) => {
   try {
-    const entry = await BadmintonLeaderboard.findOne({ leaderboard_id: Number(req.params.id) });
+    const { id } = req.params;
+    const entry = await KhoKhoLeaderboard.findOne({ leaderboard_id: Number(id) });
     if (!entry) {
-      res.status(404).json({ message: "Leaderboard entry not found" });
+      res.status(404).json({ message: "Entry not found." });
       return;
     }
-    res.status(200).json(entry);
+    res.status(200).json({ data: entry });
   } catch (error) {
-    res.status(500).json({
-      message: "Failed to fetch leaderboard entry",
-      error: (error as Error).message || error,
-    });
+    res.status(500).json({ message: "Failed to fetch entry", error: (error as Error).message || error });
   }
 };
 
 export const updateLeaderboardEntry = async (req: Request, res: Response) => {
   try {
-    const entry = await BadmintonLeaderboard.findOneAndUpdate(
-      { leaderboard_id: Number(req.params.id) },
-      req.body,
-      { new: true }
+    const { id } = req.params;
+    const updateData = req.body;
+    const updated = await KhoKhoLeaderboard.findOneAndUpdate(
+      { leaderboard_id: Number(id) },
+      updateData,
+      { new: true, runValidators: true }
     );
-    if (!entry) {
-      res.status(404).json({ message: "Leaderboard entry not found" });
+    if (!updated) {
+      res.status(404).json({ message: "Entry not found." });
       return;
     }
-    res.status(200).json(entry);
+    res.status(200).json({ message: "Entry updated.", data: updated });
   } catch (error) {
-    res.status(500).json({
-      message: "Failed to update leaderboard entry",
-      error: (error as Error).message || error,
-    });
+    res.status(500).json({ message: "Failed to update entry", error: (error as Error).message || error });
   }
 };
 
 export const deleteLeaderboardEntry = async (req: Request, res: Response) => {
   try {
-    const entry = await BadmintonLeaderboard.findOneAndDelete({ leaderboard_id: Number(req.params.id) });
-    if (!entry) {
-      res.status(404).json({ message: "Leaderboard entry not found" });
+    const { id } = req.params;
+    const deleted = await KhoKhoLeaderboard.findOneAndDelete({ leaderboard_id: Number(id) });
+    if (!deleted) {
+      res.status(404).json({ message: "Entry not found." });
       return;
     }
-    res.status(200).json({ message: "Leaderboard entry deleted" });
+    res.status(200).json({ message: "Entry deleted.", data: deleted });
   } catch (error) {
-    res.status(500).json({
-      message: "Failed to delete leaderboard entry",
-      error: (error as Error).message || error,
-    });
+    res.status(500).json({ message: "Failed to delete entry", error: (error as Error).message || error });
   }
 };

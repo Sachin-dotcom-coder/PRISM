@@ -21,7 +21,6 @@ interface IBadmintonMatch {
   _id?: string;
   match_id: number;
   match_stage: string;
-  match_type: "singles" | "doubles";
   team1_department: string;
   team2_department: string;
   match_date: string;
@@ -252,7 +251,6 @@ export default function BadmintonMatchPage() {
     try {
       const payload = {
         match_stage: form.match_stage,
-        match_type: form.match_type,
         team1_department: form.team1_department,
         team2_department: form.team2_department,
         match_date: new Date(form.match_date).toISOString(),
@@ -323,7 +321,7 @@ export default function BadmintonMatchPage() {
             {match.team2_department}
           </h1>
           <p className="text-zinc-500 text-xs mt-0.5">
-            {match.match_type} • {match.match_stage} • {match.gender}
+            {match.match_stage} • {match.gender}
           </p>
         </div>
       </div>
@@ -374,19 +372,6 @@ export default function BadmintonMatchPage() {
               <option value="group">Group</option>
               <option value="semifinal">Semifinal</option>
               <option value="final">Final</option>
-            </select>
-          </div>
-
-          {/* Match Type */}
-          <div>
-            <label className="label-sm">Type</label>
-            <select
-              value={form.match_type}
-              onChange={(e) => set("match_type", e.target.value as "singles" | "doubles")}
-              className="input-field"
-            >
-              <option value="singles">Singles</option>
-              <option value="doubles">Doubles</option>
             </select>
           </div>
 
