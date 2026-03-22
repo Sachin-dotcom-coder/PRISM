@@ -1,9 +1,8 @@
 import mongoose, { Document, Schema } from "mongoose";
 
-export interface IPowersportsEvent extends Document {
+export interface ITugOfWarEvent extends Document {
   event_id: number;
-  event_name: "squat" | "deadlift" | "benchpress";
-  category: "below_63" | "63_83" | "above_83";
+  event_name: "tug_of_war";
   event_date?: Date;
   venue?: string;
   department_1: string;
@@ -13,17 +12,13 @@ export interface IPowersportsEvent extends Document {
   gender: "men" | "women";
 }
 
-const PowersportsEventSchema = new Schema<IPowersportsEvent>(
+const TugOfWarEventSchema = new Schema<ITugOfWarEvent>(
   {
     event_id: { type: Number, required: true },
     event_name: {
       type: String,
-      enum: ["squat", "deadlift", "benchpress"],
-      required: true
-    },
-    category: {
-      type: String,
-      enum: ["below_63", "63_83", "above_83"],
+      enum: ["tug_of_war"],
+      default: "tug_of_war",
       required: true
     },
     event_date: { type: Date },
@@ -45,6 +40,6 @@ const PowersportsEventSchema = new Schema<IPowersportsEvent>(
   { timestamps: true }
 );
 
-PowersportsEventSchema.index({ event_id: 1, gender: 1 }, { unique: true });
+TugOfWarEventSchema.index({ event_id: 1, gender: 1 }, { unique: true });
 
-export default mongoose.model<IPowersportsEvent>("PowersportsEvent", PowersportsEventSchema);
+export default mongoose.model<ITugOfWarEvent>("TugOfWarEvent", TugOfWarEventSchema);

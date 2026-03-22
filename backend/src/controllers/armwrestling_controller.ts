@@ -1,14 +1,14 @@
 import { Request, Response } from "express";
-import PowersportsEvent from "../models/powersports_model";
+import ArmWrestlingEvent from "../models/armwrestling_model";
 
-type PowersportsGender = "men" | "women";
-type PowersportsEventName = "squat" | "deadlift" | "benchpress";
+type ArmWrestlingGender = "men" | "women";
+type ArmWrestlingEventName = "right_hand" | "left_hand";
 
-const isValidGender = (value: unknown): value is PowersportsGender =>
+const isValidGender = (value: unknown): value is ArmWrestlingGender =>
   value === "men" || value === "women";
 
-const isValidEventName = (value: unknown): value is PowersportsEventName =>
-  value === "squat" || value === "deadlift" || value === "benchpress";
+const isValidEventName = (value: unknown): value is ArmWrestlingEventName =>
+  value === "right_hand" || value === "left_hand";
 
 const getGenderFromRequest = (req: Request) => {
   const gender = req.query.gender ?? req.body.gender;
@@ -85,7 +85,7 @@ const validatePayload = (body: Record<string, unknown>) => {
   };
 };
 
-export const createPowerSportsEvent = async (req: Request, res: Response): Promise<void> => {
+export const createArmWrestlingEvent = async (req: Request, res: Response): Promise<void> => {
   try {
     const validation = validatePayload(req.body);
     if (!validation.valid) {
@@ -93,8 +93,8 @@ export const createPowerSportsEvent = async (req: Request, res: Response): Promi
       return;
     }
 
-    const savedEvent = await PowersportsEvent.create(validation.payload);
-    res.status(201).json({ success: true, message: "PowerSports event created.", data: savedEvent });
+    const savedEvent = await ArmWrestlingEvent.create(validation.payload);
+    res.status(201).json({ success: true, message: "Arm Wrestling event created.", data: savedEvent });
   } catch (error: any) {
     if (error.code === 11000) {
       res.status(400).json({ success: false, message: "event_id must be unique for the selected gender." });
@@ -104,7 +104,7 @@ export const createPowerSportsEvent = async (req: Request, res: Response): Promi
   }
 };
 
-export const getAllPowerSportsEvents = async (req: Request, res: Response): Promise<void> => {
+export const getAllArmWrestlingEvents = async (req: Request, res: Response): Promise<void> => {
   try {
     const gender = getGenderFromRequest(req);
     if (!gender) {
@@ -112,14 +112,14 @@ export const getAllPowerSportsEvents = async (req: Request, res: Response): Prom
       return;
     }
 
-    const events = await PowersportsEvent.find({ gender }).sort({ event_id: 1 });
+    const events = await ArmWrestlingEvent.find({ gender }).sort({ event_id: 1 });
     res.status(200).json({ success: true, message: "Events fetched.", data: events });
   } catch (error: any) {
     res.status(500).json({ success: false, message: "Server Error", data: error.message });
   }
 };
 
-export const getPowerSportsEventById = async (req: Request, res: Response): Promise<void> => {
+export const getArmWrestlingEventById = async (req: Request, res: Response): Promise<void> => {
   try {
     const gender = getGenderFromRequest(req);
     if (!gender) {
@@ -128,7 +128,7 @@ export const getPowerSportsEventById = async (req: Request, res: Response): Prom
     }
 
     const { event_id } = req.params;
-    const event = await PowersportsEvent.findOne({ event_id: Number(event_id), gender });
+    const event = await ArmWrestlingEvent.findOne({ event_id: Number(event_id), gender });
     if (!event) {
       res.status(404).json({ success: false, message: "Event not found." });
       return;
@@ -139,7 +139,7 @@ export const getPowerSportsEventById = async (req: Request, res: Response): Prom
   }
 };
 
-export const updatePowerSportsEvent = async (req: Request, res: Response): Promise<void> => {
+export const updateArmWrestlingEvent = async (req: Request, res: Response): Promise<void> => {
   try {
     const gender = getGenderFromRequest(req);
     if (!gender) {
@@ -148,7 +148,7 @@ export const updatePowerSportsEvent = async (req: Request, res: Response): Promi
     }
 
     const { event_id } = req.params;
-    const existingEvent = await PowersportsEvent.findOne({ event_id: Number(event_id), gender });
+    const existingEvent = await ArmWrestlingEvent.findOne({ event_id: Number(event_id), gender });
     if (!existingEvent) {
       res.status(404).json({ success: false, message: "Event not found." });
       return;
@@ -167,19 +167,19 @@ export const updatePowerSportsEvent = async (req: Request, res: Response): Promi
       return;
     }
 
-    const updatedEvent = await PowersportsEvent.findOneAndUpdate(
+    const updatedEvent = await ArmWrestlingEvent.findOneAndUpdate(
       { event_id: Number(event_id), gender },
       validation.payload,
       { new: true, runValidators: true }
     );
 
-    res.status(200).json({ success: true, message: "PowerSports event updated.", data: updatedEvent });
+    res.status(200).json({ success: true, message: "Arm Wrestling event updated.", data: updatedEvent });
   } catch (error: any) {
     res.status(500).json({ success: false, message: "Server Error", data: error.message });
   }
 };
 
-export const deletePowerSportsEvent = async (req: Request, res: Response): Promise<void> => {
+export const deleteArmWrestlingEvent = async (req: Request, res: Response): Promise<void> => {
   try {
     const gender = getGenderFromRequest(req);
     if (!gender) {
@@ -188,7 +188,7 @@ export const deletePowerSportsEvent = async (req: Request, res: Response): Promi
     }
 
     const { event_id } = req.params;
-    const deletedEvent = await PowersportsEvent.findOneAndDelete({
+    const deletedEvent = await ArmWrestlingEvent.findOneAndDelete({
       event_id: Number(event_id),
       gender
     });

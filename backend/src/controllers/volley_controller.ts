@@ -4,8 +4,8 @@ import VolleyballMatch from "../models/volleyball_model";
 export const createVolleyballMatch = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
-      match_id, match_stage, team1_department, team2_department, match_date, gender,
-      team1_score, team2_score, winner
+      match_id, match_stage, team1_department, team2_department, match_date, venue, gender,
+      team1_score, team2_score, winner, match_status, games, total_games
     } = req.body;
 
     if (match_id === undefined || !match_stage || !team1_department || !team2_department || !gender) {
@@ -24,11 +24,14 @@ export const createVolleyballMatch = async (req: Request, res: Response): Promis
       team1_department,
       team2_department,
       match_date,
+      venue,
       gender,
       team1_score,
       team2_score,
-      winner,
-      match_status: "completed"
+      winner: winner || null,
+      match_status: match_status || "scheduled",
+      games: games || [],
+      total_games: total_games || 0,
     });
 
     const savedMatch = await newMatch.save();
@@ -56,10 +59,10 @@ export const getAllVolleyballMatches = async (req: Request, res: Response): Prom
 
 export const getVolleyballMatchById = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { match_id } = req.params;
+    const { id } = req.params;
     const { gender } = req.query;
     
-    const match = await VolleyballMatch.findOne({ match_id: Number(match_id) });
+    const match = await VolleyballMatch.findOne({ match_id: Number(id) });
     if (!match) {
       res.status(404).json({ success: false, message: "Match not found." });
       return;
@@ -78,10 +81,10 @@ export const getVolleyballMatchById = async (req: Request, res: Response): Promi
 
 export const updateVolleyballMatch = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { match_id } = req.params;
-    const { team1_department, team2_department, match_stage, match_date, gender, winner, team1_score, team2_score } = req.body;
+    const { id } = req.params;
+    const { team1_department, team2_department, match_stage, match_date, venue, gender, winner, team1_score, team2_score, match_status, games, total_games } = req.body;
 
-    const match = await VolleyballMatch.findOne({ match_id: Number(match_id) });
+    const match = await VolleyballMatch.findOne({ match_id: Number(id) });
     if (!match) {
       res.status(404).json({ success: false, message: "Match not found." });
       return;
@@ -93,13 +96,14 @@ export const updateVolleyballMatch = async (req: Request, res: Response): Promis
     if (team1_department !== undefined) updateData.team1_department = team1_department;
     if (team2_department !== undefined) updateData.team2_department = team2_department;
     if (match_date !== undefined) updateData.match_date = match_date;
+    if (venue !== undefined) updateData.venue = venue;
     if (gender !== undefined) updateData.gender = gender;
-    
     if (team1_score !== undefined) updateData.team1_score = team1_score;
     if (team2_score !== undefined) updateData.team2_score = team2_score;
     if (winner !== undefined) updateData.winner = winner;
-
-    updateData.match_status = "completed";
+    if (match_status !== undefined) updateData.match_status = match_status;
+    if (games !== undefined) updateData.games = games;
+    if (total_games !== undefined) updateData.total_games = total_games;
 
     if (Object.keys(updateData).length === 0) {
       res.status(400).json({ success: false, message: "Provide fields to update." });
@@ -107,7 +111,7 @@ export const updateVolleyballMatch = async (req: Request, res: Response): Promis
     }
 
     const updatedMatch = await VolleyballMatch.findOneAndUpdate(
-      { match_id: Number(match_id) },
+      { match_id: Number(id) },
       updateData,
       { new: true, runValidators: true }
     );
@@ -120,8 +124,8 @@ export const updateVolleyballMatch = async (req: Request, res: Response): Promis
 
 export const deleteVolleyballMatch = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { match_id } = req.params;
-    const deletedMatch = await VolleyballMatch.findOneAndDelete({ match_id: Number(match_id) });
+    const { id } = req.params;
+    const deletedMatch = await VolleyballMatch.findOneAndDelete({ match_id: Number(id) });
 
     if (!deletedMatch) {
       res.status(404).json({ success: false, message: "Match not found." });

@@ -1,15 +1,24 @@
+
+
+// ─── GET COMPUTED LEADERBOARD ─────────────────────────────────────────────────
+// Returns standings grouped by category → group, with computed stats
+// GET /api/volleyball-leaderboard/standings?category=boys
+// GET /api/volleyball-leaderboard/standings          (returns both boys & girls)
+// volley_lead_controller.ts (Corrected)
 import { Request, Response } from "express";
 import VolleyballLeaderboard from "../models/volley_lead_model";
 import VolleyballMatch from "../models/volleyball_model";
 
-// ─── HELPER: compute stats for a dept in a category from league matches ───────
 const computeStats = async (dept_name: string, category: string) => {
-  // Only count completed league matches involving this dept
+  // Map leaderboard "boys/girls" to match "men/women"
+  const matchGender = category === "boys" ? "men" : "women";
+
+  // Filter matches using the correct field names from volleyball_model.ts
   const matches = await VolleyballMatch.find({
-    category,
-    stage: "league",
-    status: "completed",
-    $or: [{ dept_name1: dept_name }, { dept_name2: dept_name }],
+    gender: matchGender,
+    match_stage: "league", // Only league matches count for leaderboard
+    match_status: "completed",
+    $or: [{ team1_department: dept_name }, { team2_department: dept_name }],
   });
 
   let played = 0;
@@ -18,17 +27,18 @@ const computeStats = async (dept_name: string, category: string) => {
 
   for (const match of matches) {
     played++;
-    if (match.winner_dept === dept_name) {
+    if (match.winner === dept_name) {
       wins++;
     } else {
       losses++;
     }
   }
 
-  const points = wins * 3; // Win = 3pts, Loss = 0pts
-
+  const points = wins * 3; // Win = 3pts, Loss = 0pts (Volleyball standard)
   return { played, wins, losses, points };
 };
+
+
 
 // ─── CREATE a leaderboard entry ───────────────────────────────────────────────
 export const createLeaderboardEntry = async (req: Request, res: Response) => {
@@ -59,20 +69,15 @@ export const getAllLeaderboardEntries = async (req: Request, res: Response) => {
   }
 };
 
-// ─── GET COMPUTED LEADERBOARD ─────────────────────────────────────────────────
-// Returns standings grouped by category → group, with computed stats
-// GET /api/volleyball-leaderboard/standings?category=boys
-// GET /api/volleyball-leaderboard/standings          (returns both boys & girls)
+
 export const getLeaderboardStandings = async (req: Request, res: Response) => {
   try {
-    const { category } = req.query;
-
-    const filter: Record<string, unknown> = {};
+    const { category } = req.query; // "boys" or "girls"
+    const filter: any = {};
     if (category) filter.category = category;
 
     const entries = await VolleyballLeaderboard.find(filter).sort({ group: 1 });
 
-    // Enrich each entry with computed stats
     const enriched = await Promise.all(
       entries.map(async (entry) => {
         const stats = await computeStats(entry.dept_name, entry.category);
@@ -86,35 +91,23 @@ export const getLeaderboardStandings = async (req: Request, res: Response) => {
       })
     );
 
-    // Group by category → group
-    // Result shape: { boys: { A: [...], B: [...] }, girls: { A: [...], B: [...] } }
-    const result: Record<string, Record<string, typeof enriched>> = {};
-
+    const result: Record<string, any> = {};
     for (const row of enriched) {
-      if (!result[row.category]) result[row.category] = {};
-      if (!result[row.category][row.group]) result[row.category][row.group] = [];
-
-      // Sort by points desc within each group
-      result[row.category][row.group].push(row);
+      if (!result[row.group]) result[row.group] = [];
+      result[row.group].push(row);
     }
 
-    // Sort teams within each group by points descending
-    for (const cat of Object.keys(result)) {
-      for (const grp of Object.keys(result[cat])) {
-        result[cat][grp].sort((a, b) => b.points - a.points);
-      }
-    }
+    // Sort teams within each group by points desc
+    Object.keys(result).forEach(grp => {
+      result[grp].sort((a, b) => b.points - a.points || b.wins - a.wins);
+    });
 
     res.status(200).json(result);
   } catch (error) {
-    console.error("Failed to fetch leaderboard standings", error);
-    res.status(500).json({
-      message: "Failed to fetch leaderboard standings",
-      error: (error as Error).message || error,
-    });
+    res.status(500).json({ message: "Failed", error: (error as Error).message });
   }
 };
-
+// ... (rest of the controller functions remain as they were)
 // ─── READ ONE leaderboard entry by id ────────────────────────────────────────
 export const getLeaderboardEntryById = async (req: Request, res: Response) => {
   try {

@@ -1,8 +1,8 @@
 import mongoose, { Document, Schema } from "mongoose";
 
-export interface IPowersportsEvent extends Document {
+export interface IArmWrestlingEvent extends Document {
   event_id: number;
-  event_name: "squat" | "deadlift" | "benchpress";
+  event_name: "right_hand" | "left_hand";
   category: "below_63" | "63_83" | "above_83";
   event_date?: Date;
   venue?: string;
@@ -13,12 +13,12 @@ export interface IPowersportsEvent extends Document {
   gender: "men" | "women";
 }
 
-const PowersportsEventSchema = new Schema<IPowersportsEvent>(
+const ArmWrestlingEventSchema = new Schema<IArmWrestlingEvent>(
   {
     event_id: { type: Number, required: true },
     event_name: {
       type: String,
-      enum: ["squat", "deadlift", "benchpress"],
+      enum: ["right_hand", "left_hand"],
       required: true
     },
     category: {
@@ -45,6 +45,6 @@ const PowersportsEventSchema = new Schema<IPowersportsEvent>(
   { timestamps: true }
 );
 
-PowersportsEventSchema.index({ event_id: 1, gender: 1 }, { unique: true });
+ArmWrestlingEventSchema.index({ event_id: 1, gender: 1 }, { unique: true });
 
-export default mongoose.model<IPowersportsEvent>("PowersportsEvent", PowersportsEventSchema);
+export default mongoose.model<IArmWrestlingEvent>("ArmWrestlingEvent", ArmWrestlingEventSchema);
