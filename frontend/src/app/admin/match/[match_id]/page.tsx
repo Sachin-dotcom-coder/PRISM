@@ -363,6 +363,8 @@ export default function AdminMatchUpdater() {
       setBaseWickets(dbWickets - loadedWickets);
       setBaseLegalBalls(dbLegal - loadedLegal);
       setBalls(loadedBalls);
+      setBatters(inn.batters || []);
+      setBowlers(inn.bowlers || []);
     } else {
       setBaseRuns(0); setBaseWickets(0); setBaseLegalBalls(0);
       setBatters([]); setBowlers([]);
@@ -545,15 +547,33 @@ export default function AdminMatchUpdater() {
             </div>
           </div>
         )}
+      </div>
 
-        <div className="flex gap-2">
-          {[0, 1].map(i => (
-            <button key={i} onClick={() => setActiveTeam(i as 0 | 1)}
-              className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${activeTeam === i ? "bg-accent text-white" : "bg-zinc-800 text-zinc-400 hover:text-white"}`}>
-              {teamNames[i]} Innings
-            </button>
-          ))}
+      {/* Toss Information */}
+      {match.toss && (
+        <div className="glass p-5 rounded-3xl border border-zinc-800">
+          <h3 className="text-lg font-bold text-accent mb-4 uppercase tracking-wider">Toss Information</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-zinc-400">Toss Winner:</span>
+              <span className="font-bold text-white">{match.toss.winner}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-zinc-400">Decision:</span>
+              <span className="font-bold text-white">{match.toss.decision} first</span>
+            </div>
+          </div>
         </div>
+      )}
+
+      {/* Innings Selection */}
+      <div className="flex gap-2">
+        {[0, 1].map((i) => (
+          <button key={i} onClick={() => setActiveTeam(i as 0 | 1)}
+            className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${activeTeam === i ? "bg-accent text-white" : "bg-zinc-800 text-zinc-400 hover:text-white"}`}>
+            {teamNames[i]} Innings
+          </button>
+        ))}
       </div>
 
       {/* ── LIVE BALL ENTRY ── */}
