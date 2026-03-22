@@ -1,170 +1,504 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Plus, ArrowLeft, RefreshCw, Pencil, Trash2, Activity } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Plus, ArrowLeft, RefreshCw, Pencil, Trash2, Activity, Trophy, Check, X } from 'lucide-react';
 import Link from 'next/link';
 import MatchForm from './components/MatchForm';
 import { ITableTennisMatch } from './types';
 import { getMatches, deleteMatch } from './services/tableTennisApi';
 import { useGender } from '@/app/components/Providers';
 
+// ─── Types ───────────────────────────────────────────────────────────────────
+interface TTLeaderboardEntry {
+  _id?: string;
+  leaderboard_id: number;
+  dept_name: string;
+  category: string; // "men" | "women"
+  group: string;
+  wins?: number;
+  losses?: number;
+  matches?: number;
+}
+
+const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000/api";
+const LB_API = `${BASE_URL}/tt-lead`;
+
+const RANK_COLORS = [
+  "text-yellow-400 font-black",
+  "text-zinc-300 font-black",
+  "text-amber-600 font-black",
+];
+
+// ─── Leaderboard Row ─────────────────────────────────────────────────────────
+function TTTeamRow({
+  team,
+  rank,
+  onUpdate,
+  onDelete,
+}: {
+  team: TTLeaderboardEntry;
+  rank: number;
+  onUpdate: (t: TTLeaderboardEntry) => void;
+  onDelete: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState({ ...team });
+
+  useEffect(() => {
+    if (!editing) setDraft({ ...team });
+  }, [team, editing]);
+
+  const f = (k: keyof TTLeaderboardEntry, v: string | number) =>
+    setDraft((p) => ({ ...p, [k]: v }));
+  const save = () => { onUpdate(draft); setEditing(false); };
+
+  if (!editing)
+    return (
+      <tr className="border-b border-zinc-800/50 hover:bg-zinc-900/20 transition-colors">
+        <td className={`p-3 text-center w-10 text-sm ${RANK_COLORS[rank] ?? "text-zinc-500"}`}>{rank + 1}</td>
+        <td className="p-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-[#FFBF00]/10 border border-[#FFBF00]/20 flex items-center justify-center text-[10px] font-black text-[#FFBF00]">
+              {team.leaderboard_id}
+            </div>
+            <span className="font-[900] text-white tracking-widest text-sm">{team.dept_name}</span>
+          </div>
+        </td>
+        <td className="p-3 text-center text-zinc-400 text-xs font-mono font-bold">{team.group}</td>
+        <td className="p-3 text-center text-green-400 text-sm font-black">{team.wins ?? 0}</td>
+        <td className="p-3 text-center text-red-400 text-sm">{team.losses ?? 0}</td>
+        <td className="p-3 text-center text-[#FFBF00] font-mono text-sm font-bold">{team.matches ?? 0}</td>
+        <td className="p-3">
+          <div className="flex gap-1 justify-end">
+            <button onClick={() => setEditing(true)} className="p-1.5 rounded-lg bg-zinc-800 hover:bg-[#FFBF00] hover:text-black transition-all text-zinc-400">
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
+            <button onClick={onDelete} className="p-1.5 rounded-lg bg-zinc-800 hover:bg-red-700 hover:text-white transition-all text-zinc-400">
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </td>
+      </tr>
+    );
+
+  return (
+    <tr className="border-b border-[#FFBF00]/20 bg-[#FFBF00]/5">
+      <td className="p-2 text-center text-zinc-500 text-sm">{rank + 1}</td>
+      <td className="p-2 space-y-1">
+        <input
+          className="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-xs text-white outline-none focus:border-[#FFBF00]"
+          value={draft.dept_name}
+          onChange={(e) => f("dept_name", e.target.value)}
+          placeholder="Dept Name"
+        />
+      </td>
+      <td className="p-2">
+        <input
+          className="w-14 bg-zinc-800 border border-zinc-700 rounded p-1.5 text-center text-xs text-white outline-none focus:border-[#FFBF00]"
+          value={draft.group}
+          onChange={(e) => f("group", e.target.value.toUpperCase())}
+        />
+      </td>
+      <td colSpan={3} className="p-2 text-center text-[10px] text-zinc-500 italic">Auto-calculated from match results</td>
+      <td className="p-2">
+        <div className="flex gap-1 justify-end">
+          <button onClick={save} className="p-1.5 rounded-lg bg-[#FFBF00] hover:bg-yellow-500 text-black">
+            <Check className="w-3.5 h-3.5" />
+          </button>
+          <button onClick={() => setEditing(false)} className="p-1.5 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-white">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function TableTennisAdminPage() {
   const { gender: globalGender } = useGender();
   const gender = globalGender === "f" ? "women" : "men";
-  
+
+  // ── Match state ──
   const [matches, setMatches] = useState<ITableTennisMatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
   const [showForm, setShowForm] = useState(false);
   const [editingMatch, setEditingMatch] = useState<ITableTennisMatch | null>(null);
 
-  const fetchMatches = async () => {
+  // ── Leaderboard state ──
+  const [lbEntries, setLbEntries] = useState<TTLeaderboardEntry[]>([]);
+  const [standings, setStandings] = useState<Record<string, any[]>>({});
+  const [addMode, setAddMode] = useState(false);
+  const [lbMsg, setLbMsg] = useState('');
+  const [newEntry, setNewEntry] = useState<Partial<TTLeaderboardEntry>>({
+    leaderboard_id: Math.floor(Math.random() * 90000) + 10000,
+    dept_name: '',
+    category: gender,
+    group: 'A',
+  });
+
+  // ─── Fetch helpers ──────────────────────────────────────────────────────────
+  const fetchMatches = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const response = await getMatches(gender);
+      const response = await getMatches(gender as "men" | "women");
       const data = Array.isArray(response) ? response : (response as any).data || [];
       if (!Array.isArray(data)) throw new Error("Invalid response format");
       setMatches(data);
     } catch (err: any) {
-      setError(err.message || 'Failed to load matches from backend API');
+      setError(err.message || 'Failed to load matches');
     } finally {
       setLoading(false);
     }
-  };
+  }, [gender]);
+
+  const fetchLeaderboard = useCallback(async () => {
+    try {
+      const [entriesRes, standingsRes] = await Promise.all([
+        fetch(`${LB_API}`),
+        fetch(`${LB_API}/standings`),
+      ]);
+      const entriesData = await entriesRes.json();
+      const standingsData = await standingsRes.json();
+      const entries: TTLeaderboardEntry[] = Array.isArray(entriesData)
+        ? entriesData
+        : entriesData?.data ?? [];
+      setLbEntries(entries);
+      setStandings(standingsData && typeof standingsData === 'object' ? standingsData : {});
+    } catch {
+      // silently fail leaderboard
+    }
+  }, []);
 
   useEffect(() => {
     fetchMatches();
+    fetchLeaderboard();
+  }, [gender, fetchMatches, fetchLeaderboard]);
+
+  useEffect(() => {
+    setNewEntry((p) => ({ ...p, category: gender }));
   }, [gender]);
 
-  const handleAddNew = () => {
-    setEditingMatch(null);
-    setShowForm(true);
+  const showMsg = (msg: string) => {
+    setLbMsg(msg);
+    setTimeout(() => setLbMsg(''), 3000);
   };
 
-  const handleEdit = (match: ITableTennisMatch) => {
-    setEditingMatch(match);
-    setShowForm(true);
-  };
-
+  // ─── Match handlers ─────────────────────────────────────────────────────────
+  const handleAddNew = () => { setEditingMatch(null); setShowForm(true); };
+  const handleEdit = (match: ITableTennisMatch) => { setEditingMatch(match); setShowForm(true); };
   const handleDelete = async (match_id: number) => {
-    if (!confirm('Are you sure you want to delete this match entirely from the database?')) return;
-    try {
-      await deleteMatch(match_id);
-      fetchMatches();
-    } catch (err: any) {
-      alert(err.message || 'Deletion failed');
+    if (!confirm('Are you sure you want to delete this match?')) return;
+    try { await deleteMatch(match_id); fetchMatches(); } catch (err: any) { alert(err.message || 'Deletion failed'); }
+  };
+  const onFormSuccess = () => { setShowForm(false); fetchMatches(); };
+
+  // ─── Leaderboard handlers ───────────────────────────────────────────────────
+  const handleAddEntry = async () => {
+    if (!newEntry.dept_name) return;
+    const res = await fetch(LB_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newEntry),
+    });
+    if (res.ok) {
+      showMsg('✅ Department registered!');
+      setAddMode(false);
+      setNewEntry({ leaderboard_id: Math.floor(Math.random() * 90000) + 10000, dept_name: '', category: gender, group: 'A' });
+      fetchLeaderboard();
+    } else {
+      const d = await res.json();
+      showMsg(`❌ ${d.message || 'Failed to register'}`);
     }
   };
 
-  const onFormSuccess = () => {
-    setShowForm(false);
-    fetchMatches();
+  const handleUpdateEntry = async (t: TTLeaderboardEntry) => {
+    const res = await fetch(`${LB_API}/${t.leaderboard_id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(t),
+    });
+    if (res.ok) { showMsg('✅ Updated!'); fetchLeaderboard(); }
   };
 
+  const handleDeleteEntry = async (id: number) => {
+    if (!confirm('Remove this department from leaderboard?')) return;
+    const res = await fetch(`${LB_API}/${id}`, { method: 'DELETE' });
+    if (res.ok) { showMsg('🗑 Entry removed'); fetchLeaderboard(); }
+  };
+
+  // ─── Leaderboard data prep ──────────────────────────────────────────────────
+  const filteredEntries = lbEntries.filter((e) => e.category === gender);
+
+  // Build a lookup: dept_name → leaderboard entry (so we can inject leaderboard_id into standings rows)
+  const entryByDept: Record<string, TTLeaderboardEntry> = {};
+  filteredEntries.forEach((e) => { entryByDept[e.dept_name] = e; });
+
+  // Only show groups that have at least one registered entry for the current gender
+  const genderGroups = [...new Set(filteredEntries.map((e) => e.group))];
+
+  const groups = genderGroups.length > 0 ? genderGroups : [];
+
+  // ─── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto pb-20 min-h-screen bg-black text-white">
+    <div className="p-4 md:p-8 space-y-10 max-w-7xl mx-auto pb-24 min-h-screen bg-black text-white">
+
+      {/* ── Header ── */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Link href="/admin" className="p-2 bg-zinc-900 hover:bg-zinc-800 rounded-full text-zinc-400 transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="flex items-center gap-3">
-             <div className="w-10 h-10 rounded-xl bg-[#FFBF00]/20 flex items-center justify-center text-[#FFBF00]">
-                <Activity className="w-5 h-5" />
-             </div>
-             <h1 className="text-3xl font-[900] tracking-widest text-[#FFBF00] uppercase">Table Tennis CMS</h1>
+            <div className="w-10 h-10 rounded-xl bg-[#FFBF00]/20 flex items-center justify-center text-[#FFBF00]">
+              <Activity className="w-5 h-5" />
+            </div>
+            <h1 className="text-3xl font-[900] tracking-widest text-[#FFBF00] uppercase">Table Tennis CMS</h1>
           </div>
         </div>
-        
+
         {!showForm && (
           <div className="flex gap-3">
-            <button onClick={fetchMatches} className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-white rounded-lg text-sm font-bold transition-all">
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh API
+            <button
+              onClick={() => { fetchMatches(); fetchLeaderboard(); }}
+              className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-white rounded-lg text-sm font-bold transition-all"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
             </button>
-            <button onClick={handleAddNew} className="flex items-center gap-2 px-4 py-2 bg-[#FFBF00] hover:bg-yellow-500 text-black rounded-lg text-sm font-bold transition-all shadow-[0_0_15px_rgba(255,191,0,0.4)]">
+            <button
+              onClick={handleAddNew}
+              className="flex items-center gap-2 px-4 py-2 bg-[#FFBF00] hover:bg-yellow-500 text-black rounded-lg text-sm font-bold transition-all shadow-[0_0_15px_rgba(255,191,0,0.4)]"
+            >
               <Plus className="w-4 h-4" /> Create Match
             </button>
           </div>
         )}
       </div>
 
+      {/* ── Match Form ── */}
       {showForm ? (
-        <MatchForm 
-          initialData={editingMatch} 
-          gender={gender}
-          onSuccess={onFormSuccess} 
-          onCancel={() => setShowForm(false)} 
+        <MatchForm
+          initialData={editingMatch}
+          gender={gender as "men" | "women"}
+          onSuccess={onFormSuccess}
+          onCancel={() => setShowForm(false)}
         />
       ) : (
-        <div className="bg-zinc-950/50 rounded-3xl border border-zinc-800 overflow-hidden backdrop-blur-xl">
-          {error && <div className="bg-red-500/10 text-red-500 p-4 font-semibold text-center">{error}</div>}
-          
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-zinc-800 bg-zinc-900/60 text-zinc-400 text-xs uppercase tracking-wider">
-                  <th className="text-left p-4">ID</th>
-                  <th className="text-left p-4">Departments</th>
-                  <th className="text-left p-4">Stage & Venue</th>
-                  <th className="text-center p-4">Date</th>
-                  <th className="text-center p-4">Games</th>
-                  <th className="text-center p-4">Status</th>
-                  <th className="text-center p-4">Winner</th>
-                  <th className="text-right p-4">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-800/30">
-                {loading && matches.length === 0 ? (
-                  <tr><td colSpan={8} className="p-10 text-center text-[#FFBF00] font-bold animate-pulse">Fetching MongoDB Data...</td></tr>
-                ) : matches.length === 0 ? (
-                  <tr><td colSpan={8} className="p-10 text-center text-zinc-500">No table tennis matches found in database. Create one.</td></tr>
-                ) : (
-                  matches.map((match) => (
-                    <tr key={match.match_id} className="hover:bg-zinc-900/40 transition-colors">
-                      <td className="p-4 text-zinc-500 font-mono">{match.match_id}</td>
-                      <td className="p-4">
-                        <span className="font-[900] text-white tracking-widest">{match.team1_department}</span>
-                        <span className="text-[#FFBF00] mx-2 text-xs font-bold font-mono">VS</span>
-                        <span className="font-[900] text-white tracking-widest">{match.team2_department}</span>
-                      </td>
-                      <td className="p-4">
-                        <div className="text-white font-bold">{match.match_stage}</div>
-                        <div className="text-zinc-500 text-xs tracking-wider">{match.venue}</div>
-                      </td>
-                      <td className="p-4 text-center text-zinc-400 text-xs">
-                        {new Date(match.match_date).toLocaleString()}
-                      </td>
-                      <td className="p-4 text-center font-mono text-zinc-300 font-bold bg-zinc-900/30">
-                        <span className="text-[#FFBF00] text-lg glow-text mx-2 tracking-widest">{match.team1_score ?? '-'}</span>
-                         - 
-                        <span className="text-[#FFBF00] text-lg glow-text mx-2 tracking-widest">{match.team2_score ?? '-'}</span>
-                        <div className="text-[9px] text-zinc-500 uppercase tracking-widest mt-1">({match.total_games} Sets)</div>
-                      </td>
-                      <td className="p-4 text-center">
-                        <span className={`px-2 py-1 text-[10px] uppercase font-[900] tracking-widest rounded border ${
-                          match.match_status === 'scheduled' ? 'border-blue-500/30 text-blue-400 bg-blue-500/10' :
-                          match.match_status === 'ongoing' ? 'border-[#FFBF00]/30 text-[#FFBF00] bg-[#FFBF00]/10 shadow-[0_0_8px_rgba(255,191,0,0.5)]' :
-                          'border-green-500/30 text-green-400 bg-green-500/10'
-                        }`}>
-                          {match.match_status}
-                        </span>
-                      </td>
-                      <td className="p-4 text-center font-[900] text-white tracking-widest">{match.winner || '-'}</td>
-                      <td className="p-4 text-right">
-                        <div className="flex gap-2 justify-end">
-                          <button onClick={() => handleEdit(match)} className="p-2 rounded bg-zinc-800 hover:bg-[#FFBF00] transition-all text-zinc-400 hover:text-black shadow-md"><Pencil className="w-4 h-4"/></button>
-                          <button onClick={() => handleDelete(match.match_id)} className="p-2 rounded bg-zinc-800 hover:bg-red-600 transition-all text-zinc-400 hover:text-white shadow-md"><Trash2 className="w-4 h-4"/></button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <>
+          {/* ════════════════ MATCHES TABLE ════════════════ */}
+          <section className="bg-zinc-950/50 rounded-3xl border border-zinc-800 overflow-hidden backdrop-blur-xl">
+            <div className="p-5 border-b border-zinc-800 bg-zinc-900/40 flex items-center gap-3">
+              <Activity className="w-5 h-5 text-[#FFBF00]" />
+              <h2 className="text-lg font-[900] text-white uppercase tracking-widest">
+                Matches — {gender === 'men' ? 'Men' : 'Women'}
+              </h2>
+            </div>
+            {error && <div className="bg-red-500/10 text-red-500 p-4 font-semibold text-center">{error}</div>}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-zinc-800 bg-zinc-900/60 text-zinc-400 text-xs uppercase tracking-wider">
+                    <th className="text-left p-4">ID</th>
+                    <th className="text-left p-4">Departments</th>
+                    <th className="text-left p-4">Stage & Venue</th>
+                    <th className="text-center p-4">Date</th>
+                    <th className="text-center p-4">Games</th>
+                    <th className="text-center p-4">Status</th>
+                    <th className="text-center p-4">Winner</th>
+                    <th className="text-right p-4">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-800/30">
+                  {loading && matches.length === 0 ? (
+                    <tr><td colSpan={8} className="p-10 text-center text-[#FFBF00] font-bold animate-pulse">Fetching MongoDB Data...</td></tr>
+                  ) : matches.length === 0 ? (
+                    <tr><td colSpan={8} className="p-10 text-center text-zinc-500">No table tennis matches found. Create one above.</td></tr>
+                  ) : (
+                    matches.map((match) => (
+                      <tr key={match.match_id} className="hover:bg-zinc-900/40 transition-colors">
+                        <td className="p-4 text-zinc-500 font-mono">{match.match_id}</td>
+                        <td className="p-4">
+                          <span className="font-[900] text-white tracking-widest">{match.team1_department}</span>
+                          <span className="text-[#FFBF00] mx-2 text-xs font-bold font-mono">VS</span>
+                          <span className="font-[900] text-white tracking-widest">{match.team2_department}</span>
+                        </td>
+                        <td className="p-4">
+                          <div className="text-white font-bold">{match.match_stage}</div>
+                          <div className="text-zinc-500 text-xs tracking-wider">{match.venue}</div>
+                        </td>
+                        <td className="p-4 text-center text-zinc-400 text-xs">{new Date(match.match_date).toLocaleString()}</td>
+                        <td className="p-4 text-center font-mono text-zinc-300 font-bold bg-zinc-900/30">
+                          <span className="text-[#FFBF00] text-lg mx-2 tracking-widest">{match.team1_score ?? '-'}</span>
+                          {' - '}
+                          <span className="text-[#FFBF00] text-lg mx-2 tracking-widest">{match.team2_score ?? '-'}</span>
+                          <div className="text-[9px] text-zinc-500 uppercase tracking-widest mt-1">({match.total_games} Sets)</div>
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className={`px-2 py-1 text-[10px] uppercase font-[900] tracking-widest rounded border ${
+                            match.match_status === 'scheduled' ? 'border-blue-500/30 text-blue-400 bg-blue-500/10' :
+                            match.match_status === 'ongoing'   ? 'border-[#FFBF00]/30 text-[#FFBF00] bg-[#FFBF00]/10 shadow-[0_0_8px_rgba(255,191,0,0.5)]' :
+                            'border-green-500/30 text-green-400 bg-green-500/10'
+                          }`}>
+                            {match.match_status}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center font-[900] text-white tracking-widest">{match.winner || '-'}</td>
+                        <td className="p-4 text-right">
+                          <div className="flex gap-2 justify-end">
+                            <button onClick={() => handleEdit(match)} className="p-2 rounded bg-zinc-800 hover:bg-[#FFBF00] transition-all text-zinc-400 hover:text-black shadow-md"><Pencil className="w-4 h-4"/></button>
+                            <button onClick={() => handleDelete(match.match_id)} className="p-2 rounded bg-zinc-800 hover:bg-red-600 transition-all text-zinc-400 hover:text-white shadow-md"><Trash2 className="w-4 h-4"/></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* ════════════════ LEADERBOARD ════════════════ */}
+          <section className="bg-zinc-950/50 rounded-3xl border border-zinc-800 overflow-hidden backdrop-blur-xl">
+            {/* Leaderboard header */}
+            <div className="p-5 border-b border-zinc-800 bg-zinc-900/40 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Trophy className="w-5 h-5 text-[#FFBF00]" />
+                <h2 className="text-lg font-[900] text-white uppercase tracking-widest">
+                  Leaderboard — {gender === 'men' ? 'Men' : 'Women'}
+                </h2>
+              </div>
+              <button
+                onClick={() => setAddMode(!addMode)}
+                className="flex items-center gap-2 px-4 py-2 bg-[#FFBF00] hover:bg-yellow-500 text-black rounded-lg text-sm font-bold transition-all shadow-[0_0_12px_rgba(255,191,0,0.3)]"
+              >
+                {addMode ? <><X className="w-4 h-4"/> Cancel</> : <><Plus className="w-4 h-4"/> Add Dept</>}
+              </button>
+            </div>
+
+            {/* Add dept form */}
+            {addMode && (
+              <div className="p-6 bg-zinc-900/50 border-b border-zinc-800 space-y-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-black text-zinc-500 uppercase mb-1 tracking-widest">ID</label>
+                    <input
+                      type="number"
+                      value={newEntry.leaderboard_id}
+                      onChange={(e) => setNewEntry((p) => ({ ...p, leaderboard_id: +e.target.value }))}
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2.5 text-sm text-white outline-none focus:border-[#FFBF00]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-zinc-500 uppercase mb-1 tracking-widest">Department</label>
+                    <input
+                      placeholder="e.g. CS"
+                      value={newEntry.dept_name}
+                      onChange={(e) => setNewEntry((p) => ({ ...p, dept_name: e.target.value }))}
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2.5 text-sm text-white outline-none focus:border-[#FFBF00]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-zinc-500 uppercase mb-1 tracking-widest">Category</label>
+                    <select
+                      value={newEntry.category}
+                      onChange={(e) => setNewEntry((p) => ({ ...p, category: e.target.value }))}
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2.5 text-sm text-white outline-none focus:border-[#FFBF00]"
+                    >
+                      <option value="men">Men</option>
+                      <option value="women">Women</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-zinc-500 uppercase mb-1 tracking-widest">Group</label>
+                    <input
+                      value={newEntry.group}
+                      onChange={(e) => setNewEntry((p) => ({ ...p, group: e.target.value.toUpperCase() }))}
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2.5 text-sm text-white outline-none focus:border-[#FFBF00]"
+                    />
+                  </div>
+                </div>
+                <button
+                  onClick={handleAddEntry}
+                  className="w-full py-3 bg-[#FFBF00] hover:bg-yellow-500 text-black font-[900] rounded-xl tracking-widest uppercase text-sm shadow-[0_0_20px_rgba(255,191,0,0.3)] transition-all"
+                >
+                  Register Department
+                </button>
+              </div>
+            )}
+
+            {/* Status message */}
+            {lbMsg && (
+              <div className={`p-3 text-center text-xs font-bold border-b border-zinc-800 ${lbMsg.includes('✅') ? 'bg-[#FFBF00]/10 text-[#FFBF00]' : 'bg-red-500/10 text-red-400'}`}>
+                {lbMsg}
+              </div>
+            )}
+
+            {/* Standings by group */}
+            {groups.length === 0 ? (
+              <div className="p-12 text-center text-zinc-500 italic">
+                No leaderboard entries yet. Add departments above to get started.
+              </div>
+            ) : (
+              <div className="divide-y divide-zinc-800/50">
+                {groups.map((gp) => {
+                  // Use standings data if available, else fall back to registered entries for this group
+                  const rawTeams: any[] = standings[gp]
+                    ? standings[gp].filter((t: any) => entryByDept[t.dept_name]) // only depts registered for this gender
+                    : filteredEntries.filter((e) => e.group === gp);
+
+                  // Inject leaderboard_id so edit/delete work correctly
+                  const gpTeams = rawTeams.map((t: any) => ({
+                    ...t,
+                    leaderboard_id: t.leaderboard_id ?? entryByDept[t.dept_name]?.leaderboard_id ?? 0,
+                    group: t.group ?? gp,
+                  }));
+
+                  return (
+                    <div key={gp} className="p-6">
+                      <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#FFBF00]" />
+                        Group {gp} Standings
+                      </h3>
+                      <div className="overflow-x-auto rounded-2xl border border-zinc-800/50 bg-black/30">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="border-b border-zinc-800 bg-zinc-900/60 text-zinc-500 uppercase font-black tracking-tighter">
+                              <th className="p-3 w-10">POS</th>
+                              <th className="p-3 text-left">Department</th>
+                              <th className="p-3">Group</th>
+                              <th className="p-3">Wins</th>
+                              <th className="p-3">Loss</th>
+                              <th className="p-3 text-[#FFBF00]">MP</th>
+                              <th className="p-3 w-20"></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {gpTeams.length === 0 ? (
+                              <tr><td colSpan={7} className="p-8 text-center text-zinc-600 italic">No rankings for this group yet.</td></tr>
+                            ) : (
+                              gpTeams.map((t: any, i: number) => (
+                                <TTTeamRow
+                                  key={t.dept_name ?? t._id}
+                                  team={t}
+                                  rank={i}
+                                  onUpdate={handleUpdateEntry}
+                                  onDelete={() => handleDeleteEntry(t.leaderboard_id)}
+                                />
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        </>
       )}
     </div>
   );

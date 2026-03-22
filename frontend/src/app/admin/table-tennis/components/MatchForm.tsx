@@ -147,6 +147,10 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
           <input required type="datetime-local" name="match_date" value={String(formData.match_date)} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white" />
         </div>
         <div>
+          <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Venue</label>
+          <input required type="text" name="venue" value={formData.venue} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white" placeholder="e.g. TT Room, Sports Block" />
+        </div>
+        <div>
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Match Score (T1 - T2)</label>
           <div className="flex gap-2">
             <input required type="number" min="0" name="team1_score" value={formData.team1_score} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white text-center" placeholder="T1" />
