@@ -23,6 +23,8 @@ const FootballMatchSchema = new Schema(
       team1: { type: Number, default: 0 },
       team2: { type: Number, default: 0 },
     },
+    date: { type: String },
+    startTime: { type: String },
     goals: [GoalSchema],
     result: {
       winner: { type: String, default: null },

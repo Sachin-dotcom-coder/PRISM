@@ -30,6 +30,8 @@ export default function FootballAdminMatch() {
   const [goals, setGoals]     = useState<{ team: string; player: string; minute?: number }[]>([]);
   const [winner, setWinner]   = useState("");
   const [finalScore, setFinalScore] = useState("");
+  const [date, setDate]       = useState("");
+  const [startTime, setStartTime] = useState("");
 
   // New goal form
   const [newGoalPlayer, setNewGoalPlayer] = useState("");
@@ -45,6 +47,8 @@ export default function FootballAdminMatch() {
     setGoals(match.goals || []);
     setWinner(match.result?.winner || "");
     setFinalScore(match.result?.final_score || "");
+    setDate(match.date || "");
+    setStartTime(match.startTime || "");
   }, [match]);
 
   if (error) return <div className="text-red-400 p-8">Error loading match.</div>;
@@ -71,6 +75,23 @@ export default function FootballAdminMatch() {
     setGoals(p => p.filter((_, i) => i !== idx));
   };
 
+  // Auto-detect winner when status changes
+  const handleStatusChange = (s: string) => {
+    setStatus(s);
+    if (s === "COMPLETED") {
+      if (score1 > score2) {
+        setWinner(match.teams?.team1 || "");
+        setFinalScore(`${score1}-${score2}`);
+      } else if (score2 > score1) {
+        setWinner(match.teams?.team2 || "");
+        setFinalScore(`${score1}-${score2}`);
+      } else {
+        setWinner(""); // Draw
+        setFinalScore(`${score1}-${score2}`);
+      }
+    }
+  };
+
   const handleSave = async () => {
     setIsSaving(true); setSaveMsg("");
     try {
@@ -86,6 +107,8 @@ export default function FootballAdminMatch() {
             winner: winner || null,
             final_score: finalScore || null,
           },
+          date,
+          startTime,
         }),
       });
       const data = await res.json();
@@ -116,7 +139,7 @@ export default function FootballAdminMatch() {
           <label className="block text-xs text-zinc-500 uppercase font-semibold mb-1">Match Status</label>
           <div className="flex flex-wrap gap-2">
             {STATUSES.map(s => (
-              <button key={s} onClick={() => setStatus(s)}
+              <button key={s} onClick={() => handleStatusChange(s)}
                 className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase border transition-all ${
                   status === s
                     ? s === "FIRST_HALF" || s === "SECOND_HALF"
@@ -129,6 +152,20 @@ export default function FootballAdminMatch() {
                 {s.replace("_", " ")}
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Date & Time */}
+        <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-zinc-800/50">
+          <div>
+            <label className="block text-xs text-zinc-500 uppercase font-semibold mb-1">Match Date</label>
+            <input type="date" value={date} onChange={e => setDate(e.target.value)}
+              className="w-full rounded-lg px-3 py-2 text-sm focus:border-accent bg-zinc-900 border border-zinc-800 text-white" />
+          </div>
+          <div>
+            <label className="block text-xs text-zinc-500 uppercase font-semibold mb-1">Start Time</label>
+            <input type="text" placeholder="e.g. 04:30 PM" value={startTime} onChange={e => setStartTime(e.target.value)}
+              className="w-full rounded-lg px-3 py-2 text-sm focus:border-accent bg-zinc-900 border border-zinc-800 text-white" />
           </div>
         </div>
       </div>
@@ -175,9 +212,9 @@ export default function FootballAdminMatch() {
             }`}>
               <span className="text-lg">⚽</span>
               <span className={`font-bold ${g.team === team1 ? "text-accent" : "text-zinc-200"}`}>{g.player}</span>
-              <span className="text-xs text-zinc-500 flex-1">for {g.team}</span>
-              {g.minute && <span className="text-xs text-zinc-500 font-mono">{g.minute}&apos;</span>}
-              <button onClick={() => removeGoal(idx)}
+               <span className="text-xs text-zinc-500 flex-1">for {g.team}</span>
+               {(g.minute !== undefined && g.minute !== null) && <span className="text-xs text-zinc-500 font-mono">{g.minute}&apos;</span>}
+               <button onClick={() => removeGoal(idx)}
                 className="p-1 rounded-lg hover:bg-red-900/50 text-zinc-500 hover:text-red-400 transition-all">
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -224,6 +261,18 @@ export default function FootballAdminMatch() {
       {status === "COMPLETED" && (
         <div className={`p-5 rounded-3xl border space-y-3 glass border-zinc-800`}>
           <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Result</h3>
+          
+          {/* Auto-detected result banner */}
+          <div className={`p-3 rounded-xl text-center text-sm font-bold ${
+            score1 > score2 ? "bg-green-900/30 text-green-400 border border-green-800" :
+            score2 > score1 ? "bg-green-900/30 text-green-400 border border-green-800" :
+            "bg-zinc-800 text-zinc-400 border border-zinc-700"
+          }`}>
+            {score1 > score2 ? `🏆 ${team1} wins ${score1}–${score2}` :
+             score2 > score1 ? `🏆 ${team2} wins ${score1}–${score2}` :
+             `🤝 Draw ${score1}–${score2}`}
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-zinc-500 uppercase font-semibold mb-1">Winner</label>

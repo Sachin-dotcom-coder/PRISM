@@ -97,7 +97,13 @@ export default function FootballAdminPage() {
 
   const [isCreatingMatch, setIsCreatingMatch] = useState(false);
   const [createError, setCreateError] = useState("");
-  const [newMatch, setNewMatch] = useState({ match_id: `FB${Math.floor(Math.random() * 900) + 100}`, team1: "", team2: "" });
+  const [newMatch, setNewMatch] = useState({ 
+    match_id: `FB${Math.floor(Math.random() * 900) + 100}`, 
+    team1: "", 
+    team2: "",
+    date: new Date().toISOString().split('T')[0],
+    startTime: "04:30 PM"
+  });
 
   const [saveMsg, setSaveMsg] = useState("");
   const [addMode, setAddMode] = useState(false);
@@ -108,12 +114,26 @@ export default function FootballAdminPage() {
   const handleCreateMatch = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreateError("");
-    const payload = { ...newMatch, sport: "football", status: "UPCOMING", score: { team1: 0, team2: 0 }, teams: { team1: newMatch.team1, team2: newMatch.team2 } };
+    const payload = { 
+      ...newMatch, 
+      sport: "football", 
+      status: "UPCOMING", 
+      score: { team1: 0, team2: 0 }, 
+      teams: { team1: newMatch.team1, team2: newMatch.team2 },
+      date: newMatch.date,
+      startTime: newMatch.startTime
+    };
     try {
       const res = await fetch(MATCHES_API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       if (!res.ok) { const d = await res.json(); setCreateError(d.error || "Failed"); return; }
       setIsCreatingMatch(false);
-      setNewMatch({ match_id: `FB${Math.floor(Math.random() * 900) + 100}`, team1: "", team2: "" });
+      setNewMatch({ 
+        match_id: `FB${Math.floor(Math.random() * 900) + 100}`, 
+        team1: "", 
+        team2: "",
+        date: new Date().toISOString().split('T')[0],
+        startTime: "04:30 PM"
+      });
       mutateMatches();
     } catch { setCreateError("Network error."); }
   };
@@ -177,6 +197,16 @@ export default function FootballAdminPage() {
                  <option value="">— Team 2 —</option>
                  {validTeams.filter(t=>t.name!==newMatch.team1).map(t=><option key={t._id} value={t.name}>{t.name}</option>)}
                </select>
+             </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <div>
+                  <label className="label-sm">Match Date</label>
+                  <input type="date" value={newMatch.date} onChange={e=>setNewMatch({...newMatch, date: e.target.value})} className="input-field" />
+               </div>
+               <div>
+                  <label className="label-sm">Start Time</label>
+                  <input placeholder="e.g. 04:30 PM" value={newMatch.startTime} onChange={e=>setNewMatch({...newMatch, startTime: e.target.value})} className="input-field" />
+               </div>
              </div>
              {createError && <p className="text-red-500 text-sm">{createError}</p>}
              <button type="submit" className="w-full py-3 bg-white text-black font-bold rounded-xl active:scale-95 transition-all">INITIALIZE MATCH</button>

@@ -113,7 +113,7 @@ export default function FootballMatchPage() {
                   <span className="font-bold">{g.player}</span>
                   <span className="text-xs opacity-60">for {g.team}</span>
                 </div>
-                {g.minute && <span className="text-xs text-zinc-500 font-mono">{g.minute}&apos;</span>}
+                {(g.minute !== undefined && g.minute !== null) && <span className="text-xs text-zinc-500 font-mono">{g.minute}&apos;</span>}
               </div>
             ))}
           </div>
