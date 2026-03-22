@@ -31,14 +31,14 @@ export default function Navbar() {
           </div>
         </Link>
 
-        {/* Desktop Links */}
+        {/* Desktop Links (Upgraded to text-gray-100 for that premium matte white visibility) */}
         <div className="hidden md:flex items-center gap-10">
-          <Link href="/" className="text-[0.7rem] font-bold tracking-[0.3em] uppercase hover:text-[#FFBF00] transition-colors">Home</Link>
-          <Link href="/#teams" className="text-[0.7rem] font-bold tracking-[0.3em] uppercase hover:text-[#FFBF00] transition-colors">Teams</Link>
-          <Link href="/#scores" className="text-[0.7rem] font-bold tracking-[0.3em] uppercase hover:text-[#FFBF00] transition-colors">Live Score</Link>
-          <Link href="/#leaderboard" className="text-[0.7rem] font-bold tracking-[0.3em] uppercase hover:text-[#FFBF00] transition-colors">Leaderboard</Link>
-          <Link href="/#about" className="text-[0.7rem] font-bold tracking-[0.3em] uppercase hover:text-[#FFBF00] transition-colors">About Prism</Link>
-          <Link href="/admin/leaderboard" className="text-[0.7rem] font-bold tracking-[0.3em] uppercase hover:text-[#FFBF00] transition-colors">Admin</Link>
+          <Link href="/" className="text-sm font-bold tracking-[0.2em] uppercase text-gray-100 hover:text-[#FFBF00] transition-colors drop-shadow-none">Home</Link>
+          <Link href="/#teams" className="text-sm font-bold tracking-[0.2em] uppercase text-gray-100 hover:text-[#FFBF00] transition-colors drop-shadow-none">Teams</Link>
+          <Link href="/#scores" className="text-sm font-bold tracking-[0.2em] uppercase text-gray-100 hover:text-[#FFBF00] transition-colors drop-shadow-none">Live Score</Link>
+          <Link href="/#leaderboard" className="text-sm font-bold tracking-[0.2em] uppercase text-gray-100 hover:text-[#FFBF00] transition-colors drop-shadow-none">Leaderboard</Link>
+          <Link href="/#about" className="text-sm font-bold tracking-[0.2em] uppercase text-gray-100 hover:text-[#FFBF00] transition-colors drop-shadow-none">About Prism</Link>
+          <Link href="/admin/leaderboard" className="text-sm font-bold tracking-[0.2em] uppercase text-gray-100 hover:text-[#FFBF00] transition-colors drop-shadow-none">Admin</Link>
         </div>
 
         {/* 3. This button now triggers the 16-sport overlay */}
