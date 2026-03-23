@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Youtube, Instagram, Twitter, Mail, MapPin } from "lucide-react";
+import { Instagram, Mail, MapPin } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -52,14 +52,8 @@ export default function Footer() {
         <div className="flex flex-col space-y-5">
           <h4 className="text-[#FFBF00] text-xs font-black uppercase tracking-[0.3em] mb-1">Connect</h4>
           <div className="flex space-x-4">
-            <a href="#" className="p-2.5 rounded-full border border-[#FFBF00]/20 bg-[#FFBF00]/5 text-white hover:bg-[#FFBF00] hover:text-black transition-all duration-300">
+            <a href="https://www.instagram.com/prism_svnit/" target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-full border border-[#FFBF00]/20 bg-[#FFBF00]/5 text-white hover:bg-[#FFBF00] hover:text-black transition-all duration-300">
               <Instagram className="w-5 h-5" />
-            </a>
-            <a href="#" className="p-2.5 rounded-full border border-[#FFBF00]/20 bg-[#FFBF00]/5 text-white hover:bg-[#FFBF00] hover:text-black transition-all duration-300">
-              <Twitter className="w-5 h-5" />
-            </a>
-            <a href="#" className="p-2.5 rounded-full border border-[#FFBF00]/20 bg-[#FFBF00]/5 text-white hover:bg-[#FFBF00] hover:text-black transition-all duration-300">
-              <Youtube className="w-5 h-5" />
             </a>
           </div>
         </div>
