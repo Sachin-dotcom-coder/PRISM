@@ -5,7 +5,6 @@ export interface IHandballMatch {
   team1_department: string;
   team2_department: string;
   match_date?: Date | string;
-  venue?: string;
   team1_score?: number | '';
   team2_score?: number | '';
   winner?: string | null;

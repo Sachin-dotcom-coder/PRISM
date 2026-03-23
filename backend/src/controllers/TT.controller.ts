@@ -4,10 +4,10 @@ import TTMatch from "../models/TT.model";
 export const createTTMatch = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
-      match_id, match_stage, match_type, team1_department, team2_department, match_date, venue, gender
+      match_id, match_stage, match_type, team1_department, team2_department, match_date, gender
     } = req.body;
 
-    if (match_id === undefined || !match_stage || !match_type || !team1_department || !team2_department || !match_date || !venue || !gender) {
+    if (match_id === undefined || !match_stage || !match_type || !team1_department || !team2_department || !match_date || !gender) {
       res.status(400).json({ success: false, message: "Missing required fields including gender and match_type." });
       return;
     }

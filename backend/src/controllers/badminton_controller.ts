@@ -9,7 +9,6 @@ export const createBadmintonMatch = async (req: Request, res: Response): Promise
       team1_department,
       team2_department,
       match_date,
-      venue,
       gender
     } = req.body;
 
@@ -19,7 +18,6 @@ export const createBadmintonMatch = async (req: Request, res: Response): Promise
       !team1_department ||
       !team2_department ||
       !match_date ||
-      !venue ||
       !gender
     ) {
       res.status(400).json({

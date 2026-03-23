@@ -15,6 +15,7 @@ import {
 import CategorySelector from "./components/CategorySelector";
 import EventSelector from "./components/EventSelector";
 import ParticipantForm from "./components/ParticipantForm";
+import { DEPARTMENT_OPTIONS } from "../shared/departmentOptions";
 import { createEvent, deleteEvent, getEvent, getEvents, updateEvent } from "./services/athleticsApi";
 import { useGender } from "@/app/components/Providers";
 import {
@@ -30,7 +31,7 @@ import {
 
 const emptyParticipant = (): IParticipant => ({
   participant_name: "",
-  department: "",
+  department: DEPARTMENT_OPTIONS[0],
   performance: "",
   rank: null
 });
@@ -58,7 +59,6 @@ const buildInitialForm = (
     event_name: eventName,
     event_type: meta.eventType,
     event_date: new Date().toISOString().slice(0, 10),
-    venue: "",
     participants: [emptyParticipant()],
     winner: null,
     event_status: "scheduled",
@@ -75,9 +75,12 @@ const rankParticipants = (
       return a.participant_name.localeCompare(b.participant_name);
     }
 
+    const performanceA = Number(a.performance);
+    const performanceB = Number(b.performance);
+
     return eventType === "run"
-      ? a.performance - b.performance
-      : b.performance - a.performance;
+      ? performanceA - performanceB
+      : performanceB - performanceA;
   });
 
   return sorted.map((participant, index, arr) => {
@@ -426,17 +429,6 @@ export default function AthleticsAdminPage() {
 
             <div>
               <label className="mb-1 block text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
-                Venue
-              </label>
-              <input
-                value={formData.venue || ""}
-                onChange={(e) => setFormData((prev) => ({ ...prev, venue: e.target.value }))}
-                className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 text-sm text-white outline-none transition-all focus:border-[#FFBF00]"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
                 Event Status
               </label>
               <select
@@ -479,8 +471,7 @@ export default function AthleticsAdminPage() {
               <label className="mb-1 block text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
                 Dept Name 1
               </label>
-              <input
-                type="text"
+              <select
                 value={ensureParticipantSlots(formData.participants, 2)[0].department}
                 onChange={(e) =>
                   setFormData((prev) => {
@@ -489,17 +480,21 @@ export default function AthleticsAdminPage() {
                     return { ...prev, participants };
                   })
                 }
-                placeholder="e.g. CS"
                 className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 text-sm text-white outline-none transition-all focus:border-[#FFBF00]"
-              />
+              >
+                {DEPARTMENT_OPTIONS.map((department) => (
+                  <option key={department} value={department}>
+                    {department}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
               <label className="mb-1 block text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
                 Dept Name 2
               </label>
-              <input
-                type="text"
+              <select
                 value={ensureParticipantSlots(formData.participants, 2)[1].department}
                 onChange={(e) =>
                   setFormData((prev) => {
@@ -508,9 +503,14 @@ export default function AthleticsAdminPage() {
                     return { ...prev, participants };
                   })
                 }
-                placeholder="e.g. MECH"
                 className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 text-sm text-white outline-none transition-all focus:border-[#FFBF00]"
-              />
+              >
+                {DEPARTMENT_OPTIONS.map((department) => (
+                  <option key={department} value={department}>
+                    {department}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
@@ -591,7 +591,7 @@ export default function AthleticsAdminPage() {
               <tr className="bg-zinc-900 text-xs font-black uppercase tracking-[0.2em] text-zinc-500">
                 <th className="p-4 text-left">Event</th>
                 <th className="p-4 text-left">Type</th>
-                <th className="p-4 text-left">Date / Venue</th>
+                <th className="p-4 text-left">Date</th>
                 <th className="p-4 text-left">Winner</th>
                 <th className="p-4 text-left">Status</th>
                 <th className="p-4 text-left">Participants</th>
@@ -625,10 +625,7 @@ export default function AthleticsAdminPage() {
                         {event.event_type}
                       </span>
                     </td>
-                    <td className="p-4 text-zinc-300">
-                      <div>{event.event_date ? new Date(event.event_date).toLocaleDateString() : "-"}</div>
-                      <div className="mt-1 text-xs text-zinc-500">{event.venue || "-"}</div>
-                    </td>
+                    <td className="p-4 text-zinc-300">{event.event_date ? new Date(event.event_date).toLocaleDateString() : "-"}</td>
                     <td className="p-4">
                       <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-3 py-1 text-sm font-semibold text-white">
                         <Medal className="h-4 w-4 text-[#FFBF00]" />

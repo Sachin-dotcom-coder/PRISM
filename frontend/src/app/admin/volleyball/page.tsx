@@ -304,10 +304,7 @@ export default function VolleyballAdminPage() {
                     matches.map((m) => (
                       <tr key={m.match_id} className="hover:bg-zinc-900/40 transition-colors">
                         <td className="p-4 text-zinc-500 font-mono">{m.match_id}</td>
-                        <td className="p-4">
-                          <div className="text-white font-bold capitalize">{m.match_stage?.replace('_', ' ')}</div>
-                          {m.venue && <div className="text-zinc-500 text-xs capitalize">{m.venue}</div>}
-                        </td>
+                        <td className="p-4"><div className="text-white font-bold capitalize">{m.match_stage?.replace('_', ' ')}</div></td>
                         <td className="p-4">
                           <span className="font-[900] text-white tracking-widest">{m.team1_department}</span>
                           <span className="text-[#FFBF00] mx-2 text-xs font-bold font-mono">VS</span>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Medal, Pencil, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
 import { useGender } from "@/app/components/Providers";
+import { DEPARTMENT_OPTIONS } from "../shared/departmentOptions";
 import { createEvent, deleteEvent, getEvent, getEvents, updateEvent } from "./services/armWrestlingApi";
 import {
   ARM_WRESTLING_CATEGORY_OPTIONS,
@@ -16,9 +17,8 @@ const buildInitialForm = (gender: ArmWrestlingGender): IArmWrestlingEvent => ({
   event_name: "right_hand",
   category: "below_63",
   event_date: new Date().toISOString().slice(0, 10),
-  venue: "",
-  department_1: "",
-  department_2: "",
+  department_1: DEPARTMENT_OPTIONS[0],
+  department_2: DEPARTMENT_OPTIONS[1],
   winner: null,
   event_status: "scheduled",
   gender
@@ -314,55 +314,58 @@ export default function ArmWrestlingAdminPage() {
 
             <div>
               <label className="mb-1 block text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
-                Venue
-              </label>
-              <input
-                value={formData.venue || ""}
-                onChange={(e) => setFormData((prev) => ({ ...prev, venue: e.target.value }))}
-                className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 text-sm text-white outline-none transition-all focus:border-[#FFBF00]"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
                 Dept Name 1
               </label>
-              <input
+              <select
                 value={formData.department_1}
                 onChange={(e) => setFormData((prev) => ({ ...prev, department_1: e.target.value }))}
-                placeholder="e.g. CS"
                 className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 text-sm text-white outline-none transition-all focus:border-[#FFBF00]"
-              />
+              >
+                {DEPARTMENT_OPTIONS.map((department) => (
+                  <option key={department} value={department}>
+                    {department}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
               <label className="mb-1 block text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
                 Dept Name 2
               </label>
-              <input
+              <select
                 value={formData.department_2}
                 onChange={(e) => setFormData((prev) => ({ ...prev, department_2: e.target.value }))}
-                placeholder="e.g. MECH"
                 className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 text-sm text-white outline-none transition-all focus:border-[#FFBF00]"
-              />
+              >
+                {DEPARTMENT_OPTIONS.map((department) => (
+                  <option key={department} value={department}>
+                    {department}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="xl:col-span-2">
               <label className="mb-1 block text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
                 Winner
               </label>
-              <input
-                type="text"
+              <select
                 value={formData.winner || ""}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    winner: e.target.value.trim() ? e.target.value : null
+                    winner: e.target.value || null
                   }))
                 }
-                placeholder="Type winner department manually"
                 className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 text-sm text-white outline-none transition-all focus:border-[#FFBF00]"
-              />
+              >
+                {DEPARTMENT_OPTIONS.map((department) => (
+                  <option key={department} value={department}>
+                    {department}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -409,7 +412,7 @@ export default function ArmWrestlingAdminPage() {
               <tr className="bg-zinc-900 text-xs font-black uppercase tracking-[0.2em] text-zinc-500">
                 <th className="p-4 text-left">Event</th>
                 <th className="p-4 text-left">Category</th>
-                <th className="p-4 text-left">Date / Venue</th>
+                <th className="p-4 text-left">Date</th>
                 <th className="p-4 text-left">Departments</th>
                 <th className="p-4 text-left">Winner</th>
                 <th className="p-4 text-left">Status</th>
@@ -439,10 +442,7 @@ export default function ArmWrestlingAdminPage() {
                     <td className="p-4 text-zinc-300">
                       {(event.category || "below_63").replace("_", " ")}
                     </td>
-                    <td className="p-4 text-zinc-300">
-                      <div>{event.event_date ? new Date(event.event_date).toLocaleDateString() : "-"}</div>
-                      <div className="mt-1 text-xs text-zinc-500">{event.venue || "-"}</div>
-                    </td>
+                    <td className="p-4 text-zinc-300">{event.event_date ? new Date(event.event_date).toLocaleDateString() : "-"}</td>
                     <td className="p-4 font-semibold text-white">
                       {event.department_1} <span className="text-zinc-500">vs</span> {event.department_2}
                     </td>

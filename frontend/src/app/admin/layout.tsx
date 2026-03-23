@@ -32,6 +32,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: `${genderLabel} Powersports`, href: "/admin/powersports", icon: Activity },
     { name: `${genderLabel} Tug Of War`, href: "/admin/tug-of-war", icon: Activity },
     { name: `${genderLabel} Arm Wrestling`, href: "/admin/arm-wrestling", icon: Activity },
+    { name: `${genderLabel} Chess`, href: "/admin/chess", icon: Activity },
+    { name: `${genderLabel} Carrom`, href: "/admin/carrom", icon: Activity },
     { name: "Homepage LB", href: "/admin/leaderboard", icon: Trophy },
     { name: "Cricket LB", href: "/admin/leaderboard/cricket", icon: Database },
     { name: "Football LB", href: "/admin/leaderboard/football", icon: Database },

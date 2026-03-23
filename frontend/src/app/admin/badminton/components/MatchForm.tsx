@@ -3,6 +3,7 @@ import { IBadmintonMatch, IGame } from '../types';
 import GameInput from './GameInput';
 import { Plus, Save, X } from 'lucide-react';
 import { createMatch, updateMatch } from '../services/badmintonApi';
+import { DEPARTMENT_OPTIONS } from '../../shared/departmentOptions';
 
 interface MatchFormProps {
   initialData?: IBadmintonMatch | null;
@@ -15,10 +16,9 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
   const [formData, setFormData] = useState<IBadmintonMatch>({
     match_id: Date.now() % 1000000,
     match_stage: '',
-    team1_department: '',
-    team2_department: '',
+    team1_department: DEPARTMENT_OPTIONS[0],
+    team2_department: DEPARTMENT_OPTIONS[1],
     match_date: new Date().toISOString().slice(0, 16),
-    venue: '',
     team1_score: '',
     team2_score: '',
     games: [],
@@ -141,11 +141,15 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
         </div>
         <div>
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Team 1 Dept</label>
-          <input required type="text" name="team1_department" value={formData.team1_department} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white" placeholder="e.g. CS" />
+          <select required name="team1_department" value={formData.team1_department} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white">
+            {DEPARTMENT_OPTIONS.map((department) => <option key={department} value={department}>{department}</option>)}
+          </select>
         </div>
         <div>
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Team 2 Dept</label>
-          <input required type="text" name="team2_department" value={formData.team2_department} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white" placeholder="e.g. MECH" />
+          <select required name="team2_department" value={formData.team2_department} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white">
+            {DEPARTMENT_OPTIONS.map((department) => <option key={department} value={department}>{department}</option>)}
+          </select>
         </div>
         <div>
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Match Date & Time</label>
@@ -162,7 +166,9 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
         <div>
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Winner</label>
           <div className="flex gap-2">
-             <input type="text" name="winner" value={formData.winner || ''} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white" placeholder="Winner Dept" />
+             <select name="winner" value={formData.winner || ''} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white">
+               {DEPARTMENT_OPTIONS.map((department) => <option key={department} value={department}>{department}</option>)}
+             </select>
           </div>
         </div>
       </div>

@@ -12,7 +12,7 @@ export interface IBadmintonMatch extends Document {
   team1_department: string;
   team2_department: string;
   match_date: Date;
-  venue: string;
+  venue?: string;
   games: IGame[];
   team1_score: number;
   team2_score: number;
@@ -62,8 +62,7 @@ const BadmintonMatchSchema: Schema<IBadmintonMatch> = new Schema<IBadmintonMatch
       required: true
     },
     venue: {
-      type: String,
-      required: true
+      type: String
     },
 
     // ✅ NEW: Game-wise scores

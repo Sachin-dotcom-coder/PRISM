@@ -3,6 +3,7 @@ import { ILawnTennisMatch, IGame } from '../types';
 import GameInput from './GameInput';
 import { Plus, Save, X } from 'lucide-react';
 import { createMatch, updateMatch } from '../services/lawnTennisApi';
+import { DEPARTMENT_OPTIONS } from '../../shared/departmentOptions';
 
 interface MatchFormProps {
   initialData?: ILawnTennisMatch | null;
@@ -18,8 +19,8 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
     match_type: 'singles',
     category: 'boys',
     stage: 'league',
-    dept_name1: '',
-    dept_name2: '',
+    dept_name1: DEPARTMENT_OPTIONS[0],
+    dept_name2: DEPARTMENT_OPTIONS[1],
     games: [],
     winner_dept: '',
     status: 'scheduled',
@@ -139,17 +140,23 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
 
         <div>
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Dept Name 1</label>
-          <input required type="text" name="dept_name1" value={formData.dept_name1} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white" placeholder="e.g. CS" />
+          <select required name="dept_name1" value={formData.dept_name1} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white">
+            {DEPARTMENT_OPTIONS.map((department) => <option key={department} value={department}>{department}</option>)}
+          </select>
         </div>
 
         <div>
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Dept Name 2</label>
-          <input required type="text" name="dept_name2" value={formData.dept_name2} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white" placeholder="e.g. MECH" />
+          <select required name="dept_name2" value={formData.dept_name2} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white">
+            {DEPARTMENT_OPTIONS.map((department) => <option key={department} value={department}>{department}</option>)}
+          </select>
         </div>
 
         <div>
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Winner Dept</label>
-          <input type="text" name="winner_dept" value={formData.winner_dept} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white" placeholder="e.g. CS (leave blank if not done)" />
+          <select name="winner_dept" value={formData.winner_dept} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white">
+            {DEPARTMENT_OPTIONS.map((department) => <option key={department} value={department}>{department}</option>)}
+          </select>
         </div>
       </div>
 
