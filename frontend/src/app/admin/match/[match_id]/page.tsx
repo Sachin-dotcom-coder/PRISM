@@ -385,7 +385,26 @@ export default function AdminMatchUpdater() {
 
   const team1Short = match.teams?.team1?.shortName || "T1";
   const team2Short = match.teams?.team2?.shortName || "T2";
-  const teamNames = [match.teams?.team1?.name || "Team 1", match.teams?.team2?.name || "Team 2"];
+  const team1Name = match.teams?.team1?.name || "Team 1";
+  const team2Name = match.teams?.team2?.name || "Team 2";
+
+  // Derive batting order from toss if available
+  let firstBattingTeamName = team1Name;
+  let secondBattingTeamName = team2Name;
+
+  if (match.toss && match.toss.winner) {
+    const isTeam1Winner = match.toss.winner === team1Name || match.toss.winner === team1Short;
+    if (match.toss.decision.toLowerCase() === "bat") {
+      firstBattingTeamName = isTeam1Winner ? team1Name : team2Name;
+      secondBattingTeamName = isTeam1Winner ? team2Name : team1Name;
+    } else {
+      // decided to bowl -> the other team bats first
+      firstBattingTeamName = isTeam1Winner ? team2Name : team1Name;
+      secondBattingTeamName = isTeam1Winner ? team1Name : team2Name;
+    }
+  }
+
+  const teamNames = [firstBattingTeamName, secondBattingTeamName];
 
   const handleSave = async () => {
     setIsSaving(true); setSaveMsg("");

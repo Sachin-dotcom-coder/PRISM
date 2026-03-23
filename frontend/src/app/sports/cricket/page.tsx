@@ -89,7 +89,9 @@ function ScorecardContent({ match, isLive = false }: { match: any, isLive?: bool
   
   if (!match) return null;
   
-  const shownInningNum = selectedInning || match.current_innings || 1;
+  // Calculate current innings based on array length
+  const dbCurrentInnings = match.innings?.length || 1;
+  const shownInningNum = selectedInning || dbCurrentInnings;
   const currentInning = match.innings?.find((i: any) => i.inning_number === shownInningNum) || match.innings?.[shownInningNum - 1] || match.innings?.[0];
 
   const team1 = match.teams?.team1;
@@ -114,37 +116,17 @@ function ScorecardContent({ match, isLive = false }: { match: any, isLive?: bool
 
   // Target calculation for 2nd innings
   const inning1 = match.innings?.find((i: any) => i.inning_number === 1) || match.innings?.[0];
-  const runsNeeded = (inning1?.runs || 0) - (currentInning?.runs || 0);
-  const ballsLeft = 48 - totalBalls;
+  // Runs needed is (Inning 1 Runs + 1) - Current Runs
+  const runsNeeded = Math.max(0, (inning1?.runs || 0) + 1 - (currentInning?.runs || 0));
+  const ballsLeft = 48 - totalBalls; // assuming 8 overs max, 8 * 6 = 48
 
   return (
     <div className="space-y-8">
-      {/* Target Box (2nd Innings) */}
-      {match.current_innings === 2 && shownInningNum === 2 && (
-        <div className="bg-[#000000] border border-[#FFBF00]/30 rounded-xl p-4 sm:p-5 flex justify-center items-center gap-6 sm:gap-10 shadow-[0_0_15px_rgba(255,191,0,0.05)] mx-auto w-fit">
-          <div className="flex flex-col justify-center items-end leading-none text-gray-400 font-bold text-xs tracking-widest uppercase">
-            <span>Runs</span>
-            <span className="mt-1 text-[#FFBF00]">Needed</span>
-          </div>
-          <div className="text-5xl sm:text-6xl font-black text-white leading-none tracking-tighter">
-            {runsNeeded}
-          </div>
-          <div className="w-px h-10 sm:h-12 bg-[#1A1A1A] mx-2"></div>
-          <div className="flex flex-col justify-center items-end leading-none text-gray-400 font-bold text-xs tracking-widest uppercase">
-            <span>Balls</span>
-            <span className="mt-1 text-[#FFBF00]">Left</span>
-          </div>
-          <div className="text-5xl sm:text-6xl font-black text-white leading-none tracking-tighter">
-            {Math.max(0, ballsLeft)}
-          </div>
-        </div>
-      )}
-
       {/* Main Scorecard Status Box */}
       <div className="border border-[#1A1A1A] bg-[#000000] rounded-2xl p-5 md:p-6 relative overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-[#FFBF00] opacity-[0.02] blur-[100px] pointer-events-none rounded-full"></div>
 
-        <div className="flex justify-between items-center mb-5 border-b border-[#1A1A1A] pb-3">
+        <div className="flex justify-between items-center mb-5 border-b border-[#1A1A1A] pb-3 z-10 relative">
           <div className="flex gap-4 items-center">
             {[1, 2].map((num) => {
               const hasInning = match.innings?.some((i: any) => i.inning_number === num) || !!match.innings?.[num - 1];
@@ -171,6 +153,35 @@ function ScorecardContent({ match, isLive = false }: { match: any, isLive?: bool
             </div>
           )}
         </div>
+
+        {/* Toss Indicator First */}
+        <div className="flex flex-col items-center mb-6 z-10 relative">
+          <p className="text-[10px] text-gray-500 font-bold tracking-[0.2em] uppercase flex items-center gap-3">
+            <span className="bg-[#FFBF00] text-black px-2 py-0.5 rounded text-[9px] font-black">TOSS</span>
+            <span className="text-gray-300">{tossWinner} elected to {tossDecision}</span>
+          </p>
+        </div>
+
+        {/* Target Box (2nd Innings) Second */}
+        {dbCurrentInnings === 2 && shownInningNum === 2 && match.status !== "COMPLETED" && (
+          <div className="bg-[#000000] border border-[#FFBF00]/30 rounded-xl p-3 sm:p-4 flex justify-center items-center gap-4 sm:gap-6 shadow-[0_0_15px_rgba(255,191,0,0.05)] mx-auto w-fit mb-8 z-10 relative">
+            <div className="flex flex-col justify-center items-end leading-none text-gray-400 font-bold text-[10px] tracking-widest uppercase">
+              <span>Runs</span>
+              <span className="mt-1 text-[#FFBF00]">Needed</span>
+            </div>
+            <div className="text-4xl sm:text-5xl font-black text-white leading-none tracking-tighter">
+              {runsNeeded}
+            </div>
+            <div className="w-px h-8 sm:h-10 bg-[#1A1A1A] mx-2"></div>
+            <div className="flex flex-col justify-center items-end leading-none text-gray-400 font-bold text-[10px] tracking-widest uppercase">
+              <span>Balls</span>
+              <span className="mt-1 text-[#FFBF00]">Left</span>
+            </div>
+            <div className="text-4xl sm:text-5xl font-black text-white leading-none tracking-tighter">
+              {Math.max(0, ballsLeft)}
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-8 md:gap-0">
           <div className="flex flex-col items-center md:items-start w-full md:w-1/2 z-10">
@@ -206,10 +217,10 @@ function ScorecardContent({ match, isLive = false }: { match: any, isLive?: bool
                 </div>
 
                 {/* Over Tracker */}
-                {isLive && recentBalls.length > 0 && shownInningNum === match.current_innings && (
-                  <div className="flex gap-2">
+                {isLive && recentBalls.length > 0 && shownInningNum === dbCurrentInnings && (
+                  <div className="flex gap-2 mt-4 text-xs font-bold font-mono overflow-x-auto no-scrollbar w-full py-1">
                     {recentBalls.map((ball: string, i: number) => (
-                      <div key={i} className={`w-7 h-7 rounded-full flex items-center justify-center border font-bold text-xs ${ball === 'W' ? 'border-red-500 bg-red-500/10 text-red-500' :
+                      <div key={i} className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center border ${ball === 'W' ? 'border-red-500 bg-red-500/10 text-red-500' :
                         ['1', '2', '3', '4', '6'].includes(ball) ? 'border-[#FFBF00] bg-[#FFBF00]/10 text-[#FFBF00]' :
                           'border-[#1A1A1A] bg-transparent text-gray-400'
                         }`}>{ball}</div>
@@ -219,13 +230,6 @@ function ScorecardContent({ match, isLive = false }: { match: any, isLive?: bool
               </div>
             )}
           </div>
-        </div>
-
-        <div className="flex flex-col items-center border-t border-[#1A1A1A] pt-4 mt-5 z-10 relative">
-          <p className="text-[10px] text-gray-500 font-bold tracking-[0.2em] uppercase flex items-center gap-3">
-            <span className="bg-[#FFBF00] text-black px-2 py-0.5 rounded text-[9px] font-black">TOSS</span>
-            <span className="text-gray-300">{tossWinner} elected to {tossDecision}</span>
-          </p>
         </div>
       </div>
 
