@@ -1,47 +1,38 @@
 "use client";
 
 import { useGender } from "./Providers";
-import { motion } from "framer-motion";
 
 export default function GenderToggle() {
   const { gender, setGender } = useGender();
   const isWomen = gender === "f";
 
   return (
-    <div className="flex justify-center my-8">
-      <div className="relative flex items-center bg-zinc-900/50 backdrop-blur-md border border-zinc-800 rounded-full p-1 w-64 h-12 shadow-lg theme-women:bg-white/50 theme-women:border-zinc-200">
-        
-        {/* Sliding background pill */}
-        <motion.div
-          className="absolute h-10 rounded-full bg-accent shadow-lg"
-          initial={false}
-          animate={{
-            x: isWomen ? "100%" : "0%",
-            width: "50%",
-          }}
-          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-        />
-
-        {/* Men Button */}
-        <button
-          onClick={() => setGender("m")}
-          className={`flex-1 relative z-10 font-bold text-sm transition-colors duration-300 ${
-            !isWomen ? "text-white" : "text-zinc-400 hover:text-zinc-200 theme-women:text-zinc-500 theme-women:hover:text-zinc-800"
-          }`}
-        >
-          MEN
-        </button>
-
-        {/* Women Button */}
-        <button
-          onClick={() => setGender("f")}
-          className={`flex-1 relative z-10 font-bold text-sm transition-colors duration-300 ${
-            isWomen ? "text-white theme-women:text-white" : "text-zinc-400 hover:text-zinc-200"
-          }`}
-        >
-          WOMEN
-        </button>
-      </div>
+    <div
+      className="flex items-center rounded-xl p-[3px] gap-[3px]"
+      style={{ background: "#111", border: "1px solid #2A2A2A", width: "fit-content" }}
+    >
+      <button
+        onClick={() => setGender("m")}
+        className="px-5 py-2 rounded-[10px] text-sm font-black tracking-wider transition-all duration-200"
+        style={
+          !isWomen
+            ? { background: "#FFBF00", color: "#000", boxShadow: "0 2px 10px rgba(255,191,0,0.45)" }
+            : { background: "transparent", color: "#555" }
+        }
+      >
+        Men
+      </button>
+      <button
+        onClick={() => setGender("f")}
+        className="px-5 py-2 rounded-[10px] text-sm font-black tracking-wider transition-all duration-200"
+        style={
+          isWomen
+            ? { background: "#FFBF00", color: "#000", boxShadow: "0 2px 10px rgba(255,191,0,0.45)" }
+            : { background: "transparent", color: "#555" }
+        }
+      >
+        Women
+      </button>
     </div>
   );
 }

@@ -8,7 +8,6 @@ export interface IArmWrestlingEvent {
   event_name: ArmWrestlingEventName;
   category: ArmWrestlingCategory;
   event_date?: string;
-  venue?: string;
   department_1: string;
   department_2: string;
   winner: string | null;

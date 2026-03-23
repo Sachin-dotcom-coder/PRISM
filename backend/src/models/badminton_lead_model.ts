@@ -3,7 +3,6 @@ import mongoose, { Document, Schema } from "mongoose";
 export interface IBadmintonLeaderboard extends Document {
   leaderboard_id: number;
   dept_name: string;
-  event_name: "singles" | "doubles";
   category: "boys" | "girls";
   group: string; // e.g. "A", "B"
   createdAt: Date;
@@ -21,11 +20,6 @@ const BadmintonLeaderboardSchema: Schema<IBadmintonLeaderboard> = new Schema(
       type: String,
       required: true,
     },
-    event_name: {
-      type: String,
-      enum: ["singles", "doubles"],
-      required: true,
-    },
     category: {
       type: String,
       enum: ["boys", "girls"],
@@ -41,9 +35,9 @@ const BadmintonLeaderboardSchema: Schema<IBadmintonLeaderboard> = new Schema(
   }
 );
 
-// A department can only be registered once per event + category combination
+// A department can only be registered once per category combination
 BadmintonLeaderboardSchema.index(
-  { dept_name: 1, event_name: 1, category: 1 },
+  { dept_name: 1, category: 1 },
   { unique: true }
 );
 

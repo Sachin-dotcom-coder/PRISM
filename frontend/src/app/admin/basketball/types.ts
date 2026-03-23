@@ -11,7 +11,6 @@ export interface IBasketballMatch {
   team1_department: string;
   team2_department: string;
   match_date: Date | string;
-  venue: string;
   games: IGame[]; 
   total_games: number; 
   winner: string | null;

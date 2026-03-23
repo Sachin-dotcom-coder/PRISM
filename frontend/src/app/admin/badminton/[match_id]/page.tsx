@@ -9,6 +9,7 @@ import {
   ArrowLeft, Save, Plus, Trash2, Trophy, Activity,
   Check, X, AlertCircle, CheckCircle2
 } from "lucide-react";
+import { DEPARTMENT_OPTIONS } from "../../shared/departmentOptions";
 
 // ── Types ────────────────────────────────────────────────
 interface IGame {
@@ -21,11 +22,9 @@ interface IBadmintonMatch {
   _id?: string;
   match_id: number;
   match_stage: string;
-  match_type: "singles" | "doubles";
   team1_department: string;
   team2_department: string;
   match_date: string;
-  venue: string;
   team1_score: number;
   team2_score: number;
   games: IGame[];
@@ -252,11 +251,9 @@ export default function BadmintonMatchPage() {
     try {
       const payload = {
         match_stage: form.match_stage,
-        match_type: form.match_type,
         team1_department: form.team1_department,
         team2_department: form.team2_department,
         match_date: new Date(form.match_date).toISOString(),
-        venue: form.venue,
         team1_score: Number(form.team1_score),
         team2_score: Number(form.team2_score),
         games: form.games.map((g) => ({
@@ -323,7 +320,7 @@ export default function BadmintonMatchPage() {
             {match.team2_department}
           </h1>
           <p className="text-zinc-500 text-xs mt-0.5">
-            {match.match_type} • {match.match_stage} • {match.gender}
+            {match.match_stage} • {match.gender}
           </p>
         </div>
       </div>
@@ -377,19 +374,6 @@ export default function BadmintonMatchPage() {
             </select>
           </div>
 
-          {/* Match Type */}
-          <div>
-            <label className="label-sm">Type</label>
-            <select
-              value={form.match_type}
-              onChange={(e) => set("match_type", e.target.value as "singles" | "doubles")}
-              className="input-field"
-            >
-              <option value="singles">Singles</option>
-              <option value="doubles">Doubles</option>
-            </select>
-          </div>
-
           {/* Gender */}
           <div>
             <label className="label-sm">Gender</label>
@@ -406,23 +390,29 @@ export default function BadmintonMatchPage() {
           {/* Team 1 */}
           <div>
             <label className="label-sm">Team 1 Department</label>
-            <input
+            <select
               value={form.team1_department}
               onChange={(e) => set("team1_department", e.target.value)}
               className="input-field"
-              placeholder="e.g. CS"
-            />
+            >
+              {DEPARTMENT_OPTIONS.map((department) => (
+                <option key={department} value={department}>{department}</option>
+              ))}
+            </select>
           </div>
 
           {/* Team 2 */}
           <div>
             <label className="label-sm">Team 2 Department</label>
-            <input
+            <select
               value={form.team2_department}
               onChange={(e) => set("team2_department", e.target.value)}
               className="input-field"
-              placeholder="e.g. MECH"
-            />
+            >
+              {DEPARTMENT_OPTIONS.map((department) => (
+                <option key={department} value={department}>{department}</option>
+              ))}
+            </select>
           </div>
 
           {/* Date */}
@@ -436,16 +426,6 @@ export default function BadmintonMatchPage() {
             />
           </div>
 
-          {/* Venue */}
-          <div>
-            <label className="label-sm">Venue</label>
-            <input
-              value={form.venue}
-              onChange={(e) => set("venue", e.target.value)}
-              className="input-field"
-              placeholder="e.g. Indoor Court A"
-            />
-          </div>
         </div>
       </section>
 

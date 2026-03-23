@@ -6,7 +6,6 @@ export interface ITugOfWarEvent {
   event_id: number;
   event_name: TugOfWarEventName;
   event_date?: string;
-  venue?: string;
   department_1: string;
   department_2: string;
   winner: string | null;

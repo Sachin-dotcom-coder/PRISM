@@ -11,27 +11,33 @@ export const getLeaderboardStandings = async (req: Request, res: Response) => {
       ...(gender ? { gender } : {})
     });
     const leaderboardEntries = await PowersportsLeaderboard.find();
-    const deptToGroup: Record<string, string> = {};
+    
+    // Map using category and dept_name to avoid mixing men's and women's stats
+    const deptCategoryMap: Record<string, { group: string }> = {};
     leaderboardEntries.forEach(entry => {
-      deptToGroup[entry.dept_name] = entry.group;
+      deptCategoryMap[`${entry.category}_${entry.dept_name}`] = { group: entry.group || "A" };
     });
 
-    const standings: Record<string, { dept_name: string; group: string; points: number; participations: number }> = {};
+    const standings: Record<string, { dept_name: string; category: string; group: string; points: number; participations: number }> = {};
 
     for (const event of events) {
+      const category = event.gender === "men" ? "boys" : "girls";
       const departments = [event.department_1, event.department_2].filter(Boolean);
+      
       for (const dept of departments) {
-        const group = deptToGroup[dept] || "Unknown";
-        if (!standings[dept]) standings[dept] = { dept_name: dept, group, points: 0, participations: 0 };
-        standings[dept].participations++;
+        const key = `${category}_${dept}`;
+        const group = deptCategoryMap[key]?.group || "Unknown";
+        if (!standings[key]) standings[key] = { dept_name: dept, category, group, points: 0, participations: 0 };
+        standings[key].participations++;
       }
 
       if (event.winner) {
-        const group = deptToGroup[event.winner] || "Unknown";
-        if (!standings[event.winner]) {
-          standings[event.winner] = { dept_name: event.winner, group, points: 0, participations: 0 };
+        const key = `${category}_${event.winner}`;
+        const group = deptCategoryMap[key]?.group || "Unknown";
+        if (!standings[key]) {
+          standings[key] = { dept_name: event.winner, category, group, points: 0, participations: 0 };
         }
-        standings[event.winner].points += 5;
+        standings[key].points += 5;
       }
     }
 

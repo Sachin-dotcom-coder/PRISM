@@ -33,10 +33,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: `${genderLabel} Tug Of War`, href: "/admin/tug-of-war", icon: Activity },
     { name: `${genderLabel} Arm Wrestling`, href: "/admin/arm-wrestling", icon: Activity },
     { name: `${genderLabel} Kabaddi`, href: "/admin/kabaddi", icon: Activity },
+    { name: `${genderLabel} Chess`, href: "/admin/chess", icon: Activity },
+    { name: `${genderLabel} Carrom`, href: "/admin/carrom", icon: Activity },
     { name: "Homepage LB", href: "/admin/leaderboard", icon: Trophy },
-    { name: "Cricket LB", href: "/admin/leaderboard/cricket", icon: Database },
-    { name: "Football LB", href: "/admin/leaderboard/football", icon: Database },
-    { name: "Settings", href: "/admin/settings", icon: Settings },
   ];
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -95,14 +94,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="flex h-[calc(100vh-80px)] overflow-hidden bg-background">
+    <div className="flex flex-col md:flex-row h-[calc(100vh-80px)] overflow-hidden bg-background">
       {/* Sidebar */}
-      <div className={`w-64 border-r overflow-y-auto shadow-sm border-zinc-800 bg-card`}>
-        <div className="p-6 h-full flex flex-col">
+      <div className={`w-full md:w-64 md:h-full border-b md:border-b-0 md:border-r overflow-x-auto md:overflow-y-auto shadow-sm border-zinc-800 bg-card shrink-0`}>
+        <div className="p-4 md:p-6 h-full flex flex-col">
           <div className="flex-1">
-            <h2 className={`text-xl font-bold glow-text mb-6`}>Admin Panel • {genderLabel}</h2>
+            <div className="flex items-center justify-between md:block mb-4 md:mb-0">
+              <h2 className={`text-lg md:text-xl font-bold glow-text md:mb-4`}>Admin • {genderLabel}</h2>
+
+              {/* Logout button at top */}
+              <button
+                onClick={() => {
+                  sessionStorage.removeItem("adminAuth");
+                  setIsAuthenticated(false);
+                  router.push("/");
+                }}
+                className="md:w-full md:mb-5 px-3 py-1.5 md:px-4 md:py-2.5 rounded-lg border text-xs md:text-sm font-bold transition-all text-left bg-red-900/20 border-red-800/50 hover:bg-red-600/30 text-red-400 hover:text-red-300 shrink-0"
+              >
+                🚪 Logout
+              </button>
+            </div>
             
-            <nav className="space-y-1">
+            <nav className="flex md:flex-col gap-2 md:gap-0 md:space-y-1 overflow-x-auto pb-1 md:pb-0">
               {navigation.map((item) => {
                 const isActive = pathname === item.href;
                 const Icon = item.icon;
@@ -110,30 +123,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+                    className={`flex items-center gap-2 md:gap-3 px-3 py-2 md:px-4 md:py-3 rounded-xl transition-all duration-300 whitespace-nowrap ${
                       isActive 
-                        ? "bg-accent/15 text-accent font-bold border-l-2 border-accent"
+                        ? "bg-accent/15 text-accent font-bold border-b-2 md:border-b-0 md:border-l-2 border-accent"
                         : "text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200"
                     }`}
                   >
-                    <Icon className="w-5 h-5" />
-                    <span className="text-sm font-medium">{item.name}</span>
+                    <Icon className="w-4 h-4 md:w-5 md:h-5 shrink-0" />
+                    <span className="text-xs md:text-sm font-medium">{item.name}</span>
                   </Link>
                 );
               })}
             </nav>
           </div>
-          
-          <button
-            onClick={() => {
-              sessionStorage.removeItem("adminAuth");
-              setIsAuthenticated(false);
-              router.push("/");
-            }}
-            className={`mt-6 w-full px-4 py-3 rounded-lg border text-sm font-semibold transition-all text-left bg-zinc-900 border-zinc-800 hover:bg-danger/20 hover:text-danger hover:border-danger/50 text-white`}
-          >
-            Logout
-          </button>
         </div>
       </div>
 
@@ -149,8 +151,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           
           <div className="flex items-center gap-4">
             {/* Embedded Gender Toggle inside Admin Header */}
-            <div className="scale-75 origin-right">
-               <GenderToggle />
+            <div className="origin-right">
+              <GenderToggle />
             </div>
             
             <div className="flex items-center gap-3 pl-4 border-l border-zinc-800">

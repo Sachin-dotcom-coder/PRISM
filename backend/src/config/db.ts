@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const connectDB = async (): Promise<void> => {
   try {
-    const uri = process.env.MONGGODB_OTHERSPORTS_URI || process.env.mongodb_urlcricket || process.env.MONGO_URI || process.env.MONGODB_URI;
+    const uri = process.env.MONGGODB_OTHERSPORTS_URI || process.env.MONGODB_HOMEPAGE_URI || process.env.mongodb_urlcricket || process.env.MONGODB_URI || process.env.mongodb_url || process.env.MONGO_URI;
     if (!uri) {
       throw new Error("MongoDB connection string is not defined");
     }

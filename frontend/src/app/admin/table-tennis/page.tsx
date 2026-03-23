@@ -303,7 +303,7 @@ export default function TableTennisAdminPage() {
                   <tr className="border-b border-zinc-800 bg-zinc-900/60 text-zinc-400 text-xs uppercase tracking-wider">
                     <th className="text-left p-4">ID</th>
                     <th className="text-left p-4">Departments</th>
-                    <th className="text-left p-4">Stage & Venue</th>
+                    <th className="text-left p-4">Stage</th>
                     <th className="text-center p-4">Date</th>
                     <th className="text-center p-4">Games</th>
                     <th className="text-center p-4">Status</th>
@@ -325,10 +325,7 @@ export default function TableTennisAdminPage() {
                           <span className="text-[#FFBF00] mx-2 text-xs font-bold font-mono">VS</span>
                           <span className="font-[900] text-white tracking-widest">{match.team2_department}</span>
                         </td>
-                        <td className="p-4">
-                          <div className="text-white font-bold">{match.match_stage}</div>
-                          <div className="text-zinc-500 text-xs tracking-wider">{match.venue}</div>
-                        </td>
+                        <td className="p-4"><div className="text-white font-bold">{match.match_stage}</div></td>
                         <td className="p-4 text-center text-zinc-400 text-xs">{new Date(match.match_date).toLocaleString()}</td>
                         <td className="p-4 text-center font-mono text-zinc-300 font-bold bg-zinc-900/30">
                           <span className="text-[#FFBF00] text-lg mx-2 tracking-widest">{match.team1_score ?? '-'}</span>

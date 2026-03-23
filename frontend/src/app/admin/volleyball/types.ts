@@ -11,7 +11,6 @@ export interface IVolleyballMatch {
   team1_department: string;
   team2_department: string;
   match_date: Date | string;
-  venue: string;
   team1_score?: number | string;
   team2_score?: number | string;
   games?: IGame[]; 

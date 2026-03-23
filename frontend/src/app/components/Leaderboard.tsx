@@ -75,9 +75,6 @@ export default function Leaderboard() {
                             {index + 1}
                           </td>
                           <td className="px-6 py-3 font-bold tracking-wide flex items-center gap-3">
-                            <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-[10px] border border-zinc-700">
-                              {team.shortName}
-                            </div>
                             <span className="text-zinc-200 text-xs sm:text-sm truncate max-w-[100px] sm:max-w-none">{team.name}</span>
                           </td>
                           <td className="px-6 py-3 text-center text-zinc-400 font-medium">

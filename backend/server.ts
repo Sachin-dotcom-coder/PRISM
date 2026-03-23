@@ -14,6 +14,8 @@ import basketballRoutes from "./src/routers/basketball_router";
 import powerSportsRoutes from "./src/routers/powersports_router";
 import tugOfWarRoutes from "./src/routers/tugofwar_router";
 import armWrestlingRoutes from "./src/routers/armwrestling_router";
+import chessRoutes from "./src/routers/chess_router";
+import carromRoutes from "./src/routers/carrom_router";
 import volleyballLeadRoutes from "./src/routers/volley_leade_router";
 import tennisMatchRoutes from "./src/routers/tennis_router";
 import tennisLead from "./src/routers/tennis_lead_router";
@@ -26,6 +28,11 @@ import powersportLeadRoutes from "./src/routers/powersports_lead_router";
 import kabaddiRoutes from "./src/routers/kabaddi_router";
 import kabaddiLeadRoutes from "./src/routers/kabaddi_lead_router";
 
+import khokhoLeadRoutes from "./src/routers/khokho_lead_router";
+import tugofwarLeadRoutes from "./src/routers/tugofwar_lead_router";
+import chessLeadRoutes from "./src/routers/chess_lead_router";
+import armWrestlingLeadRoutes from "./src/routers/armwrestling_lead_router";
+import carromLeadRoutes from "./src/routers/carrom_lead_router";
 
 dotenv.config();
 
@@ -49,6 +56,8 @@ app.use("/api/basketball", basketballRoutes);
 app.use("/api/powersports", powerSportsRoutes);
 app.use("/api/tug-of-war", tugOfWarRoutes);
 app.use("/api/arm-wrestling", armWrestlingRoutes);
+app.use("/api/chess", chessRoutes);
+app.use("/api/carrom", carromRoutes);
 app.use("/api/volleylead", volleyballLeadRoutes);
 app.use("/api/tennis", tennisMatchRoutes);
 app.use("/api/badminton", badmintonRoutes);
@@ -61,6 +70,12 @@ app.use("/api/tt-lead",ttLeadRoutes);
 app.use("/api/powersport-lead",powersportLeadRoutes)
 app.use("/api/kabaddi", kabaddiRoutes);
 app.use("/api/kabaddi-leaderboard", kabaddiLeadRoutes);
+app.use("/api/powersport-lead",powersportLeadRoutes);
+app.use("/api/khokho-leaderboard", khokhoLeadRoutes);
+app.use("/api/tugofwar-leaderboard", tugofwarLeadRoutes);
+app.use("/api/chess-leaderboard", chessLeadRoutes);
+app.use("/api/armwrestling-leaderboard", armWrestlingLeadRoutes);
+app.use("/api/carrom-leaderboard", carromLeadRoutes);
 
 const PORT = process.env.PORT || 5000;
 

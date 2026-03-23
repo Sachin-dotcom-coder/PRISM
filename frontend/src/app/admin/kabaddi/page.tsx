@@ -7,7 +7,21 @@ import { Plus, Trophy, Activity, Trash2, Pencil, Check, X } from "lucide-react";
 import Link from "next/link";
 import { useGender } from "@/app/components/Providers";
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = async (url: string) => {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.error(`Fetch failed: ${url}`, res.status);
+      throw new Error(`API Error: ${res.status}`);
+    }
+    const data = await res.json();
+    console.log(`Fetched from ${url}:`, data);
+    return data;
+  } catch (error) {
+    console.error(`Fetch error for ${url}:`, error);
+    throw error;
+  }
+};
 const RANK_COLORS = ["text-yellow-400 font-black", "text-zinc-300 font-black", "text-amber-600 font-black"];
 
 type Team = { _id: string; name: string; shortName: string; wins: number; losses: number; matches: number; points: number; scoreDiff: number; group: string };
@@ -133,39 +147,107 @@ export default function KabaddiAdminPage() {
       halves: []
     };
     try {
+      console.log("Creating match with payload:", payload);
+      console.log("API URL:", MATCHES_API);
       const res = await fetch(MATCHES_API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      if (!res.ok) { const data = await res.json(); setCreateError(data.error || "Failed"); return; }
+      console.log("Response status:", res.status);
+      if (!res.ok) { const data = await res.json(); console.error("Error response:", data); setCreateError(data.error || "Failed"); return; }
+      const createdData = await res.json();
+      console.log("Match created:", createdData);
       setIsCreatingMatch(false);
       setNewMatch({ match_id: `KBD${Math.floor(Math.random() * 1000)}`, team_a: "", team_a_short: "", team_b: "", team_b_short: "", date: new Date().toISOString().split("T")[0], startTime: "20:00", format: "Standard" });
       mutateMatches();
-    } catch { setCreateError("Network error."); }
+    } catch (error) {
+      console.error("Catch error:", error);
+      setCreateError("Network error.");
+    }
   };
 
   const handleDeleteMatch = async (matchId: string) => {
     if (!confirm("Are you sure?")) return;
-    const res = await fetch(`${MATCHES_API}&id=${matchId}`, { method: "DELETE" });
-    if (res.ok) mutateMatches();
-    else alert("Delete failed");
+    console.log("Deleting match:", matchId, "API:", MATCHES_API);
+    try {
+      const res = await fetch(`${MATCHES_API}&id=${matchId}`, { method: "DELETE" });
+      console.log("Delete response status:", res.status);
+      if (res.ok) {
+        console.log("Match deleted successfully");
+        mutateMatches();
+      }
+      else {
+        const error = await res.json();
+        console.error("Delete error:", error);
+        alert("Delete failed: " + (error?.message || "Unknown error"));
+      }
+    } catch (error) {
+      console.error("Delete catch error:", error);
+      alert("Delete error: Network issue");
+    }
   };
 
   const handleUpdateTeam = async (team: Team) => {
-    const res = await fetch(LB_API, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(team) });
-    if (res.ok) { showMsg(`✅ ${team.name} updated!`); mutateTeams(); }
-    else { const d = await res.json(); showMsg(`❌ ${d.error}`); }
+    try {
+      console.log("Updating team:", team, "API:", LB_API);
+      const res = await fetch(LB_API, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(team) });
+      console.log("Update response status:", res.status);
+      if (res.ok) {
+        const updated = await res.json();
+        console.log("Team updated:", updated);
+        showMsg(`✅ ${team.name} updated!`);
+        mutateTeams();
+      }
+      else {
+        const d = await res.json();
+        console.error("Update error:", d);
+        showMsg(`❌ ${d.error || "Update failed"}`);
+      }
+    } catch (error) {
+      console.error("Update catch error:", error);
+      showMsg("❌ Network error");
+    }
   };
 
   const handleDeleteTeam = async (team: Team) => {
     if (!confirm(`Delete ${team.name}?`)) return;
-    const res = await fetch(`${LB_API}&id=${team._id}`, { method: "DELETE" });
-    if (res.ok) { showMsg(`🗑 ${team.name} removed`); mutateTeams(); }
-    else showMsg("❌ Delete failed");
+    try {
+      console.log("Deleting team:", team, "API:", LB_API);
+      const res = await fetch(`${LB_API}&id=${team._id}`, { method: "DELETE" });
+      console.log("Delete response status:", res.status);
+      if (res.ok) {
+        console.log("Team deleted successfully");
+        showMsg(`🗑 ${team.name} removed`);
+        mutateTeams();
+      } else {
+        console.error("Delete failed");
+        showMsg("❌ Delete failed");
+      }
+    } catch (error) {
+      console.error("Delete catch error:", error);
+      showMsg("❌ Network error");
+    }
   };
 
   const handleAddTeam = async () => {
     if (!newTeam.name.trim() || !newTeam.shortName.trim()) { showMsg("❌ Name/Short Name required"); return; }
-    const res = await fetch(LB_API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(newTeam) });
-    if (res.ok) { showMsg(`✅ ${newTeam.name} added!`); setNewTeam({ name: "", shortName: "", wins: 0, losses: 0, scoreDiff: 0, group: "A" }); setAddMode(false); mutateTeams(); }
-    else { const d = await res.json(); showMsg(`❌ ${d.error}`); }
+    try {
+      console.log("Adding team:", newTeam, "API:", LB_API);
+      const res = await fetch(LB_API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(newTeam) });
+      console.log("Add response status:", res.status);
+      if (res.ok) {
+        const added = await res.json();
+        console.log("Team added:", added);
+        showMsg(`✅ ${newTeam.name} added!`);
+        setNewTeam({ name: "", shortName: "", wins: 0, losses: 0, scoreDiff: 0, group: "A" });
+        setAddMode(false);
+        mutateTeams();
+      } else {
+        const d = await res.json();
+        console.error("Add error:", d);
+        showMsg(`❌ ${d.error || "Failed to add"}`);
+      }
+    } catch (error) {
+      console.error("Add catch error:", error);
+      showMsg("❌ Network error");
+    }
   };
 
   return (

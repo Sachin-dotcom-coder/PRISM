@@ -1,5 +1,6 @@
 import { Minus, Plus } from "lucide-react";
 import { AthleticsEventType, IParticipant } from "../types";
+import { DEPARTMENT_OPTIONS } from "../../shared/departmentOptions";
 
 interface ParticipantFormProps {
   participants: IParticipant[];
@@ -103,12 +104,17 @@ export default function ParticipantForm({
                   <label className="mb-1 block text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
                     {index === 0 ? "Team 1 Department" : index === 1 ? "Team 2 Department" : `Department ${index + 1}`}
                   </label>
-                  <input
+                  <select
                     value={participant.department}
                     onChange={(e) => updateParticipant(index, "department", e.target.value)}
-                    placeholder={index === 0 ? "Type team 1 department" : index === 1 ? "Type team 2 department" : "Type department"}
                     className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 text-sm text-white outline-none transition-all focus:border-[#FFBF00]"
-                  />
+                  >
+                    {DEPARTMENT_OPTIONS.map((department) => (
+                      <option key={department} value={department}>
+                        {department}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>

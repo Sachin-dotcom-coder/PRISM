@@ -8,7 +8,6 @@ export interface IPowersportsEvent {
   event_name: PowersportsEventName;
   category: PowersportsCategory;
   event_date?: string;
-  venue?: string;
   department_1: string;
   department_2: string;
   winner: string | null;

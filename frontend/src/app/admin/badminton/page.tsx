@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import useSWR from "swr";
 import Link from "next/link";
 import { Plus, Activity, Trash2, Pencil, Check, X, Trophy } from "lucide-react";
+import { useGender } from "@/app/components/Providers";
 
 // --- API FETCHERS ---
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -14,7 +15,6 @@ export type BTeam = {
   _id?: string;
   leaderboard_id: number;
   dept_name: string;
-  event_name: "singles" | "doubles";
   category: "boys" | "girls";
   group: string;
   wins?: number;
@@ -45,7 +45,7 @@ function BTeamRow({ team, rank, onUpdate, onDelete }: { team: BTeam; rank: numbe
           <div className="flex flex-col">
             <span className="font-semibold text-zinc-200 text-sm">{team.dept_name}</span>
             <span className="text-[10px] text-blue-500 font-bold uppercase tracking-tighter">
-              {team.category} • {team.event_name}
+              {team.category}
             </span>
           </div>
         </div>
@@ -69,10 +69,6 @@ function BTeamRow({ team, rank, onUpdate, onDelete }: { team: BTeam; rank: numbe
       <td className="p-2">
         <input className="input-field py-1 text-xs mb-1" value={draft.dept_name} onChange={e => f("dept_name", e.target.value)} placeholder="Dept Name" />
         <div className="flex gap-1">
-          <select className="input-field py-1 text-[10px]" value={draft.event_name} onChange={e => f("event_name", e.target.value as any)}>
-            <option value="singles">Singles</option>
-            <option value="doubles">Doubles</option>
-          </select>
           <select className="input-field py-1 text-[10px]" value={draft.category} onChange={e => f("category", e.target.value as any)}>
             <option value="boys">Boys</option>
             <option value="girls">Girls</option>
@@ -98,7 +94,8 @@ export default function BadmintonAdminPage() {
   const LB_API = "/api/badminton-leaderboard";    // GET/POST /api/badminton-leaderboard
 
   // Men / Women toggle (maps to gender field on matches, category boys/girls on leaderboard)
-  const [genderTab, setGenderTab] = useState<"men" | "women">("men");
+  const { gender: globalGender } = useGender();
+  const genderTab = globalGender === "f" ? "women" : "men";
   // boys/girls is the leaderboard category that maps to men/women respectively
   const lbCategory: "boys" | "girls" = genderTab === "men" ? "boys" : "girls";
 
@@ -126,23 +123,9 @@ export default function BadmintonAdminPage() {
   // Filter leaderboard entries by current category tab
   const filteredEntries = validEntries.filter(e => e.category === lbCategory);
 
-  // Filter standings by category: standings object keyed by group, each group has entries
-  const filteredStandings: Record<string, any[]> = {};
-  if (standings && typeof standings === "object") {
-    Object.entries(standings).forEach(([group, teams]) => {
-      const filtered = (teams as any[]).filter((t: any) => {
-        // If standings entry has category field use it, otherwise fall back to showing all
-        return t.category ? t.category === lbCategory : true;
-      });
-      if (filtered.length > 0) filteredStandings[group] = filtered;
-    });
-  }
-
-  const groups = Object.keys(filteredStandings).length > 0
-    ? Object.keys(filteredStandings)
-    : filteredEntries.length > 0
-      ? [...new Set(filteredEntries.map(e => e.group))]
-      : ["A", "B"];
+  const groups = filteredEntries.length > 0
+    ? [...new Set(filteredEntries.map(e => e.group))]
+    : ["A", "B"];
 
   // State
   const [isCreatingMatch, setIsCreatingMatch] = useState(false);
@@ -153,9 +136,7 @@ export default function BadmintonAdminPage() {
     team1_department: "",
     team2_department: "",
     match_stage: "group" as "group" | "semifinal" | "final",
-    match_type: "singles" as "singles" | "doubles",
     match_date: new Date().toISOString().slice(0, 10),
-    venue: "",
     gender: genderTab,
   });
 
@@ -167,7 +148,6 @@ export default function BadmintonAdminPage() {
   const [newEntry, setNewEntry] = useState<Partial<BTeam>>({
     leaderboard_id: Math.floor(Math.random() * 10000),
     dept_name: "",
-    event_name: "singles",
     category: lbCategory,
     group: "A"
   });
@@ -198,9 +178,7 @@ export default function BadmintonAdminPage() {
           team1_department: "",
           team2_department: "",
           match_stage: "group",
-          match_type: "singles",
           match_date: new Date().toISOString().slice(0, 10),
-          venue: "",
           gender: genderTab,
         });
         mutateMatches();
@@ -235,7 +213,6 @@ export default function BadmintonAdminPage() {
       setNewEntry({
         leaderboard_id: Math.floor(Math.random() * 10000),
         dept_name: "",
-        event_name: "singles",
         category: lbCategory,
         group: "A"
       });
@@ -281,22 +258,7 @@ export default function BadmintonAdminPage() {
         </div>
       </div>
 
-      {/* MEN / WOMEN TOGGLE */}
-      <div className="flex gap-2 mb-2">
-        {(["men", "women"] as const).map(tab => (
-          <button
-            key={tab}
-            onClick={() => setGenderTab(tab)}
-            className={`px-6 py-2 rounded-xl text-sm font-black uppercase tracking-widest transition-all ${
-              genderTab === tab
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30"
-                : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
-            }`}
-          >
-            {tab === "men" ? "👦 Men (Boys)" : "👧 Women (Girls)"}
-          </button>
-        ))}
-      </div>
+      {/* MEN / WOMEN TOGGLE (removed, using global context instead) */}
 
       {/* MATCHES SECTION */}
       <section className="glass rounded-3xl border border-zinc-800 overflow-hidden shadow-2xl">
@@ -336,19 +298,8 @@ export default function BadmintonAdminPage() {
                  </select>
                </div>
                <div>
-                 <label className="label-sm">Type</label>
-                 <select value={newMatch.match_type} onChange={e => setNewMatch({...newMatch, match_type: e.target.value as any})} className="input-field">
-                   <option value="singles">Singles</option>
-                   <option value="doubles">Doubles</option>
-                 </select>
-               </div>
-               <div>
                  <label className="label-sm">Date</label>
                  <input required type="date" value={newMatch.match_date} onChange={e => setNewMatch({...newMatch, match_date: e.target.value})} className="input-field" />
-               </div>
-               <div className="md:col-span-2 lg:col-span-3">
-                 <label className="label-sm">Venue</label>
-                 <input required placeholder="e.g. Indoor Badminton Court" value={newMatch.venue} onChange={e => setNewMatch({...newMatch, venue: e.target.value})} className="input-field" />
                </div>
              </div>
              <div className="flex items-center gap-3 text-xs text-zinc-500">
@@ -367,10 +318,26 @@ export default function BadmintonAdminPage() {
                     <div className="flex items-center gap-3 mb-2">
                       <span className="text-[10px] font-black bg-zinc-800 px-2 py-0.5 rounded text-blue-500 tracking-tighter">#{m.match_id}</span>
                       <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border border-zinc-800 text-zinc-500 uppercase`}>{m.match_status}</span>
-                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 uppercase">{m.match_type} • {m.match_stage}</span>
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 uppercase">{m.match_stage}</span>
                     </div>
-                    <h3 className="font-sports text-xl uppercase tracking-tighter text-white">{m.team1_department} <span className="text-zinc-600 font-normal lowercase italic px-1">vs</span> {m.team2_department}</h3>
-                    {m.venue && <p className="text-[11px] text-zinc-500 mt-1">📍 {m.venue}</p>}
+                    <div className="flex items-center gap-4">
+                       <h3 className="font-sports text-xl uppercase tracking-tighter text-white">{m.team1_department} <span className="text-zinc-600 font-normal lowercase italic px-1">vs</span> {m.team2_department}</h3>
+                       {m.match_status !== 'scheduled' && (
+                         <div className="text-lg font-black font-mono text-white bg-blue-900/30 px-3 py-1 rounded-lg border border-blue-500/20 shadow-inner">
+                           {m.team1_score ?? 0} <span className="text-blue-500 mx-1">-</span> {m.team2_score ?? 0}
+                         </div>
+                       )}
+                     </div>
+                     {m.games && m.games.length > 0 && (
+                       <div className="flex flex-wrap gap-2 mt-2">
+                         {m.games.map((g: any, i: number) => (
+                           <div key={i} className="text-[10px] font-mono bg-zinc-950 px-2 py-1 rounded border border-zinc-800 text-zinc-400">
+                             G{g.game_number}: <span className={g.team1_score > g.team2_score ? "text-blue-400 font-bold" : "text-zinc-300"}>{g.team1_score}</span>-<span className={g.team2_score > g.team1_score ? "text-blue-400 font-bold" : "text-zinc-300"}>{g.team2_score}</span>
+                           </div>
+                         ))}
+                       </div>
+                     )}
+                     {m.venue && <p className="text-[11px] text-zinc-500 mt-2">📍 {m.venue}</p>}
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => handleDeleteMatch(m.match_id)} className="p-2 text-zinc-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"><Trash2 className="w-5 h-5" /></button>
@@ -392,14 +359,9 @@ export default function BadmintonAdminPage() {
         </div>
         {addMode && (
           <div className="p-6 bg-zinc-900/50 border-b border-zinc-800 space-y-4">
-             <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                <div><label className="label-sm">ID</label><input type="number" value={newEntry.leaderboard_id} onChange={e => setNewEntry(p => ({...p, leaderboard_id: +e.target.value}))} className="input-field py-2" /></div>
                <div><label className="label-sm">Dept</label><input placeholder="CS" value={newEntry.dept_name} onChange={e => setNewEntry(p => ({...p, dept_name: e.target.value}))} className="input-field py-2" /></div>
-               <div><label className="label-sm">Event</label>
-                 <select value={newEntry.event_name} onChange={e => setNewEntry(p => ({...p, event_name: e.target.value as any}))} className="input-field py-2">
-                   <option value="singles">Singles</option><option value="doubles">Doubles</option>
-                 </select>
-               </div>
                <div><label className="label-sm">Category</label>
                  <select value={newEntry.category} onChange={e => setNewEntry(p => ({...p, category: e.target.value as any}))} className="input-field py-2">
                    <option value="boys">Boys (Men)</option><option value="girls">Girls (Women)</option>
@@ -412,9 +374,16 @@ export default function BadmintonAdminPage() {
         )}
         <div className="divide-y divide-zinc-800">
           {groups.map(gp => {
-            // Use filtered standings if available, else fall back to filtered entries grouped manually
-            const gpTeams: any[] = filteredStandings[gp]
-              ?? filteredEntries.filter(e => e.group === gp);
+            const rawStandings: any[] = standings ? standings[gp] ?? [] : [];
+
+            const gpTeams: BTeam[] = filteredEntries
+              .filter(e => e.group === gp)
+              .map(e => {
+                const s = rawStandings.find((t: any) => t.dept_name === e.dept_name && t.category === e.category);
+                return { ...e, wins: s?.wins ?? 0, losses: s?.losses ?? 0, matches: s?.matches ?? 0 };
+              })
+              .sort((a, b) => (b.wins ?? 0) - (a.wins ?? 0));
+
             return (
               <div key={gp} className="p-6">
                 <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Group {gp} Standings</h3>

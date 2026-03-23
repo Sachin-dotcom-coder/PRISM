@@ -24,7 +24,6 @@ export interface IAthleticsEvent {
   event_name: AthleticsEventName;
   event_type: AthleticsEventType;
   event_date?: string;
-  venue?: string;
   participants: IParticipant[];
   winner: string | null;
   event_status: "scheduled" | "ongoing" | "completed";

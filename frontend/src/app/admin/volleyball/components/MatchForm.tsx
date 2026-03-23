@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { IVolleyballMatch, IGame } from '../types';
 import { Save, X, Plus, Trash2 } from 'lucide-react';
 import { createMatch, updateMatch } from '../services/volleyballApi';
+import { DEPARTMENT_OPTIONS } from '../../shared/departmentOptions';
 
 interface MatchFormProps {
   initialData?: IVolleyballMatch | null;
@@ -16,10 +17,9 @@ const STAGES = ['league', 'quarter-final', 'semi-final', 'grand_finale'];
 const emptyForm = (gender: "men" | "women"): IVolleyballMatch => ({
   match_id: Date.now() % 1000000,
   match_stage: 'league',
-  team1_department: '',
-  team2_department: '',
+  team1_department: DEPARTMENT_OPTIONS[0],
+  team2_department: DEPARTMENT_OPTIONS[1],
   match_date: new Date().toISOString().slice(0, 16),
-  venue: '',
   team1_score: '',
   team2_score: '',
   winner: '',
@@ -147,26 +147,26 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
 
         <div>
           <label className={labelCls}>Team 1 Department</label>
-          <input required type="text" name="team1_department" value={formData.team1_department}
-            onChange={handleChange} className={inputCls} placeholder="e.g. CS" />
+          <select required name="team1_department" value={formData.team1_department}
+            onChange={handleChange} className={inputCls}>
+            {DEPARTMENT_OPTIONS.map((department) => <option key={department} value={department}>{department}</option>)}
+          </select>
         </div>
 
         <div>
           <label className={labelCls}>Team 2 Department</label>
-          <input required type="text" name="team2_department" value={formData.team2_department}
-            onChange={handleChange} className={inputCls} placeholder="e.g. MECH" />
+          <select required name="team2_department" value={formData.team2_department}
+            onChange={handleChange} className={inputCls}>
+            {DEPARTMENT_OPTIONS.map((department) => <option key={department} value={department}>{department}</option>)}
+          </select>
         </div>
 
         <div>
           <label className={labelCls}>Winner (leave blank if ongoing)</label>
-          <input type="text" name="winner" value={formData.winner || ''} onChange={handleChange}
-            className={inputCls} placeholder="e.g. CS" />
-        </div>
-
-        <div>
-          <label className={labelCls}>Venue</label>
-          <input type="text" name="venue" value={formData.venue || ''} onChange={handleChange}
-            className={inputCls} placeholder="e.g. Main Court" />
+          <select name="winner" value={formData.winner || ''} onChange={handleChange}
+            className={inputCls}>
+            {DEPARTMENT_OPTIONS.map((department) => <option key={department} value={department}>{department}</option>)}
+          </select>
         </div>
 
         <div>

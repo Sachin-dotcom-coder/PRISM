@@ -8,7 +8,21 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useGender } from "@/app/components/Providers";
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = async (url: string) => {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.error(`Fetch failed: ${url}`, res.status);
+      throw new Error(`API Error: ${res.status}`);
+    }
+    const data = await res.json();
+    console.log(`Fetched from ${url}:`, data);
+    return data;
+  } catch (error) {
+    console.error(`Fetch error for ${url}:`, error);
+    throw error;
+  }
+};
 
 type Raid = {
   raid_id: string;
@@ -38,18 +52,19 @@ type MatchState = {
 
 export default function KabaddiMatchAdmin() {
   const { gender } = useGender();
-  const { match_id } = useParams();
+  const params = useParams();
   const router = useRouter();
+  const match_id = params?.match_id as string;
 
-  const MATCH_API = `http://localhost:5000/api/kabaddi/${match_id}?gender=${gender}`;
-  const UPDATE_API = `http://localhost:5000/api/kabaddi/${match_id}?gender=${gender}`;
+  const MATCH_API = match_id ? `http://localhost:5000/api/kabaddi/${match_id}?gender=${gender}` : null;
+  const UPDATE_API = match_id ? `http://localhost:5000/api/kabaddi/${match_id}?gender=${gender}` : null;
 
   const { data: matchData, mutate } = useSWR(MATCH_API, fetcher);
 
   const [match, setMatch] = useState<MatchState | null>(null);
   const [saveMsg, setSaveMsg] = useState("");
 
-  const [raidForm, setRaidForm] = useState({ raider: "", result: "SUCCESSFUL", points_scored: 1 });
+  const [raidForm, setRaidForm] = useState({ result: "SUCCESSFUL", points_scored: 1, team: "team_a" });
 
   useEffect(() => {
     if (matchData && !matchData.error) {
@@ -60,15 +75,31 @@ export default function KabaddiMatchAdmin() {
   const showMsg = (msg: string) => { setSaveMsg(msg); setTimeout(() => setSaveMsg(""), 3000); };
 
   const handleSave = async (updatedState: MatchState = match!) => {
-    const res = await fetch(UPDATE_API, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updatedState)
-    });
-    if (res.ok) {
-      showMsg("✅ Match Saved");
-      mutate();
-    } else {
+    if (!UPDATE_API) {
+      showMsg("❌ Match ID not loaded");
+      return;
+    }
+    try {
+      console.log("Saving to:", UPDATE_API);
+      console.log("Payload:", updatedState);
+      const res = await fetch(UPDATE_API, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedState)
+      });
+      console.log("Response status:", res.status);
+      if (res.ok) {
+        const savedData = await res.json();
+        console.log("Saved successfully:", savedData);
+        showMsg("✅ Match Saved");
+        mutate();
+      } else {
+        const errorData = await res.json();
+        console.error("Save error:", errorData);
+        showMsg("❌ Save Failed");
+      }
+    } catch (error) {
+      console.error("Save catch error:", error);
       showMsg("❌ Save Failed");
     }
   };
@@ -90,15 +121,28 @@ export default function KabaddiMatchAdmin() {
   const addRaid = (e: React.FormEvent) => {
     e.preventDefault();
     if (!match) return;
+
+    const teamKey = raidForm.team as "team_a" | "team_b";
+    const teamName = match.teams[teamKey].name;
+
     const newRaid: Raid = {
       raid_id: `r_${Math.floor(Math.random() * 10000)}`,
-      raider: raidForm.raider,
+      raider: teamName,
       result: raidForm.result as Raid["result"],
       points_scored: Number(raidForm.points_scored)
     };
+
     const newMatch = { ...match, recent_raids: [newRaid, ...match.recent_raids] };
+
+    // Automatically update team score if raid was successful
+    if (raidForm.result === "SUCCESSFUL" || raidForm.result === "SUPER RAID") {
+      if (newMatch.teams[teamKey]) {
+        newMatch.teams[teamKey].score += Number(raidForm.points_scored);
+      }
+    }
+
     setMatch(newMatch);
-    setRaidForm({ raider: "", result: "SUCCESSFUL", points_scored: 1 });
+    setRaidForm({ result: "SUCCESSFUL", points_scored: 1, team: "team_a" });
   };
 
   const changeStatus = (newStatus: string) => {
@@ -192,7 +236,10 @@ export default function KabaddiMatchAdmin() {
              </div>
              
              <form onSubmit={addRaid} className="flex flex-col md:flex-row gap-3">
-               <input required placeholder="Raider Name" className="input-field flex-1" value={raidForm.raider} onChange={e => setRaidForm({...raidForm, raider: e.target.value})} />
+               <select className="input-field md:w-40 font-bold" value={raidForm.team} onChange={e => setRaidForm({...raidForm, team: e.target.value})}>
+                 <option value="team_a">{match.teams.team_a.name}</option>
+                 <option value="team_b">{match.teams.team_b.name}</option>
+               </select>
                <select className="input-field md:w-48 font-bold" value={raidForm.result} onChange={e => setRaidForm({...raidForm, result: e.target.value})}>
                  <option value="SUCCESSFUL">SUCCESSFUL</option>
                  <option value="FAILED">FAILED</option>

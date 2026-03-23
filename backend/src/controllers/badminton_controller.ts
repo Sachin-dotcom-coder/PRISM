@@ -6,22 +6,18 @@ export const createBadmintonMatch = async (req: Request, res: Response): Promise
     const {
       match_id,
       match_stage,
-      match_type,
       team1_department,
       team2_department,
       match_date,
-      venue,
       gender
     } = req.body;
 
     if (
       match_id === undefined ||
       !match_stage ||
-      !match_type ||
       !team1_department ||
       !team2_department ||
       !match_date ||
-      !venue ||
       !gender
     ) {
       res.status(400).json({
@@ -113,7 +109,6 @@ export const updateBadmintonMatch = async (req: Request, res: Response): Promise
       team1_score, 
       team2_score, 
       match_stage,
-      match_type, 
       venue, 
       match_date, 
       team1_department, 
@@ -126,7 +121,6 @@ export const updateBadmintonMatch = async (req: Request, res: Response): Promise
 
     // Standard fields
     if (match_stage !== undefined) updateData.match_stage = match_stage;
-    if (match_type !== undefined) updateData.match_type = match_type;
     if (venue !== undefined) updateData.venue = venue;
     if (match_date !== undefined) updateData.match_date = match_date;
     if (team1_department !== undefined) updateData.team1_department = team1_department;
