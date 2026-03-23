@@ -23,6 +23,8 @@ import basketballLeadRoutes from "./src/routers/basketball_lead_router";
 import handballLeadRoutes from "./src/routers/handball_lead_router";
 import ttLeadRoutes from "./src/routers/TT_lead_router";
 import powersportLeadRoutes from "./src/routers/powersports_lead_router";
+import kabaddiRoutes from "./src/routers/kabaddi_router";
+import kabaddiLeadRoutes from "./src/routers/kabaddi_lead_router";
 
 
 dotenv.config();
@@ -31,7 +33,10 @@ const app = express();
 
 connectDB();
 
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:3000",
+  credentials: true
+}));
 app.use(express.json());
 
 app.use("/api/matches", matchRoutes);
@@ -54,6 +59,8 @@ app.use("/api/basketball-leaderboard", basketballLeadRoutes);
 app.use("/api/handball-leaderboard",handballLeadRoutes);
 app.use("/api/tt-lead",ttLeadRoutes);
 app.use("/api/powersport-lead",powersportLeadRoutes)
+app.use("/api/kabaddi", kabaddiRoutes);
+app.use("/api/kabaddi-leaderboard", kabaddiLeadRoutes);
 
 const PORT = process.env.PORT || 5000;
 
