@@ -27,7 +27,9 @@ import ttLeadRoutes from "./src/routers/TT_lead_router";
 import powersportLeadRoutes from "./src/routers/powersports_lead_router";
 import khokhoLeadRoutes from "./src/routers/khokho_lead_router";
 import tugofwarLeadRoutes from "./src/routers/tugofwar_lead_router";
-
+import chessLeadRoutes from "./src/routers/chess_lead_router";
+import armWrestlingLeadRoutes from "./src/routers/armwrestling_lead_router";
+import carromLeadRoutes from "./src/routers/carrom_lead_router";
 
 dotenv.config();
 
@@ -62,6 +64,9 @@ app.use("/api/tt-lead",ttLeadRoutes);
 app.use("/api/powersport-lead",powersportLeadRoutes);
 app.use("/api/khokho-leaderboard", khokhoLeadRoutes);
 app.use("/api/tugofwar-leaderboard", tugofwarLeadRoutes);
+app.use("/api/chess-leaderboard", chessLeadRoutes);
+app.use("/api/armwrestling-leaderboard", armWrestlingLeadRoutes);
+app.use("/api/carrom-leaderboard", carromLeadRoutes);
 
 const PORT = process.env.PORT || 5000;
 
