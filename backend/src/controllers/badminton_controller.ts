@@ -56,7 +56,9 @@ export const createBadmintonMatch = async (req: Request, res: Response): Promise
 export const getAllBadmintonMatches = async (req: Request, res: Response): Promise<void> => {
   try {
     const { gender } = req.query;
-    const filter = gender ? { gender: String(gender) } : {};
+    const filter = gender
+      ? { gender: new RegExp(`^${gender}$`, "i") }
+      : {};
     const matches = await BadmintonMatch.find(filter);
     res.status(200).json({
       success: true,
