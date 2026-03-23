@@ -66,18 +66,15 @@ export default function HomepageLeaderboard() {
             }`}
           >
             {/* Rank badge */}
-            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 ${
-              isTop3 ? style!.badge : "bg-zinc-800 text-zinc-500"
+            <div className={`flex items-center justify-center shrink-0 ${
+              isTop3 ? "text-3xl drop-shadow-md w-9 h-9" : "w-9 h-9 rounded-full bg-zinc-800 text-zinc-500 text-sm font-black"
             }`}>
-              {index + 1}
+              {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : index + 1}
             </div>
 
             {/* Team info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-bold shrink-0">
-                  {team.shortName?.slice(0, 4) || team.name?.slice(0, 3)}
-                </div>
                 <span className={`font-bold text-sm truncate ${isTop3 ? style!.label : "text-zinc-300"}`}>
                   {team.name}
                 </span>
@@ -85,22 +82,22 @@ export default function HomepageLeaderboard() {
             </div>
 
             {/* Stats: 1st / 2nd / 3rd medals + Points */}
-            <div className="flex items-center gap-4 text-right shrink-0">
+            <div className="flex items-center gap-6 sm:gap-8 text-right shrink-0 pr-2">
               <div className="text-center hidden sm:block">
-                <div className="text-xs text-yellow-500 font-semibold">🥇</div>
-                <div className="text-yellow-400 font-bold text-sm">{team.First ?? 0}</div>
+                <div className="text-2xl drop-shadow-md pb-1">🥇</div>
+                <div className="text-yellow-400 font-sports text-2xl">{team.First ?? 0}</div>
               </div>
               <div className="text-center hidden sm:block">
-                <div className="text-xs text-zinc-400 font-semibold">🥈</div>
-                <div className="text-zinc-300 font-bold text-sm">{team.Second ?? 0}</div>
+                <div className="text-2xl drop-shadow-md pb-1">🥈</div>
+                <div className="text-zinc-300 font-sports text-2xl">{team.Second ?? 0}</div>
               </div>
               <div className="text-center hidden sm:block">
-                <div className="text-xs text-amber-600 font-semibold">🥉</div>
-                <div className="text-amber-500 font-bold text-sm">{team.Third ?? 0}</div>
+                <div className="text-2xl drop-shadow-md pb-1">🥉</div>
+                <div className="text-amber-500 font-sports text-2xl">{team.Third ?? 0}</div>
               </div>
-              <div className="text-center">
-                <div className="text-xs text-zinc-600 uppercase font-semibold">Pts</div>
-                <div className={`font-black text-lg ${isTop3 ? style!.label : "text-zinc-300"}`}>
+              <div className="text-center ml-2 border-l border-zinc-800/50 pl-6">
+                <div className="text-sm text-zinc-500 uppercase font-bold pb-1 tracking-widest">Pts</div>
+                <div className={`font-sports text-4xl drop-shadow-md ${isTop3 ? style!.label : "text-white"}`}>
                   {team.points ?? 0}
                 </div>
               </div>

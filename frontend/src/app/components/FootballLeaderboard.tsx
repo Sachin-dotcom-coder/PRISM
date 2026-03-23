@@ -96,9 +96,6 @@ export default function FootballLeaderboard() {
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
-                                <div className="w-5 h-5 rounded-full bg-zinc-800 flex items-center justify-center text-[8px] border border-zinc-700 font-bold">
-                                  {team.shortName?.slice(0, 3)}
-                                </div>
                                 <span className={`font-bold text-[11px] sm:text-xs truncate max-w-[80px] sm:max-w-none ${isTop3 ? style!.label : "text-zinc-200"}`}>{team.name}</span>
                               </div>
                             </td>
