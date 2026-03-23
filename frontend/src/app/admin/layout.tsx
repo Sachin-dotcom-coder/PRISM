@@ -35,9 +35,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: `${genderLabel} Chess`, href: "/admin/chess", icon: Activity },
     { name: `${genderLabel} Carrom`, href: "/admin/carrom", icon: Activity },
     { name: "Homepage LB", href: "/admin/leaderboard", icon: Trophy },
-    { name: "Cricket LB", href: "/admin/leaderboard/cricket", icon: Database },
-    { name: "Football LB", href: "/admin/leaderboard/football", icon: Database },
-    { name: "Settings", href: "/admin/settings", icon: Settings },
   ];
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -101,7 +98,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className={`w-64 border-r overflow-y-auto shadow-sm border-zinc-800 bg-card`}>
         <div className="p-6 h-full flex flex-col">
           <div className="flex-1">
-            <h2 className={`text-xl font-bold glow-text mb-6`}>Admin Panel • {genderLabel}</h2>
+            <h2 className={`text-xl font-bold glow-text mb-4`}>Admin Panel • {genderLabel}</h2>
+
+            {/* Logout button at top */}
+            <button
+              onClick={() => {
+                sessionStorage.removeItem("adminAuth");
+                setIsAuthenticated(false);
+                router.push("/");
+              }}
+              className="w-full mb-5 px-4 py-2.5 rounded-lg border text-sm font-bold transition-all text-left bg-red-900/20 border-red-800/50 hover:bg-red-600/30 text-red-400 hover:text-red-300"
+            >
+              🚪 Logout
+            </button>
             
             <nav className="space-y-1">
               {navigation.map((item) => {
@@ -124,17 +133,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               })}
             </nav>
           </div>
-          
-          <button
-            onClick={() => {
-              sessionStorage.removeItem("adminAuth");
-              setIsAuthenticated(false);
-              router.push("/");
-            }}
-            className={`mt-6 w-full px-4 py-3 rounded-lg border text-sm font-semibold transition-all text-left bg-zinc-900 border-zinc-800 hover:bg-danger/20 hover:text-danger hover:border-danger/50 text-white`}
-          >
-            Logout
-          </button>
         </div>
       </div>
 
@@ -150,8 +148,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           
           <div className="flex items-center gap-4">
             {/* Embedded Gender Toggle inside Admin Header */}
-            <div className="scale-75 origin-right">
-               <GenderToggle />
+            <div className="origin-right">
+              <GenderToggle />
             </div>
             
             <div className="flex items-center gap-3 pl-4 border-l border-zinc-800">

@@ -320,7 +320,6 @@ export default function BadmintonAdminPage() {
                       <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border border-zinc-800 text-zinc-500 uppercase`}>{m.match_status}</span>
                       <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 uppercase">{m.match_stage}</span>
                     </div>
-<<<<<<< Updated upstream
                     <div className="flex items-center gap-4">
                        <h3 className="font-sports text-xl uppercase tracking-tighter text-white">{m.team1_department} <span className="text-zinc-600 font-normal lowercase italic px-1">vs</span> {m.team2_department}</h3>
                        {m.match_status !== 'scheduled' && (
@@ -339,9 +338,6 @@ export default function BadmintonAdminPage() {
                        </div>
                      )}
                      {m.venue && <p className="text-[11px] text-zinc-500 mt-2">📍 {m.venue}</p>}
-=======
-                    <h3 className="font-sports text-xl uppercase tracking-tighter text-white">{m.team1_department} <span className="text-zinc-600 font-normal lowercase italic px-1">vs</span> {m.team2_department}</h3>
->>>>>>> Stashed changes
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => handleDeleteMatch(m.match_id)} className="p-2 text-zinc-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"><Trash2 className="w-5 h-5" /></button>

@@ -62,7 +62,7 @@ function HTeamRow({ team, rank, onUpdate, onDelete }: { team: HTeam; rank: numbe
       <td className="p-2"><input type="number" min={0} className="w-14 bg-zinc-800 rounded px-1 py-1.5 text-xs text-center text-yellow-400" value={draft.First||0} onChange={e => f("First", +e.target.value)} /></td>
       <td className="p-2"><input type="number" min={0} className="w-14 bg-zinc-800 rounded px-1 py-1.5 text-xs text-center text-zinc-300" value={draft.Second||0} onChange={e => f("Second", +e.target.value)} /></td>
       <td className="p-2"><input type="number" min={0} className="w-14 bg-zinc-800 rounded px-1 py-1.5 text-xs text-center text-amber-600" value={draft.Third||0} onChange={e => f("Third", +e.target.value)} /></td>
-      <td className="p-2"><input type="number" min={0} className="w-14 bg-zinc-800 rounded px-1 py-1.5 text-xs text-center text-accent font-bold" value={draft.points||0} onChange={e => f("points", +e.target.value)} /></td>
+      <td className="p-2"><div className="w-14 px-1 py-1.5 text-xs text-center text-accent font-bold bg-zinc-800/50 rounded cursor-not-allowed">{(draft.First||0)*7 + (draft.Second||0)*5 + (draft.Third||0)*3}</div></td>
       <td className="p-2">
         <div className="flex gap-1 justify-end">
           <button onClick={save} className="p-1.5 rounded-lg bg-green-700 hover:bg-green-600 text-white"><Check className="w-3.5 h-3.5" /></button>
@@ -131,7 +131,7 @@ export default function HomepageLeaderboardAdmin() {
         {addMode && (
           <div className="p-5 bg-zinc-900/50 border-b border-zinc-800 space-y-3">
             <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-              {([["Full Name","name","text"],["Short","shortName","text"],["1st 🥇","First","number"],["2nd 🥈","Second","number"],["3rd 🥉","Third","number"],["Points","points","number"]] as [string,string,string][]).map(([label,key,type]) => (
+              {([["Full Name","name","text"],["Short","shortName","text"],["1st 🥇","First","number"],["2nd 🥈","Second","number"],["3rd 🥉","Third","number"]] as [string,string,string][]).map(([label,key,type]) => (
                 <div key={key}>
                   <label className="block text-xs text-zinc-500 uppercase font-semibold mb-1">{label}</label>
                   <input type={type} value={(newTeam as any)[key]}
@@ -174,7 +174,7 @@ export default function HomepageLeaderboardAdmin() {
           </div>
         )}
         <div className="px-6 py-3 text-xs text-zinc-600 border-t border-zinc-800/50">
-          💡 Enter 1st/2nd/3rd place counts and total Points manually. All values are stored as-is.
+          💡 Enter 1st/2nd/3rd place counts. Points are calculated automatically (1st=7, 2nd=5, 3rd=3).
         </div>
       </div>
     </div>
