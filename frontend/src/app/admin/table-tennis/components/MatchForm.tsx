@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ITableTennisMatch, IGame } from '../types';
 import GameInput from './GameInput';
 import { Plus, Save, X } from 'lucide-react';
@@ -12,6 +12,29 @@ interface MatchFormProps {
   onCancel: () => void;
 }
 
+const normalizeGames = (
+  games: IGame[],
+  team1Department: string,
+  team2Department: string
+): IGame[] =>
+  games.map((game, index) => {
+    const team1Score = game.team1_score === '' ? null : Number(game.team1_score);
+    const team2Score = game.team2_score === '' ? null : Number(game.team2_score);
+
+    let winner: string | null = null;
+    if (team1Score !== null && team2Score !== null) {
+      if (team1Score > team2Score) winner = team1Department;
+      else if (team2Score > team1Score) winner = team2Department;
+    }
+
+    return {
+      ...game,
+      game_number: index + 1,
+      match_type: game.match_type || 'singles',
+      winner,
+    };
+  });
+
 export default function MatchForm({ initialData, gender, onSuccess, onCancel }: MatchFormProps) {
   const [formData, setFormData] = useState<ITableTennisMatch>({
     match_id: Date.now() % 1000000,
@@ -19,43 +42,100 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
     team1_department: DEPARTMENT_OPTIONS[0],
     team2_department: DEPARTMENT_OPTIONS[1],
     match_date: new Date().toISOString().slice(0, 16),
-    team1_score: '',
-    team2_score: '',
+    team1_score: 0,
+    team2_score: 0,
     games: [],
     total_games: 0,
     winner: '',
     match_status: 'completed',
-    match_type: 'singles',
-    gender: gender
+    gender
   });
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (initialData) {
+      const games = normalizeGames(
+        (initialData.games || []).map((game, index) => ({
+          ...game,
+          game_number: game.game_number || index + 1,
+          match_type: game.match_type || initialData.match_type || 'singles',
+          winner: game.winner || null,
+        })),
+        initialData.team1_department,
+        initialData.team2_department
+      );
+
+      const team1Wins = games.filter((game) => game.winner === initialData.team1_department).length;
+      const team2Wins = games.filter((game) => game.winner === initialData.team2_department).length;
+
       setFormData({
         ...initialData,
-        match_date: typeof initialData.match_date === 'string' 
-          ? initialData.match_date.slice(0, 16) 
+        match_date: typeof initialData.match_date === 'string'
+          ? initialData.match_date.slice(0, 16)
           : new Date(initialData.match_date).toISOString().slice(0, 16),
-        match_type: initialData.match_type || 'singles'
+        games,
+        total_games: games.length,
+        team1_score: team1Wins,
+        team2_score: team2Wins,
+        winner: team1Wins > team2Wins
+          ? initialData.team1_department
+          : team2Wins > team1Wins
+          ? initialData.team2_department
+          : '',
       });
     } else {
-      setFormData(prev => ({ ...prev, gender }));
+      setFormData((prev) => ({ ...prev, gender }));
     }
   }, [initialData, gender]);
 
+  useEffect(() => {
+    const games = normalizeGames(formData.games, formData.team1_department, formData.team2_department);
+    const team1Wins = games.filter((game) => game.winner === formData.team1_department).length;
+    const team2Wins = games.filter((game) => game.winner === formData.team2_department).length;
+    const winner = team1Wins > team2Wins
+      ? formData.team1_department
+      : team2Wins > team1Wins
+      ? formData.team2_department
+      : '';
+
+    const isSame =
+      games.length === formData.games.length &&
+      games.every((game, index) =>
+        game.game_number === formData.games[index]?.game_number &&
+        game.match_type === formData.games[index]?.match_type &&
+        game.team1_score === formData.games[index]?.team1_score &&
+        game.team2_score === formData.games[index]?.team2_score &&
+        game.winner === formData.games[index]?.winner
+      ) &&
+      team1Wins === formData.team1_score &&
+      team2Wins === formData.team2_score &&
+      games.length === formData.total_games &&
+      winner === (formData.winner || '');
+
+    if (isSame) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      games,
+      total_games: games.length,
+      team1_score: team1Wins,
+      team2_score: team2Wins,
+      winner,
+    }));
+  }, [formData.games, formData.team1_department, formData.team2_department, formData.team1_score, formData.team2_score, formData.total_games, formData.winner]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const updateGame = (index: number, updatedGame: IGame) => {
     const newGames = [...formData.games];
     newGames[index] = updatedGame;
-    setFormData(prev => ({ 
-      ...prev, 
+    setFormData((prev) => ({
+      ...prev,
       games: newGames,
       total_games: newGames.length
     }));
@@ -63,30 +143,29 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
 
   const removeGame = (index: number) => {
     const newGames = formData.games.filter((_, i) => i !== index);
-    newGames.forEach((g, i) => { g.game_number = i + 1; });
-    setFormData(prev => ({ ...prev, games: newGames, total_games: newGames.length }));
+    setFormData((prev) => ({ ...prev, games: newGames, total_games: newGames.length }));
   };
 
   const addGame = () => {
     const newGame: IGame = {
       game_number: formData.games.length + 1,
+      match_type: 'singles',
       team1_score: '',
       team2_score: '',
+      winner: null,
     };
-    setFormData(prev => ({ 
-      ...prev, 
+    setFormData((prev) => ({
+      ...prev,
       games: [...prev.games, newGame],
       total_games: prev.games.length + 1
     }));
   };
 
-
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
+
     if (formData.total_games !== formData.games.length) {
       setError("Total games count does not match the number of games listed.");
       setLoading(false);
@@ -94,16 +173,30 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
     }
 
     try {
-      const payload = { ...formData, gender };
-      
+      const payload = {
+        ...formData,
+        gender,
+        games: formData.games.map((game, index) => ({
+          game_number: index + 1,
+          match_type: game.match_type,
+          team1_score: Number(game.team1_score),
+          team2_score: Number(game.team2_score),
+          winner: game.winner || null,
+        })),
+        team1_score: Number(formData.team1_score || 0),
+        team2_score: Number(formData.team2_score || 0),
+        total_games: formData.games.length,
+        winner: formData.winner || null,
+      };
+
       if (initialData?._id || (initialData && initialData.match_id)) {
         await updateMatch(formData.match_id, payload);
       } else {
         await createMatch(payload);
       }
       onSuccess();
-    } catch (err: any) {
-      setError(err.message || "An error occurred");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }
@@ -128,11 +221,8 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
           <input required type="text" name="match_stage" value={formData.match_stage} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white" placeholder="e.g. Quarter Finals" />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Match Type</label>
-          <select required name="match_type" value={formData.match_type} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white">
-            <option value="singles">Singles</option>
-            <option value="doubles">Doubles</option>
-          </select>
+          <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Match Date & Time</label>
+          <input required type="datetime-local" name="match_date" value={String(formData.match_date)} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white" />
         </div>
         <div>
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Team 1 Dept</label>
@@ -147,30 +237,34 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
           </select>
         </div>
         <div>
-          <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Match Date & Time</label>
-          <input required type="datetime-local" name="match_date" value={String(formData.match_date)} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white" />
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Match Score (T1 - T2)</label>
-          <div className="flex gap-2">
-            <input required type="number" min="0" name="team1_score" value={formData.team1_score} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white text-center" placeholder="T1" />
-            <span className="text-zinc-500 flex items-center">-</span>
-            <input required type="number" min="0" name="team2_score" value={formData.team2_score} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white text-center" placeholder="T2" />
+          <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Overall Winner</label>
+          <div className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm text-white font-bold">
+            {formData.winner || 'No overall winner yet'}
+            <div className="text-[10px] text-zinc-500 mt-1">Auto-calculated from games won</div>
           </div>
         </div>
         <div>
-          <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Winner</label>
-          <div className="flex gap-2">
-             <select name="winner" value={formData.winner || ''} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white">
-               {DEPARTMENT_OPTIONS.map((department) => <option key={department} value={department}>{department}</option>)}
-             </select>
+          <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Match Score</label>
+          <div className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm text-white text-center font-bold">
+            {formData.team1_score || 0} - {formData.team2_score || 0}
+            <div className="text-[10px] text-zinc-500 mt-1">Games won by each department</div>
+          </div>
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Total Games</label>
+          <div className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm text-white font-bold">
+            {formData.total_games}
+            <div className="text-[10px] text-zinc-500 mt-1">Each game gives 1 point to its winner</div>
           </div>
         </div>
       </div>
 
       <div className="pt-4 border-t border-zinc-800">
         <div className="flex justify-between items-center mb-4">
-          <h4 className="text-zinc-300 font-bold tracking-widest text-sm uppercase">Games / Sets</h4>
+          <div>
+            <h4 className="text-zinc-300 font-bold tracking-widest text-sm uppercase">Games / Sets</h4>
+            <p className="text-[11px] text-zinc-500 mt-1">Choose Singles or Doubles for each game separately.</p>
+          </div>
           <button type="button" onClick={addGame} className="flex items-center gap-1 text-xs bg-[#FFBF00] text-black px-3 py-1.5 rounded font-bold hover:bg-yellow-500 transition-colors"><Plus className="w-4 h-4"/> Add Game</button>
         </div>
         <div className="space-y-3">

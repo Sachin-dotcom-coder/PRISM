@@ -2,16 +2,17 @@ import mongoose, { Document, Schema } from "mongoose";
 
 export interface ITTGame {
   game_number: number;
+  match_type: "singles" | "doubles";
   team1_score: number;
   team2_score: number;
-  winner: string;
+  winner: string | null;
 }
 
 export interface ITTMatch extends Document {
   match_id: number;
   match_name?: string;
   match_stage: string;
-  match_type: "singles" | "doubles";
+  match_type?: "singles" | "doubles";
   team1_department: string;
   team2_department: string;
   match_date?: Date;
@@ -27,8 +28,18 @@ export interface ITTMatch extends Document {
 
 const TTGameSchema: Schema<ITTGame> = new Schema<ITTGame>({
   game_number: { type: Number, required: true },
+  match_type: {
+    type: String,
+    enum: ["singles", "doubles"],
+    required: true,
+    default: "singles"
+  },
   team1_score: { type: Number, required: true },
-  team2_score: { type: Number, required: true }
+  team2_score: { type: Number, required: true },
+  winner: {
+    type: String,
+    default: null
+  }
 });
 
 const TTMatchSchema: Schema<ITTMatch> = new Schema<ITTMatch>(
@@ -47,8 +58,7 @@ const TTMatchSchema: Schema<ITTMatch> = new Schema<ITTMatch>(
     },
     match_type: {
       type: String,
-      enum: ["singles", "doubles"],
-      required: true
+      enum: ["singles", "doubles"]
     },
     team1_department: {
       type: String,

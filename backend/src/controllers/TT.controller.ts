@@ -1,18 +1,73 @@
 import { Request, Response } from "express";
 import TTMatch from "../models/TT.model";
 
+const buildDerivedMatchFields = (
+  games: any[] | undefined,
+  team1Department: string,
+  team2Department: string
+) => {
+  if (!Array.isArray(games)) {
+    return {};
+  }
+
+  let team1Wins = 0;
+  let team2Wins = 0;
+
+  const normalizedGames = games.map((game, index) => {
+    const team1Score = Number(game.team1_score ?? 0);
+    const team2Score = Number(game.team2_score ?? 0);
+
+    let winner: string | null = null;
+    if (team1Score > team2Score) {
+      winner = team1Department;
+      team1Wins++;
+    } else if (team2Score > team1Score) {
+      winner = team2Department;
+      team2Wins++;
+    }
+
+    return {
+      game_number: Number(game.game_number ?? index + 1),
+      match_type: game.match_type === "doubles" ? "doubles" : "singles",
+      team1_score: team1Score,
+      team2_score: team2Score,
+      winner
+    };
+  });
+
+  let winner: string | null = null;
+  if (team1Wins > team2Wins) {
+    winner = team1Department;
+  } else if (team2Wins > team1Wins) {
+    winner = team2Department;
+  }
+
+  return {
+    games: normalizedGames,
+    total_games: normalizedGames.length,
+    team1_score: team1Wins,
+    team2_score: team2Wins,
+    winner
+  };
+};
+
 export const createTTMatch = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
-      match_id, match_stage, match_type, team1_department, team2_department, match_date, gender
+      match_id, match_stage, team1_department, team2_department, match_date, gender, games
     } = req.body;
 
-    if (match_id === undefined || !match_stage || !match_type || !team1_department || !team2_department || !match_date || !gender) {
-      res.status(400).json({ success: false, message: "Missing required fields including gender and match_type." });
+    if (match_id === undefined || !match_stage || !team1_department || !team2_department || !match_date || !gender) {
+      res.status(400).json({ success: false, message: "Missing required fields." });
       return;
     }
 
-    const newMatch = new TTMatch(req.body);
+    const derivedFields = buildDerivedMatchFields(games, team1_department, team2_department);
+
+    const newMatch = new TTMatch({
+      ...req.body,
+      ...derivedFields
+    });
     const savedMatch = await newMatch.save();
 
     res.status(201).json({ success: true, message: "Match created successfully.", data: savedMatch });
@@ -53,6 +108,13 @@ export const getTTMatchById = async (req: Request, res: Response): Promise<void>
 export const updateTTMatchScore = async (req: Request, res: Response): Promise<void> => {
   try {
     const { match_id } = req.params;
+    const existingMatch = await TTMatch.findOne({ match_id: Number(match_id) });
+
+    if (!existingMatch) {
+      res.status(404).json({ success: false, message: "Match not found." });
+      return;
+    }
+
     const { 
       games, match_status, team1_score, team2_score, match_stage, match_type, venue, match_date, team1_department, team2_department, winner, gender 
     } = req.body;
@@ -71,9 +133,27 @@ export const updateTTMatchScore = async (req: Request, res: Response): Promise<v
     if (team2_score !== undefined) updateData.team2_score = team2_score;
     if (gender !== undefined) updateData.gender = gender;
 
+    const nextTeam1Department = team1_department ?? existingMatch.team1_department;
+    const nextTeam2Department = team2_department ?? existingMatch.team2_department;
+
     if (games !== undefined && Array.isArray(games)) {
-      updateData.games = games;
-      updateData.total_games = games.length;
+      Object.assign(
+        updateData,
+        buildDerivedMatchFields(
+          games,
+          nextTeam1Department,
+          nextTeam2Department
+        )
+      );
+    } else if (team1_department !== undefined || team2_department !== undefined) {
+      Object.assign(
+        updateData,
+        buildDerivedMatchFields(
+          existingMatch.games as any[],
+          nextTeam1Department,
+          nextTeam2Department
+        )
+      );
     }
 
     if (Object.keys(updateData).length === 0) {

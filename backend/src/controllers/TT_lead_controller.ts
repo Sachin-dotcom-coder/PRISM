@@ -4,47 +4,50 @@ import { Request, Response } from "express";
 
 export const getLeaderboardStandings = async (req: Request, res: Response) => {
   try {
-    // Only completed matches
-    const matches = await TTMatch.find({ match_status: "completed" });
+    const matches = await TTMatch.find();
     const leaderboardEntries = await TTLeaderboard.find();
-    const deptToGroup: Record<string, string> = {};
+    const deptCategoryMap: Record<string, { group: string }> = {};
     leaderboardEntries.forEach(entry => {
-      deptToGroup[entry.dept_name] = entry.group;
+      deptCategoryMap[`${entry.category}_${entry.dept_name}`] = { group: entry.group || "A" };
     });
 
-    const standings: Record<string, { dept_name: string; group: string; wins: number; losses: number; matches: number }> = {};
+    const standings: Record<string, { dept_name: string; category: string; group: string; wins: number; losses: number; matches: number }> = {};
 
     for (const match of matches) {
+      const category = match.gender === "men" ? "men" : "women";
       const t1 = match.team1_department;
       const t2 = match.team2_department;
-      const winner = match.winner;
-      const group1 = deptToGroup[t1] || "Unknown";
-      const group2 = deptToGroup[t2] || "Unknown";
+      const key1 = `${category}_${t1}`;
+      const key2 = `${category}_${t2}`;
 
-      if (!standings[t1]) standings[t1] = { dept_name: t1, group: group1, wins: 0, losses: 0, matches: 0 };
-      if (!standings[t2]) standings[t2] = { dept_name: t2, group: group2, wins: 0, losses: 0, matches: 0 };
+      const group1 = deptCategoryMap[key1]?.group || "Unknown";
+      const group2 = deptCategoryMap[key2]?.group || "Unknown";
 
-      standings[t1].matches++;
-      standings[t2].matches++;
+      if (!standings[key1]) standings[key1] = { dept_name: t1, category, group: group1, wins: 0, losses: 0, matches: 0 };
+      if (!standings[key2]) standings[key2] = { dept_name: t2, category, group: group2, wins: 0, losses: 0, matches: 0 };
 
-      if (winner === t1) {
-        standings[t1].wins++;
-        standings[t2].losses++;
-      } else if (winner === t2) {
-        standings[t2].wins++;
-        standings[t1].losses++;
+      for (const game of match.games ?? []) {
+        standings[key1].matches++;
+        standings[key2].matches++;
+
+        if (game.winner === t1) {
+          standings[key1].wins++;
+          standings[key2].losses++;
+        } else if (game.winner === t2) {
+          standings[key2].wins++;
+          standings[key1].losses++;
+        }
       }
     }
 
-    // Group standings by group
     const grouped: Record<string, any[]> = {};
     Object.values(standings).forEach(entry => {
       if (!grouped[entry.group]) grouped[entry.group] = [];
       grouped[entry.group].push(entry);
     });
-    // Sort each group by wins desc, then matches desc
+
     Object.keys(grouped).forEach(group => {
-      grouped[group].sort((a, b) => b.wins - a.wins || b.matches - a.matches);
+      grouped[group].sort((a, b) => b.wins - a.wins || a.losses - b.losses || b.matches - a.matches);
     });
     res.status(200).json(grouped);
   } catch (error) {
