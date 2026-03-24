@@ -11,7 +11,7 @@ export default function KabaddiDashboard() {
 
   // Fetch matches to get live count for header (adjust API route if needed)
   const { data: matches } = useSWR(
-    `/api/matches?sport=kabaddi&gender=${gender}`,
+    `http://localhost:5000/api/kabaddi?gender=${gender}`,
     fetcher,
     { refreshInterval: 10000 }
   );
@@ -249,7 +249,7 @@ function ScorecardContent({ match, isLive = false }: { match: any, isLive?: bool
 
 function LiveScore({ gender }: { gender: "m" | "f" }) {
   const { data: matches, error, isLoading } = useSWR(
-    `/api/matches?sport=kabaddi&gender=${gender}`,
+    `http://localhost:5000/api/kabaddi?gender=${gender}`,
     fetcher,
     { refreshInterval: 5000 } // Faster refresh for kabaddi
   );
@@ -274,7 +274,7 @@ function LiveScore({ gender }: { gender: "m" | "f" }) {
 
 function Leaderboard({ gender }: { gender: "m" | "f" }) {
   const { data: teams, error, isLoading } = useSWR(
-    `/api/leaderboard?sport=kabaddi&gender=${gender}`,
+    `http://localhost:5000/api/kabaddi-leaderboard?gender=${gender}`,
     fetcher,
     { refreshInterval: 10000 }
   );
@@ -342,7 +342,7 @@ function Leaderboard({ gender }: { gender: "m" | "f" }) {
 
 function Fixtures({ gender }: { gender: "m" | "f" }) {
   const { data: matches, error, isLoading } = useSWR(
-    `/api/matches?sport=kabaddi&gender=${gender}`,
+    `http://localhost:5000/api/kabaddi?gender=${gender}`,
     fetcher,
     { refreshInterval: 30000 }
   );
@@ -394,17 +394,21 @@ function Fixtures({ gender }: { gender: "m" | "f" }) {
                     <h4 className="text-lg font-black text-white tracking-wide uppercase truncate max-w-[70%] group-hover:text-[#FFBF00] transition-colors">
                       {teamA}
                     </h4>
-                    <span className="text-white font-black text-2xl tracking-tighter">
-                      {teamAObj?.score ?? "-"}
-                    </span>
+                    {match.status !== "UPCOMING" && (
+                      <span className="text-white font-black text-2xl tracking-tighter">
+                        {teamAObj?.score ?? "-"}
+                      </span>
+                    )}
                   </div>
                   <div className="flex justify-between items-center">
                     <h4 className="text-lg font-black text-white tracking-wide uppercase truncate max-w-[70%] group-hover:text-[#FFBF00] transition-colors">
                       {teamB}
                     </h4>
-                    <span className="text-white font-black text-2xl tracking-tighter">
-                      {teamBObj?.score ?? "-"}
-                    </span>
+                    {match.status !== "UPCOMING" && (
+                      <span className="text-white font-black text-2xl tracking-tighter">
+                        {teamBObj?.score ?? "-"}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -455,7 +459,7 @@ function Fixtures({ gender }: { gender: "m" | "f" }) {
       )}
 
       <div className="space-y-4">
-        <RenderMatchList list={upcoming} title="Upcoming Raids" />
+        <RenderMatchList list={upcoming} title="Upcoming Matches" />
         <RenderMatchList list={completed} title="Completed Matches" />
         {upcoming.length === 0 && completed.length === 0 && (
           <div className="text-center py-20 border border-[#1A1A1A] rounded-2xl bg-[#050505]">
