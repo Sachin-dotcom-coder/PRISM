@@ -6,7 +6,7 @@ const SPORTS = [
   { label: "CRICKET",       href: "/sports/cricket",       emoji: "🏏" },
   { label: "FOOTBALL",      href: "/sports/football",      emoji: "⚽" },
   { label: "KABADDI",       href: "/sports/kabaddi",       emoji: "🏃‍♂️" },
-  { label: "TUG OF WAR",    href: "/sports/tug-of-war",    emoji: "⚓" },
+  { label: "TUG OF WAR",    href: "/sports/tugofwar",      emoji: "🪢" },
   { label: "KHO KHO",       href: "/sports/kho-kho",       emoji: "🏃" },
   { label: "ATHLETICS",     href: "/sports/athletics",     emoji: "👟" },
   { label: "VOLLEYBALL",    href: "/sports/volleyball",    emoji: "🏐" },
