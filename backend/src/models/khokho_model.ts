@@ -27,7 +27,7 @@ const KhoKhoMatchSchema = new Schema<IKhoKhoMatch>(
     winner: { type: String, default: null },
     match_status: { 
       type: String, 
-      enum: ["scheduled", "ongoing", "completed"], 
+      enum: ["scheduled", "completed"], 
       default: "scheduled" 
     },
     gender: { type: String, enum: ["men", "women"], required: true }

@@ -1,8 +1,14 @@
 import mongoose, { Document, Schema } from "mongoose";
 
+export interface ITTSet {
+  team1_score: number;
+  team2_score: number;
+}
+
 export interface ITTGame {
   game_number: number;
   match_type: "singles" | "doubles";
+  sets: ITTSet[];
   team1_score: number;
   team2_score: number;
   winner: string | null;
@@ -12,7 +18,6 @@ export interface ITTMatch extends Document {
   match_id: number;
   match_name?: string;
   match_stage: string;
-  match_type?: "singles" | "doubles";
   team1_department: string;
   team2_department: string;
   match_date?: Date;
@@ -26,6 +31,11 @@ export interface ITTMatch extends Document {
   gender: "men" | "women";
 }
 
+const TTSetSchema: Schema<ITTSet> = new Schema<ITTSet>({
+  team1_score: { type: Number, required: true },
+  team2_score: { type: Number, required: true }
+});
+
 const TTGameSchema: Schema<ITTGame> = new Schema<ITTGame>({
   game_number: { type: Number, required: true },
   match_type: {
@@ -34,6 +44,7 @@ const TTGameSchema: Schema<ITTGame> = new Schema<ITTGame>({
     required: true,
     default: "singles"
   },
+  sets: [TTSetSchema],
   team1_score: { type: Number, required: true },
   team2_score: { type: Number, required: true },
   winner: {
@@ -55,10 +66,6 @@ const TTMatchSchema: Schema<ITTMatch> = new Schema<ITTMatch>(
     match_stage: {
       type: String,
       required: true
-    },
-    match_type: {
-      type: String,
-      enum: ["singles", "doubles"]
     },
     team1_department: {
       type: String,
@@ -93,7 +100,7 @@ const TTMatchSchema: Schema<ITTMatch> = new Schema<ITTMatch>(
     },
     match_status: {
       type: String,
-      enum: ["scheduled", "ongoing", "completed"],
+      enum: ["scheduled", "completed"],
       default: "scheduled"
     },
     gender: {

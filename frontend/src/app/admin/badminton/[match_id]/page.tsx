@@ -306,7 +306,6 @@ export default function BadmintonMatchPage() {
 
   const statusColor: Record<string, string> = {
     scheduled: "bg-zinc-800 text-zinc-400",
-    ongoing: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
     completed: "bg-green-500/20 text-green-400 border-green-500/30",
   };
 
@@ -372,7 +371,6 @@ export default function BadmintonMatchPage() {
               className={`input-field border ${statusColor[form.match_status] ?? "border-zinc-700"}`}
             >
               <option value="scheduled">Scheduled</option>
-              <option value="ongoing">Ongoing</option>
               <option value="completed">Completed</option>
             </select>
           </div>

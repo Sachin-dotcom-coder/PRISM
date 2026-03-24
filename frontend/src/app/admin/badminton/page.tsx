@@ -139,7 +139,7 @@ export default function BadmintonAdminPage() {
     match_date: new Date().toISOString().slice(0, 10),
     gender: genderTab,
     venue: "",
-    match_status: "scheduled" as "scheduled" | "ongoing" | "completed",
+    match_status: "scheduled" as "scheduled" | "completed",
     games: [] as any[],
     team1_score: 0,
     team2_score: 0,
@@ -374,9 +374,9 @@ export default function BadmintonAdminPage() {
                <div>
                  <label className="label-sm">Stage</label>
                  <select value={newMatch.match_stage} onChange={e => setNewMatch({...newMatch, match_stage: e.target.value as any})} className="input-field">
-                   <option value="group">Group</option>
-                   <option value="semifinal">Semifinal</option>
-                   <option value="final">Final</option>
+                    <option value="group">Group</option>
+                    <option value="semifinal">Semifinal</option>
+                    <option value="final">Final</option>
                  </select>
                </div>
                <div>

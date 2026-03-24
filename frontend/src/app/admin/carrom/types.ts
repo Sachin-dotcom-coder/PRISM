@@ -8,7 +8,7 @@ export interface ICarromEvent {
   department_1: string;
   department_2: string;
   winner: string | null;
-  event_status: "scheduled" | "ongoing" | "completed";
+  event_status: "scheduled" | "completed";
   gender: CarromGender;
   createdAt?: string;
   updatedAt?: string;

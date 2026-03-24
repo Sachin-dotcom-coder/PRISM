@@ -140,7 +140,6 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
           <label className={labelCls}>Status</label>
           <select name="match_status" value={formData.match_status} onChange={handleChange} className={inputCls}>
             <option value="scheduled">Scheduled</option>
-            <option value="ongoing">Ongoing</option>
             <option value="completed">Completed</option>
           </select>
         </div>
@@ -162,7 +161,7 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
         </div>
 
         <div>
-          <label className={labelCls}>Winner (leave blank if ongoing)</label>
+          <label className={labelCls}>Winner (leave blank if scheduled)</label>
           <select name="winner" value={formData.winner || ''} onChange={handleChange}
             className={inputCls}>
             {DEPARTMENT_OPTIONS.map((department) => <option key={department} value={department}>{department}</option>)}

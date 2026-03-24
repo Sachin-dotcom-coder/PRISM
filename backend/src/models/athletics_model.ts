@@ -54,7 +54,7 @@ const AthleticsEventSchema = new Schema<IAthleticsEvent>(
     winner: { type: String, default: null }, // Participant name
     event_status: { 
       type: String, 
-      enum: ["scheduled", "ongoing", "completed"], 
+      enum: ["scheduled", "completed"], 
       default: "scheduled" 
     },
     gender: {

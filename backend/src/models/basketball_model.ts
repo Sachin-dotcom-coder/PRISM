@@ -42,7 +42,7 @@ const BasketballMatchSchema = new Schema<IBasketballMatch>(
     winner: { type: String, default: null }, // Team name or 'draw'
     match_status: { 
       type: String, 
-      enum: ["scheduled", "ongoing", "completed"], 
+      enum: ["scheduled", "completed"], 
       default: "scheduled" 
     },
     gender: {

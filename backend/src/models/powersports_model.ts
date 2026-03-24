@@ -33,7 +33,7 @@ const PowersportsEventSchema = new Schema<IPowersportsEvent>(
     winner: { type: String, default: null },
     event_status: {
       type: String,
-      enum: ["scheduled", "ongoing", "completed"],
+      enum: ["scheduled", "completed"],
       default: "scheduled"
     },
     gender: {

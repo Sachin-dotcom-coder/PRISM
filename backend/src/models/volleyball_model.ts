@@ -43,11 +43,11 @@ const VolleyballMatchSchema = new Schema<IVolleyballMatch>(
     team2_score: { type: Number },
     games: { type: [GameSchema], default: [] },
     total_games: { type: Number, default: 0 },
-    winner: { type: String, default: null }, 
-    match_status: { 
-      type: String, 
-      enum: ["scheduled", "ongoing", "completed"], 
-      default: "scheduled" 
+    winner: { type: String, default: null },
+    match_status: {
+      type: String,
+      enum: ["scheduled", "completed"],
+      default: "scheduled"
     },
     gender: {
       type: String,

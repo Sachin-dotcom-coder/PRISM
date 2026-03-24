@@ -26,7 +26,7 @@ export interface IAthleticsEvent {
   event_date?: string;
   participants: IParticipant[];
   winner: string | null;
-  event_status: "scheduled" | "ongoing" | "completed";
+  event_status: "scheduled" | "completed";
   gender: AthleticsGender;
   createdAt?: string;
   updatedAt?: string;

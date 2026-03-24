@@ -584,7 +584,6 @@ export default function AthleticsAdminPage() {
                 className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 text-sm text-white outline-none transition-all focus:border-[#FFBF00]"
               >
                 <option value="scheduled">Scheduled</option>
-                <option value="ongoing">Ongoing</option>
                 <option value="completed">Completed</option>
               </select>
             </div>
@@ -775,7 +774,10 @@ export default function AthleticsAdminPage() {
                       </div>
                     </td>
                     <td className="p-4">
-                      <span className="rounded-full border border-zinc-800 px-3 py-1 text-xs font-black uppercase tracking-wider text-zinc-300">
+                      <span className={`rounded-full border px-3 py-1 text-xs font-black uppercase tracking-wider ${
+                        event.event_status === 'scheduled' ? 'border-blue-500/30 text-blue-400 bg-blue-500/10' :
+                        'border-green-500/30 text-green-400 bg-green-500/10'
+                      }`}>
                         {event.event_status}
                       </span>
                     </td>

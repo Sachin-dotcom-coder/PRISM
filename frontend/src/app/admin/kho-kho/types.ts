@@ -8,7 +8,8 @@ export interface IKhoKhoMatch {
   team1_score?: number | '';
   team2_score?: number | '';
   winner?: string | null;
-  match_status: "scheduled" | "ongoing" | "completed";
+  venue?: string;
+  match_status: "scheduled" | "completed";
   gender: "men" | "women";
   createdAt?: Date | string;
   updatedAt?: Date | string;

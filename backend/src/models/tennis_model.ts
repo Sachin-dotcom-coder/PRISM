@@ -4,7 +4,7 @@ export interface ITennisGame {
   tie_id: number;
   score_dept1: number;
   score_dept2: number;
-  status: "scheduled" | "ongoing" | "completed";
+  status: "scheduled" | "completed";
 }
 
 export interface ITennisMatch extends Document {
@@ -16,7 +16,7 @@ export interface ITennisMatch extends Document {
   dept_name2: string;
   games: ITennisGame[];
   winner_dept?: string;
-  status: "scheduled" | "ongoing" | "completed";
+  status: "scheduled" | "completed";
   gender: "men" | "women";
   createdAt: Date;
   updatedAt: Date;
@@ -38,7 +38,7 @@ const TennisGameSchema: Schema<ITennisGame> = new Schema(
     },
     status: {
       type: String,
-      enum: ["scheduled", "ongoing", "completed"],
+      enum: ["scheduled", "completed"],
       default: "completed",
       required: true,
     },
@@ -84,7 +84,7 @@ const TennisMatchSchema: Schema<ITennisMatch> = new Schema(
     },
     status: {
       type: String,
-      enum: ["scheduled", "ongoing", "completed"],
+      enum: ["scheduled", "completed"],
       default: "completed",
       required: true,
     },

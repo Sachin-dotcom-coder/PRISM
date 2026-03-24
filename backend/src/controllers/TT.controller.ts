@@ -116,13 +116,12 @@ export const updateTTMatchScore = async (req: Request, res: Response): Promise<v
     }
 
     const { 
-      games, match_status, team1_score, team2_score, match_stage, match_type, venue, match_date, team1_department, team2_department, winner, gender 
+      games, match_status, team1_score, team2_score, match_stage, venue, match_date, team1_department, team2_department, winner, gender 
     } = req.body;
 
     const updateData: any = {};
 
     if (match_stage !== undefined) updateData.match_stage = match_stage;
-    if (match_type !== undefined) updateData.match_type = match_type;
     if (venue !== undefined) updateData.venue = venue;
     if (match_date !== undefined) updateData.match_date = match_date;
     if (team1_department !== undefined) updateData.team1_department = team1_department;

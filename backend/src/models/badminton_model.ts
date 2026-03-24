@@ -124,7 +124,7 @@ const BadmintonMatchSchema: Schema<IBadmintonMatch> = new Schema<IBadmintonMatch
 
     match_status: {
       type: String,
-      enum: ["scheduled", "ongoing", "completed"],
+      enum: ["scheduled", "completed"],
       default: "scheduled"
     },
     gender: {

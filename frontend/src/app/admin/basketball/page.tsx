@@ -236,7 +236,7 @@ export default function BasketballAdminPage() {
 
   // Filtered list of departments for the current gender toggle
   const filteredEntries = useMemo(() => lbEntries.filter(e => e.category === lbCategory), [lbEntries, lbCategory]);
-  const groups = useMemo(() => [...new Set(filteredEntries.map(e => e.group))].sort(), [filteredEntries]);
+  const groups = useMemo(() => Array.from(new Set([...filteredEntries.map(e => e.group || "A"), "A", "B"])).sort(), [filteredEntries]);
 
   return (
     <div className="p-4 md:p-8 space-y-10 max-w-7xl mx-auto pb-24 min-h-screen bg-black text-white">
@@ -256,11 +256,12 @@ export default function BasketballAdminPage() {
 
         {!showForm && (
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 bg-zinc-900 p-1.5 rounded-lg border border-zinc-800">
-              <button onClick={() => setGlobalGender('m')} className={`px-6 py-2 rounded-md text-sm font-bold uppercase transition-all ${gender === 'men' ? 'bg-[#FFBF00] text-black' : 'text-zinc-500'}`}>Men</button>
-              <button onClick={() => setGlobalGender('f')} className={`px-6 py-2 rounded-md text-sm font-bold uppercase transition-all ${gender === 'women' ? 'bg-[#FFBF00] text-black' : 'text-zinc-500'}`}>Women</button>
-            </div>
+<<<<<<< Updated upstream
+            <button onClick={() => { fetchMatches(); fetchLeaderboard(); }} className="p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-400 transition-all hover:bg-zinc-800"><RefreshCw className={loading ? 'animate-spin' : ''} /></button>
+=======
+
             <button onClick={() => { fetchMatches(); fetchLeaderboard(); }} className="p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-400"><RefreshCw className={loading ? 'animate-spin' : ''} /></button>
+>>>>>>> Stashed changes
             <button onClick={handleAddNew} className="flex items-center gap-2 px-4 py-2 bg-[#FFBF00] hover:bg-yellow-500 text-black rounded-lg text-sm font-bold transition-all"><Plus className="w-4 h-4" /> Create Match</button>
           </div>
         )}

@@ -20,7 +20,8 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
     team1_score: '',
     team2_score: '',
     winner: '',
-    match_status: 'completed',
+    venue: '',
+    match_status: 'scheduled',
     gender: gender
   });
   
@@ -111,6 +112,19 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Winner Dept</label>
           <select name="winner" value={formData.winner || ''} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white">
             {DEPARTMENT_OPTIONS.map((department) => <option key={department} value={department}>{department}</option>)}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Venue</label>
+          <input type="text" name="venue" value={formData.venue} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white" placeholder="e.g. Ground A, Court 1" />
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Match Status</label>
+          <select name="match_status" value={formData.match_status} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white">
+            <option value="scheduled">Scheduled</option>
+            <option value="completed">Completed</option>
           </select>
         </div>
       </div>

@@ -48,7 +48,8 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
     total_games: 0,
     winner: '',
     match_status: 'completed',
-    gender
+    match_type: 'singles',
+    gender: gender
   });
 
   const [loading, setLoading] = useState(false);
@@ -82,8 +83,8 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
         winner: team1Wins > team2Wins
           ? initialData.team1_department
           : team2Wins > team1Wins
-          ? initialData.team2_department
-          : '',
+            ? initialData.team2_department
+            : '',
       });
     } else {
       setFormData((prev) => ({ ...prev, gender }));
@@ -97,8 +98,8 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
     const winner = team1Wins > team2Wins
       ? formData.team1_department
       : team2Wins > team1Wins
-      ? formData.team2_department
-      : '';
+        ? formData.team2_department
+        : '';
 
     const isSame =
       games.length === formData.games.length &&
@@ -251,10 +252,11 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
           </div>
         </div>
         <div>
-          <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Total Games</label>
-          <div className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm text-white font-bold">
-            {formData.total_games}
-            <div className="text-[10px] text-zinc-500 mt-1">Each game gives 1 point to its winner</div>
+          <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Winner</label>
+          <div className="flex gap-2">
+            <select name="winner" value={formData.winner || ''} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white">
+              {DEPARTMENT_OPTIONS.map((department) => <option key={department} value={department}>{department}</option>)}
+            </select>
           </div>
         </div>
       </div>
@@ -265,7 +267,7 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
             <h4 className="text-zinc-300 font-bold tracking-widest text-sm uppercase">Games / Sets</h4>
             <p className="text-[11px] text-zinc-500 mt-1">Choose Singles or Doubles for each game separately.</p>
           </div>
-          <button type="button" onClick={addGame} className="flex items-center gap-1 text-xs bg-[#FFBF00] text-black px-3 py-1.5 rounded font-bold hover:bg-yellow-500 transition-colors"><Plus className="w-4 h-4"/> Add Game</button>
+          <button type="button" onClick={addGame} className="flex items-center gap-1 text-xs bg-[#FFBF00] text-black px-3 py-1.5 rounded font-bold hover:bg-yellow-500 transition-colors"><Plus className="w-4 h-4" /> Add Game</button>
         </div>
         <div className="space-y-3">
           {formData.games.length === 0 ? (
@@ -281,7 +283,7 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
       <div className="pt-6 border-t border-zinc-800 flex justify-end gap-3">
         <button type="button" onClick={onCancel} className="px-6 py-2 rounded-lg text-sm text-zinc-400 font-bold hover:text-white hover:bg-zinc-800 transition-colors">Cancel</button>
         <button type="submit" disabled={loading} className="px-6 py-2 rounded-lg text-sm bg-[#FFBF00] text-black font-bold hover:bg-yellow-500 transition-colors flex items-center gap-2">
-          {loading ? 'Saving to MongoDB...' : <><Save className="w-4 h-4"/> Save Match Data</>}
+          {loading ? 'Saving to MongoDB...' : <><Save className="w-4 h-4" /> Save Match Data</>}
         </button>
       </div>
     </form>

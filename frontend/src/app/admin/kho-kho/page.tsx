@@ -329,7 +329,6 @@ export default function KhoKhoAdminPage() {
                         <td className="p-4 text-center">
                           <span className={`px-2 py-1 text-[10px] uppercase font-[900] tracking-widest rounded border ${
                             match.match_status === 'scheduled' ? 'border-blue-500/30 text-blue-400 bg-blue-500/10' :
-                            match.match_status === 'ongoing' ? 'border-[#FFBF00]/30 text-[#FFBF00] bg-[#FFBF00]/10 shadow-[0_0_8px_rgba(255,191,0,0.5)]' :
                             'border-green-500/30 text-green-400 bg-green-500/10'
                           }`}>
                             {match.match_status}

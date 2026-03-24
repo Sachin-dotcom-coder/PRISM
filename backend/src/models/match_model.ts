@@ -50,7 +50,7 @@ const MatchSchema: Schema<IMatch> = new Schema<IMatch>(
     },
     match_status: {
       type: String,
-      enum: ["scheduled", "ongoing", "completed"],
+      enum: ["scheduled", "completed"],
       required: true,
       default: "scheduled"
     }

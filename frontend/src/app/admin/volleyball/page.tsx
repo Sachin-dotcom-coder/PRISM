@@ -219,7 +219,7 @@ export default function VolleyballAdminPage() {
 
   // ─── Leaderboard data prep ─────────────────────────────────────────────────
   const filteredEntries = lbEntries.filter(e => e.category === lbCategory);
-  const groups = [...new Set(filteredEntries.map(e => e.group))].sort();
+  const groups = Array.from(new Set([...filteredEntries.map(e => e.group || "A"), "A", "B"])).sort();
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
@@ -241,16 +241,6 @@ export default function VolleyballAdminPage() {
 
         {!showForm && (
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 bg-zinc-900 p-1.5 rounded-lg border border-zinc-800">
-              <button onClick={() => setGlobalGender('m')}
-                className={`px-6 py-2 rounded-md text-sm font-bold tracking-wider uppercase transition-all ${gender === 'men' ? 'bg-[#FFBF00] text-black shadow-md' : 'text-zinc-500 hover:text-white'}`}>
-                Men
-              </button>
-              <button onClick={() => setGlobalGender('f')}
-                className={`px-6 py-2 rounded-md text-sm font-bold tracking-wider uppercase transition-all ${gender === 'women' ? 'bg-[#FFBF00] text-black shadow-md' : 'text-zinc-500 hover:text-white'}`}>
-                Women
-              </button>
-            </div>
             <button onClick={() => { fetchMatches(); fetchLeaderboard(); }}
               className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-white rounded-lg text-sm font-bold transition-all">
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
@@ -334,7 +324,6 @@ export default function VolleyballAdminPage() {
                         <td className="p-4 text-center">
                           <span className={`px-2 py-1 text-[10px] uppercase font-[900] tracking-widest rounded border ${
                             m.match_status === 'scheduled' ? 'border-blue-500/30 text-blue-400 bg-blue-500/10' :
-                            m.match_status === 'ongoing'   ? 'border-[#FFBF00]/30 text-[#FFBF00] bg-[#FFBF00]/10 shadow-[0_0_8px_rgba(255,191,0,0.5)]' :
                             'border-green-500/30 text-green-400 bg-green-500/10'
                           }`}>
                             {m.match_status}
