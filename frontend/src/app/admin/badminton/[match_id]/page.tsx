@@ -12,10 +12,18 @@ import {
 import { DEPARTMENT_OPTIONS } from "../../shared/departmentOptions";
 
 // ── Types ────────────────────────────────────────────────
+interface ISet {
+  team1_score: number;
+  team2_score: number;
+}
+
 interface IGame {
   game_number: number;
-  team1_score: number | "";
-  team2_score: number | "";
+  game_type: "single" | "double";
+  sets: ISet[];
+  team1_score: number;
+  team2_score: number;
+  winner: string | null;
 }
 
 interface IBadmintonMatch {
@@ -43,7 +51,6 @@ const fetcher = (url: string) =>
 
 const MATCHES_API = "/api/badminton";
 
-// ── Game Row Component ───────────────────────────────────
 function GameRow({
   game,
   index,
@@ -59,83 +66,85 @@ function GameRow({
   onUpdate: (idx: number, g: IGame) => void;
   onRemove: (idx: number) => void;
 }) {
-  const t1Wins =
-    game.team1_score !== "" && game.team2_score !== "" &&
-    Number(game.team1_score) > Number(game.team2_score);
-  const t2Wins =
-    game.team1_score !== "" && game.team2_score !== "" &&
-    Number(game.team2_score) > Number(game.team1_score);
+  const updateSet = (setIdx: number, team: 1 | 2, score: number) => {
+    const sets = [...game.sets];
+    sets[setIdx] = { ...sets[setIdx], [`team${team}_score`]: score };
+    
+    let t1Sets = 0, t2Sets = 0;
+    sets.forEach(s => {
+      if (s.team1_score > s.team2_score) t1Sets++;
+      else if (s.team2_score > s.team1_score) t2Sets++;
+    });
+    
+    onUpdate(index, {
+      ...game,
+      sets,
+      team1_score: t1Sets,
+      team2_score: t2Sets,
+      winner: t1Sets > t2Sets ? team1 : t2Sets > t1Sets ? team2 : null
+    });
+  };
 
   return (
-    <div className="flex items-center gap-3 p-4 bg-zinc-900/60 rounded-2xl border border-zinc-800 hover:border-zinc-700 transition-all">
-      {/* Game # badge */}
-      <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-xs font-black text-blue-400 shrink-0">
-        G{game.game_number}
+    <div className="bg-zinc-950/50 border border-zinc-800 rounded-2xl p-4 shadow-xl">
+      <div className="flex items-center justify-between mb-4 mt-2">
+        <div className="flex items-center gap-4">
+          <span className="w-8 h-8 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-xs font-black text-blue-400">G{game.game_number}</span>
+          <div className="flex bg-zinc-900/80 p-1 rounded-xl border border-zinc-800 self-start">
+            {["single", "double"].map(t => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => onUpdate(index, { ...game, game_type: t as any })}
+                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${
+                  game.game_type === t 
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
+                    : "text-zinc-500 hover:text-zinc-300"
+                }`}
+              >
+                {t}s
+              </button>
+            ))}
+          </div>
+        </div>
+        <button type="button" onClick={() => onRemove(index)} className="p-2 hover:bg-red-500/10 hover:text-red-400 text-zinc-600 transition-all rounded-lg"><Trash2 className="w-4 h-4" /></button>
       </div>
 
-      {/* Team 1 score */}
-      <div className="flex-1">
-        <label className="block text-[9px] font-black text-zinc-500 uppercase mb-1 tracking-widest">
-          {team1 || "Team 1"}
-        </label>
-        <input
-          type="number"
-          min={0}
-          value={game.team1_score}
-          onChange={(e) =>
-            onUpdate(index, {
-              ...game,
-              team1_score: e.target.value === "" ? "" : Number(e.target.value),
-            })
-          }
-          className={`w-full rounded-xl p-2.5 text-center text-lg font-black outline-none border transition-all
-            ${t1Wins ? "bg-blue-600/20 border-blue-500/50 text-blue-300" : "bg-zinc-800 border-zinc-700 text-zinc-200 focus:border-blue-500"}
-          `}
-          placeholder="0"
-        />
+      <div className="space-y-2.5">
+        {game.sets.map((set, sIdx) => (
+          <div key={sIdx} className="flex items-center justify-between p-4 bg-zinc-900/50 rounded-2xl border border-zinc-800/50 hover:border-zinc-700 transition-all gap-4">
+            <span className="text-sm font-black text-zinc-500 uppercase tracking-widest shrink-0">Set {sIdx + 1}</span>
+            <div className="flex items-center gap-6">
+              <div className="flex flex-col items-center">
+                <span className="text-[10px] text-zinc-600 font-bold uppercase mb-2">{team1 || "T1"}</span>
+                <input 
+                  type="number" 
+                  value={set.team1_score} 
+                  onFocus={(e) => e.target.value === "0" && (e.target.value = "")}
+                  onChange={(e) => updateSet(sIdx, 1, +e.target.value)}
+                  className="w-24 bg-zinc-950 border border-zinc-800 rounded-xl text-center py-3.5 text-2xl font-black text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all tabular-nums font-mono"
+                />
+              </div>
+              <span className="text-zinc-700 font-black text-xl mt-8">—</span>
+              <div className="flex flex-col items-center">
+                <span className="text-[10px] text-zinc-600 font-bold uppercase mb-2">{team2 || "T2"}</span>
+                <input 
+                  type="number" 
+                  value={set.team2_score} 
+                  onFocus={(e) => e.target.value === "0" && (e.target.value = "")}
+                  onChange={(e) => updateSet(sIdx, 2, +e.target.value)}
+                  className="w-24 bg-zinc-950 border border-zinc-800 rounded-xl text-center py-3.5 text-2xl font-black text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all tabular-nums font-mono"
+                />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
-
-      <div className="text-zinc-600 font-black text-sm shrink-0">vs</div>
-
-      {/* Team 2 score */}
-      <div className="flex-1">
-        <label className="block text-[9px] font-black text-zinc-500 uppercase mb-1 tracking-widest">
-          {team2 || "Team 2"}
-        </label>
-        <input
-          type="number"
-          min={0}
-          value={game.team2_score}
-          onChange={(e) =>
-            onUpdate(index, {
-              ...game,
-              team2_score: e.target.value === "" ? "" : Number(e.target.value),
-            })
-          }
-          className={`w-full rounded-xl p-2.5 text-center text-lg font-black outline-none border transition-all
-            ${t2Wins ? "bg-blue-600/20 border-blue-500/50 text-blue-300" : "bg-zinc-800 border-zinc-700 text-zinc-200 focus:border-blue-500"}
-          `}
-          placeholder="0"
-        />
+      
+      <div className="mt-5 flex items-center justify-between text-xs font-black uppercase tracking-wider py-1 border-t border-zinc-900">
+        <span className="text-zinc-500">Game Score: <span className="text-white ml-2 text-sm">{game.team1_score} - {game.team2_score}</span></span>
+        {game.winner && <span className="text-blue-500 flex items-center gap-2 bg-blue-500/5 px-3 py-1.5 rounded-lg border border-blue-500/10"><Trophy className="w-4 h-4" /> {game.winner}</span>}
       </div>
-
-      {/* Winner indicator */}
-      <div className="w-20 text-center shrink-0">
-        {t1Wins && <span className="text-[10px] font-black text-blue-400 uppercase">🏆 {team1}</span>}
-        {t2Wins && <span className="text-[10px] font-black text-blue-400 uppercase">🏆 {team2}</span>}
-        {!t1Wins && !t2Wins && game.team1_score !== "" && (
-          <span className="text-[10px] text-zinc-600">Draw</span>
-        )}
-      </div>
-
-      {/* Remove button */}
-      <button
-        type="button"
-        onClick={() => onRemove(index)}
-        className="p-2 rounded-xl bg-zinc-800 hover:bg-red-500/20 hover:text-red-400 text-zinc-500 transition-all shrink-0"
-      >
-        <Trash2 className="w-4 h-4" />
-      </button>
     </div>
   );
 }
@@ -201,8 +210,15 @@ export default function BadmintonMatchPage() {
     if (!form) return;
     const next: IGame = {
       game_number: form.games.length + 1,
-      team1_score: "",
-      team2_score: "",
+      game_type: "single",
+      sets: [
+        { team1_score: 0, team2_score: 0 },
+        { team1_score: 0, team2_score: 0 },
+        { team1_score: 0, team2_score: 0 }
+      ],
+      team1_score: 0,
+      team2_score: 0,
+      winner: null
     };
     setForm((p) => p ? { ...p, games: [...p.games, next], total_games: p.games.length + 1 } : p);
   };
@@ -222,17 +238,12 @@ export default function BadmintonMatchPage() {
     setForm((p) => p ? { ...p, games: updated } : p);
   };
 
-  // Auto-compute overall scores from games (games won by each team)
   const autoComputeScores = () => {
     if (!form) return;
     let t1 = 0, t2 = 0;
     form.games.forEach((g) => {
-      const s1 = Number(g.team1_score);
-      const s2 = Number(g.team2_score);
-      if (g.team1_score !== "" && g.team2_score !== "") {
-        if (s1 > s2) t1++;
-        else if (s2 > s1) t2++;
-      }
+      if (g.winner === form.team1_department) t1++;
+      else if (g.winner === form.team2_department) t2++;
     });
     setForm((p) =>
       p ? {
@@ -258,8 +269,14 @@ export default function BadmintonMatchPage() {
         team2_score: Number(form.team2_score),
         games: form.games.map((g) => ({
           game_number: g.game_number,
+          game_type: g.game_type,
+          sets: g.sets.map(s => ({
+            team1_score: Number(s.team1_score || 0),
+            team2_score: Number(s.team2_score || 0)
+          })),
           team1_score: Number(g.team1_score || 0),
           team2_score: Number(g.team2_score || 0),
+          winner: g.winner
         })),
         total_games: form.games.length,
         winner: form.winner || null,
@@ -576,9 +593,9 @@ export default function BadmintonMatchPage() {
 
       <style jsx global>{`
         .glass { background: rgba(8,8,8,0.8); backdrop-filter: blur(16px); }
-        .input-field { width: 100%; background: #121212; border: 1px solid #222; border-radius: 10px; padding: 10px 12px; font-size: 13px; color: white; outline: none; }
+        .input-field { width: 100%; background: #121212; border: 1px solid #222; border-radius: 12px; padding: 12px 14px; font-size: 15px; color: white; outline: none; }
         .input-field:focus { border-color: #3b82f6; }
-        .label-sm { display: block; font-size: 9px; font-weight: 900; color: #555; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.12em; }
+        .label-sm { display: block; font-size: 11px; font-weight: 900; color: #777; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.12em; }
         select.input-field option { background: #111; color: white; }
       `}</style>
     </div>

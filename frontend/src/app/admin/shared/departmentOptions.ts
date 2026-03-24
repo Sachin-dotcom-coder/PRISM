@@ -1,10 +1,10 @@
 export const DEPARTMENT_OPTIONS = [
-  "CS",
-  "AI+MBA",
-  "ECE",
-  "Physics",
-  "Chemistry",
-  "Chemical",
+  "Computer Science",
+  "Science",
+  "Electrical",
+  "AI-MBA",
   "Mechanical",
-  "Civil"
+  "Civil",
+  "Chemical",
+  "ECE"
 ] as const;

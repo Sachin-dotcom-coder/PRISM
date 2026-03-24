@@ -1,9 +1,17 @@
 import mongoose, { Document, Schema } from "mongoose";
 
-export interface IGame {
-  game_number: number;
+export interface ISet {
   team1_score: number;
   team2_score: number;
+}
+
+export interface IGame {
+  game_number: number;
+  game_type: "single" | "double";
+  sets: ISet[];
+  team1_score: number;
+  team2_score: number;
+  winner: string | null;
 }
 
 export interface IBadmintonMatch extends Document {
@@ -22,18 +30,40 @@ export interface IBadmintonMatch extends Document {
   gender: "men" | "women";
 }
 
+const SetSchema: Schema<ISet> = new Schema<ISet>({
+  team1_score: { type: Number, default: 0 },
+  team2_score: { type: Number, default: 0 }
+});
+
 const GameSchema: Schema<IGame> = new Schema<IGame>({
   game_number: {
     type: Number,
     required: true
   },
+  game_type: {
+    type: String,
+    enum: ["single", "double"],
+    default: "single"
+  },
+  sets: {
+    type: [SetSchema],
+    default: () => [
+      { team1_score: 0, team2_score: 0 },
+      { team1_score: 0, team2_score: 0 },
+      { team1_score: 0, team2_score: 0 }
+    ]
+  },
   team1_score: {
     type: Number,
-    required: true
+    default: 0
   },
   team2_score: {
     type: Number,
-    required: true
+    default: 0
+  },
+  winner: {
+    type: String,
+    default: null
   }
 });
 

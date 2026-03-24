@@ -138,6 +138,12 @@ export default function BadmintonAdminPage() {
     match_stage: "group" as "group" | "semifinal" | "final",
     match_date: new Date().toISOString().slice(0, 10),
     gender: genderTab,
+    venue: "",
+    match_status: "scheduled" as "scheduled" | "ongoing" | "completed",
+    games: [] as any[],
+    team1_score: 0,
+    team2_score: 0,
+    winner: "" as string | null
   });
 
   // Keep gender in match form in sync with tab
@@ -158,6 +164,76 @@ export default function BadmintonAdminPage() {
   }, [lbCategory]);
 
   const showMsg = (msg: string) => { setSaveMsg(msg); setTimeout(() => setSaveMsg(""), 3000); };
+
+  const addGame = () => {
+    setNewMatch(prev => ({
+      ...prev,
+      games: [...prev.games, {
+        game_number: prev.games.length + 1,
+        game_type: "single",
+        sets: [
+          { team1_score: 0, team2_score: 0 },
+          { team1_score: 0, team2_score: 0 },
+          { team1_score: 0, team2_score: 0 }
+        ],
+        team1_score: 0,
+        team2_score: 0,
+        winner: null
+      }]
+    }));
+  };
+
+  const removeGame = (idx: number) => {
+    setNewMatch(prev => {
+      const games = prev.games.filter((_, i) => i !== idx).map((g, i) => ({ ...g, game_number: i + 1 }));
+      return { ...prev, games };
+    });
+  };
+
+  const updateGameType = (idx: number, type: "single" | "double") => {
+    setNewMatch(prev => {
+      const games = [...prev.games];
+      games[idx] = { ...games[idx], game_type: type };
+      return { ...prev, games };
+    });
+  };
+
+  const updateSet = (gameIdx: number, setIdx: number, team: 1 | 2, score: number) => {
+    setNewMatch(prev => {
+      const games = [...prev.games];
+      const game = { ...games[gameIdx] };
+      const sets = [...game.sets];
+      sets[setIdx] = { ...sets[setIdx], [`team${team}_score`]: score };
+      
+      let t1Sets = 0, t2Sets = 0;
+      sets.forEach(s => {
+        if (s.team1_score > s.team2_score) t1Sets++;
+        else if (s.team2_score > s.team1_score) t2Sets++;
+      });
+      
+      game.sets = sets;
+      game.team1_score = t1Sets;
+      game.team2_score = t2Sets;
+      game.winner = t1Sets > t2Sets ? prev.team1_department : t2Sets > t1Sets ? prev.team2_department : null;
+      
+      games[gameIdx] = game;
+      
+      let t1Games = 0, t2Games = 0;
+      games.forEach(g => {
+        if (g.team1_score > g.team2_score) t1Games++;
+        else if (g.team2_score > g.team1_score) t2Games++;
+      });
+      
+      return {
+        ...prev,
+        games,
+        team1_score: t1Games,
+        team2_score: t2Games,
+        winner: t1Games > t2Games ? prev.team1_department : t2Games > t1Games ? prev.team2_department : null,
+        match_status: (t1Games > 0 || t2Games > 0) ? "completed" : "scheduled"
+      };
+    });
+  };
 
   // --- MATCH HANDLERS ---
   const handleCreateMatch = async (e: React.FormEvent) => {
@@ -180,6 +256,12 @@ export default function BadmintonAdminPage() {
           match_stage: "group",
           match_date: new Date().toISOString().slice(0, 10),
           gender: genderTab,
+          venue: "",
+          match_status: "scheduled",
+          games: [],
+          team1_score: 0,
+          team2_score: 0,
+          winner: null
         });
         mutateMatches();
         showMsg("✅ Match created!");
@@ -268,7 +350,7 @@ export default function BadmintonAdminPage() {
              {isCreatingMatch ? "Cancel" : <><Plus className="w-4 h-4" /> New Match</>}
            </button>
         </div>
-        {isCreatingMatch && (
+         {isCreatingMatch && (
           <form onSubmit={handleCreateMatch} className="p-6 bg-zinc-900/50 border-b border-zinc-800 space-y-4">
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                <div>
@@ -301,12 +383,116 @@ export default function BadmintonAdminPage() {
                  <label className="label-sm">Date</label>
                  <input required type="date" value={newMatch.match_date} onChange={e => setNewMatch({...newMatch, match_date: e.target.value})} className="input-field" />
                </div>
-             </div>
-             <div className="flex items-center gap-3 text-xs text-zinc-500">
-               <span className="px-2 py-1 rounded-lg bg-zinc-800 font-black text-blue-400 uppercase">{genderTab}</span>
-               <span>Gender is automatically set to the active tab</span>
-             </div>
-             <button type="submit" className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl active:scale-95 transition-all">INITIALIZE MATCH</button>
+               <div>
+                  <label className="label-sm">Venue</label>
+                  <input type="text" value={newMatch.venue} onChange={e => setNewMatch({...newMatch, venue: e.target.value})} className="input-field" placeholder="Court 1" />
+                </div>
+              </div>
+
+              {/* Games and Sets */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
+                    <Trophy className="w-4 h-4 text-blue-500" /> Games / Sets
+                  </h3>
+                  <button type="button" onClick={addGame} className="text-[10px] font-black uppercase bg-blue-600/20 text-blue-400 px-3 py-1 rounded-lg border border-blue-500/20 hover:bg-blue-600 hover:text-white transition-all">
+                    + Add Game
+                  </button>
+                </div>
+
+                {newMatch.games.length === 0 ? (
+                  <div className="p-8 border border-dashed border-zinc-800 rounded-2xl text-center text-zinc-600 text-xs italic">
+                    No games added. Click "+ Add Game" to enter scores.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {newMatch.games.map((game: any, gIdx: number) => (
+                      <div key={gIdx} className="bg-zinc-950/50 border border-zinc-800 rounded-2xl p-4">
+                        <div className="flex items-center justify-between mb-4 mt-2">
+                          <div className="flex items-center gap-4">
+                            <span className="w-8 h-8 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-xs font-black text-blue-400">G{game.game_number}</span>
+                            <div className="flex bg-zinc-900/80 p-1 rounded-xl border border-zinc-800 self-start">
+                              {["single", "double"].map(t => (
+                                <button
+                                  key={t}
+                                  type="button"
+                                  onClick={() => updateGameType(gIdx, t as any)}
+                                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${
+                                    game.game_type === t 
+                                      ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
+                                      : "text-zinc-500 hover:text-zinc-300"
+                                  }`}
+                                >
+                                  {t}s
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <button type="button" onClick={() => removeGame(gIdx)} className="p-2 hover:bg-red-500/10 hover:text-red-400 text-zinc-600 transition-all rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                        </div>
+
+                        <div className="space-y-2.5">
+                          {game.sets.map((set: any, sIdx: number) => (
+                            <div key={sIdx} className="flex items-center justify-between p-4 bg-zinc-900/50 rounded-2xl border border-zinc-800/50 hover:border-zinc-700 transition-all gap-4">
+                              <span className="text-sm font-black text-zinc-500 uppercase tracking-widest shrink-0">Set {sIdx + 1}</span>
+                              <div className="flex items-center gap-6">
+                                <div className="flex flex-col items-center">
+                                  <span className="text-[10px] text-zinc-600 font-bold uppercase mb-2">{newMatch.team1_department || "T1"}</span>
+                                  <input 
+                                    type="number" 
+                                    value={set.team1_score} 
+                                    onFocus={(e) => e.target.value === "0" && (e.target.value = "")}
+                                    onChange={e => updateSet(gIdx, sIdx, 1, +e.target.value)}
+                                    className="w-24 bg-zinc-950 border border-zinc-800 rounded-xl text-center py-3.5 text-2xl font-black text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all tabular-nums font-mono"
+                                  />
+                                </div>
+                                <span className="text-zinc-700 font-black text-xl mt-8">—</span>
+                                <div className="flex flex-col items-center">
+                                  <span className="text-[10px] text-zinc-600 font-bold uppercase mb-2">{newMatch.team2_department || "T2"}</span>
+                                  <input 
+                                    type="number" 
+                                    value={set.team2_score} 
+                                    onFocus={(e) => e.target.value === "0" && (e.target.value = "")}
+                                    onChange={e => updateSet(gIdx, sIdx, 2, +e.target.value)}
+                                    className="w-24 bg-zinc-950 border border-zinc-800 rounded-xl text-center py-3.5 text-2xl font-black text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all tabular-nums font-mono"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        <div className="mt-5 flex items-center justify-between text-xs font-black uppercase tracking-wider py-1 border-t border-zinc-900">
+                          <span className="text-zinc-500">Game Score: <span className="text-white ml-2 text-sm">{game.team1_score} - {game.team2_score}</span></span>
+                          {game.winner && <span className="text-blue-500 flex items-center gap-2 bg-blue-500/5 px-3 py-1.5 rounded-lg border border-blue-500/10"><Trophy className="w-4 h-4" /> {game.winner}</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Match Result Summary Box */}
+              <div className="p-4 bg-blue-600/5 border border-blue-500/20 rounded-2xl flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Match Summary</p>
+                  <h4 className="font-sports text-lg text-white uppercase tracking-tight">
+                    {newMatch.team1_department || "Team 1"} <span className="text-blue-500 mx-2">{newMatch.team1_score} - {newMatch.team2_score}</span> {newMatch.team2_department || "Team 2"}
+                  </h4>
+                </div>
+                {newMatch.winner && (
+                  <div className="text-right">
+                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1 text-right">Overall Winner</p>
+                    <span className="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-black uppercase shadow-lg shadow-blue-600/20">{newMatch.winner}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3 text-xs text-zinc-500">
+                <span className="px-2 py-1 rounded-lg bg-zinc-800 font-black text-blue-400 uppercase">{genderTab}</span>
+                <span>Match status will be "completed" if scores are entered.</span>
+              </div>
+              <button type="submit" className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl active:scale-95 transition-all uppercase tracking-widest text-sm shadow-xl shadow-blue-600/20">SAVE MATCH DATA</button>
           </form>
         )}
         {saveMsg && <div className={`p-3 text-center text-xs font-bold border-b border-zinc-800 ${saveMsg.includes('✅') ? 'bg-blue-500/10 text-blue-500' : 'bg-red-500/10 text-red-500'}`}>{saveMsg}</div>}
@@ -410,9 +596,9 @@ export default function BadmintonAdminPage() {
       <style jsx global>{`
         .glass { background: rgba(8, 8, 8, 0.8); backdrop-filter: blur(16px); }
         .glow-text-blue { text-shadow: 0 0 25px rgba(59, 130, 246, 0.3); }
-        .input-field { width: 100%; background: #121212; border: 1px solid #222; border-radius: 10px; padding: 10px; font-size: 13px; color: white; }
+        .input-field { width: 100%; background: #121212; border: 1px solid #222; border-radius: 12px; padding: 12px 14px; font-size: 15px; color: white; }
         .input-field:focus { border-color: #3b82f6; outline: none; }
-        .label-sm { display: block; font-size: 9px; font-weight: 900; color: #555; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.1em; }
+        .label-sm { display: block; font-size: 11px; font-weight: 900; color: #777; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.12em; }
         .btn-blue { background: #1d4ed8; color: white; transition: all 0.2s; }
         .btn-blue:hover { background: #2563eb; box-shadow: 0 0 15px rgba(59,130,246,0.4); }
       `}</style>
