@@ -295,7 +295,7 @@ export default function LawnTennisAdminPage() {
                     <th className="text-left p-4">Type & Stage</th>
                     <th className="text-left p-4">Category</th>
                     <th className="text-left p-4">Departments</th>
-                    <th className="text-center p-4">Sets</th>
+                    <th className="text-center p-4">Tie Matches</th>
                     <th className="text-center p-4">Status</th>
                     <th className="text-center p-4">Winner</th>
                     <th className="text-right p-4">Actions</th>
@@ -321,14 +321,24 @@ export default function LawnTennisAdminPage() {
                           <span className="font-[900] text-white tracking-widest">{match.dept_name2}</span>
                         </td>
                         <td className="p-4 text-center font-mono text-zinc-300 font-bold bg-zinc-900/30">
-                          {match.games?.map((g, idx) => (
-                            <div key={idx} className="text-xs">
-                              <span className="text-[#FFBF00]">{g.score_dept1}</span>
-                              {' - '}
-                              <span className="text-[#FFBF00]">{g.score_dept2}</span>
-                            </div>
-                          ))}
-                          {(!match.games || match.games.length === 0) && <span className="text-zinc-500">-</span>}
+                          <div className="flex flex-col gap-1 items-center min-w-[120px]">
+                            {match.games?.map((g, idx) => (
+                              <div key={idx} className="flex items-center gap-2 group/score relative">
+                                <span className="text-[10px] text-zinc-600 uppercase font-black w-16 text-right truncate transition-colors">
+                                  {g.game_name?.includes('Doubles') ? 'Doubles' : (g.game_name || `Set ${idx + 1}`)}
+                                </span>
+                                <div className="flex items-center gap-1.5 bg-black/40 px-2 py-0.5 rounded-md border border-zinc-800 transition-all hover:border-[#FFBF00]/30 min-w-[60px] justify-center">
+                                  <span className={`font-mono text-xs ${Number(g.score_dept1) > Number(g.score_dept2) ? 'text-[#FFBF00] font-black' : 'text-zinc-500'}`}>
+                                    {g.score_dept1 === '' ? '0' : g.score_dept1}
+                                  </span>
+                                  <span className="text-zinc-700 font-mono text-[10px]">-</span>
+                                  <span className={`font-mono text-xs ${Number(g.score_dept2) > Number(g.score_dept1) ? 'text-[#FFBF00] font-black' : 'text-zinc-500'}`}>
+                                    {g.score_dept2 === '' ? '0' : g.score_dept2}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </td>
                         <td className="p-4 text-center">
                           <span className={`px-2 py-1 text-[10px] uppercase font-[900] tracking-widest rounded border ${
