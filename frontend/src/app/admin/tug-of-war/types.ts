@@ -9,7 +9,7 @@ export interface ITugOfWarEvent {
   department_1: string;
   department_2: string;
   winner: string | null;
-  event_status: "scheduled" | "ongoing" | "completed";
+  event_status: "scheduled" | "completed";
   gender: TugOfWarGender;
   createdAt?: string;
   updatedAt?: string;

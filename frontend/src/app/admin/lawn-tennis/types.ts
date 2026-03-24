@@ -2,7 +2,7 @@ export interface IGame {
   tie_id: number;
   score_dept1: number | '';
   score_dept2: number | '';
-  status: "scheduled" | "ongoing" | "completed";
+  status: "scheduled" | "completed";
 }
 
 export interface ILawnTennisMatch {
@@ -15,7 +15,7 @@ export interface ILawnTennisMatch {
   dept_name2: string;
   games: IGame[];
   winner_dept?: string;
-  status: "scheduled" | "ongoing" | "completed";
+  status: "scheduled" | "completed";
   gender: "men" | "women";
   createdAt?: Date | string;
   updatedAt?: Date | string;

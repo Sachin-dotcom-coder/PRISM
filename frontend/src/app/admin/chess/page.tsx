@@ -361,7 +361,6 @@ export default function ChessAdminPage() {
             <Field label="Event Status">
               <select value={formData.event_status} onChange={(e) => setFormData((prev) => ({ ...prev, event_status: e.target.value as IChessEvent["event_status"] }))} className={inputClass}>
                 <option value="scheduled">Scheduled</option>
-                <option value="ongoing">Ongoing</option>
                 <option value="completed">Completed</option>
               </select>
             </Field>
@@ -436,7 +435,10 @@ export default function ChessAdminPage() {
                     <td className="p-4 text-zinc-300">{event.event_date ? new Date(event.event_date).toLocaleDateString() : "-"}</td>
                     <td className="p-4 font-semibold text-white">{event.department_1} <span className="text-zinc-500">vs</span> {event.department_2}</td>
                     <td className="p-4"><div className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-3 py-1 text-sm font-semibold text-white"><Medal className="h-4 w-4 text-[#FFBF00]" />{event.winner || "Not selected"}</div></td>
-                    <td className="p-4"><span className="rounded-full border border-zinc-800 px-3 py-1 text-xs font-black uppercase tracking-wider text-zinc-300">{event.event_status}</span></td>
+                    <td className="p-4"><span className={`rounded-full border px-3 py-1 text-xs font-black uppercase tracking-wider ${
+                      event.event_status === 'scheduled' ? 'border-blue-500/30 text-blue-400 bg-blue-500/10' :
+                      'border-green-500/30 text-green-400 bg-green-500/10'
+                    }`}>{event.event_status}</span></td>
                     <td className="p-4">
                       <div className="flex justify-end gap-2">
                         <button type="button" onClick={() => handleEdit(event.event_id)} className="rounded-lg border border-zinc-800 p-2 text-zinc-400 transition-all hover:border-[#FFBF00] hover:text-[#FFBF00]"><Pencil className="h-4 w-4" /></button>

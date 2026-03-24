@@ -17,6 +17,6 @@ export interface ITableTennisMatch {
   games: IGame[];
   total_games: number;
   winner: string | null;
-  match_status: string;
+  match_status: "scheduled" | "completed";
   gender: "men" | "women";
 }

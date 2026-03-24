@@ -22,7 +22,7 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
     games: [],
     total_games: 1,
     winner: '',
-    match_status: 'completed',
+    match_status: 'scheduled',
     gender: gender
   });
   
@@ -115,6 +115,14 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
         <div>
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Gender Constraint</label>
           <input type="text" name="gender" value={gender} readOnly className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-zinc-500 opacity-70 uppercase tracking-widest font-bold" />
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Match Status</label>
+          <select required name="match_status" value={formData.match_status} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white">
+            <option value="scheduled">Scheduled</option>
+            <option value="completed">Completed</option>
+          </select>
         </div>
       </div>
 

@@ -140,7 +140,6 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
           <label className={labelCls}>Status</label>
           <select name="match_status" value={formData.match_status} onChange={handleChange} className={inputCls}>
             <option value="scheduled">Scheduled</option>
-            <option value="ongoing">Ongoing</option>
             <option value="completed">Completed</option>
           </select>
         </div>
