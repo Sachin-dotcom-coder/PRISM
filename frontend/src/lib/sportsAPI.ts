@@ -63,7 +63,7 @@ export interface BasketballMatch {
 }
 
 export const fetchBasketballMatches = (gender: "men" | "women") =>
-  apiFetch<unknown>(`/basketball-matches?gender=${gender}`)
+  apiFetch<unknown>(`/basketball?gender=${gender}`)
     .then((r) => unwrapArray<BasketballMatch>(r));
 
 export const fetchBasketballStandings = (category: "boys" | "girls") =>
@@ -144,7 +144,7 @@ export interface KhoKhoMatch {
 }
 
 export const fetchKhoKhoMatches = (gender: "men" | "women") =>
-  apiFetch<unknown>(`/khokho-matches?gender=${gender}`)
+  apiFetch<unknown>(`/kho-kho?gender=${gender}`)
     .then((r) => unwrapArray<KhoKhoMatch>(r));
 
 export const fetchKhoKhoStandings = (category: "boys" | "girls") =>
@@ -210,11 +210,11 @@ export interface TTMatch {
 }
 
 export const fetchTTMatches = (gender: "men" | "women") =>
-  apiFetch<unknown>(`/tt-matches?gender=${gender}`)
+  apiFetch<unknown>(`/tabletennis?gender=${gender}`)
     .then((r) => unwrapArray<TTMatch>(r));
 
 export const fetchTTStandings = (category: "boys" | "girls") =>
-  apiFetch<GroupedStandings>(`/tt-leaderboard/standings?category=${category}`);
+  apiFetch<GroupedStandings>(`/tt-lead/standings?category=${category}`);
 
 // ─── Volleyball ───────────────────────────────────────────────────────────────
 
@@ -242,8 +242,8 @@ export interface VolleyballMatch {
 }
 
 export const fetchVolleyballMatches = (gender: "men" | "women") =>
-  apiFetch<unknown>(`/volleyball-matches?gender=${gender}`)
+  apiFetch<unknown>(`/volleyball?gender=${gender}`)
     .then((r) => unwrapArray<VolleyballMatch>(r));
 
 export const fetchVolleyballStandings = (category: "boys" | "girls") =>
-  apiFetch<GroupedStandings>(`/volleyball-leaderboard/standings?category=${category}`);
+  apiFetch<GroupedStandings>(`/volleyball-lead/standings?category=${category}`);

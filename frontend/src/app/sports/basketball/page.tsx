@@ -76,7 +76,11 @@ function Results({ gender }: { gender: "men" | "women" }) {
     finally { setLoading(false); }
   }, [gender]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { 
+    load(); 
+    const interval = setInterval(load, 5000);
+    return () => clearInterval(interval);
+  }, [load]);
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorState message={error} onRetry={load} />;
@@ -139,7 +143,11 @@ function Leaderboard({ gender }: { gender: "men" | "women" }) {
     finally { setLoading(false); }
   }, [category]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { 
+    load(); 
+    const interval = setInterval(load, 10000);
+    return () => clearInterval(interval);
+  }, [load]);
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorState message={error} onRetry={load} />;
@@ -195,7 +203,11 @@ function Fixtures({ gender }: { gender: "men" | "women" }) {
     finally { setLoading(false); }
   }, [gender]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { 
+    load(); 
+    const interval = setInterval(load, 10000);
+    return () => clearInterval(interval);
+  }, [load]);
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorState message={error} onRetry={load} />;
