@@ -37,7 +37,7 @@ const validatePayload = (body: Record<string, unknown>) => {
     return { valid: false, message: "Invalid event_name." as const };
   }
 
-  if (!["below_63", "63_83", "above_83"].includes(String(category))) {
+  if (!["u63", "u83", "a83"].includes(String(category))) {
     return { valid: false, message: "Invalid category selection." as const };
   }
 

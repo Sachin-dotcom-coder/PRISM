@@ -6,9 +6,8 @@ import Link from "next/link";
 import { ArrowLeft, Medal, Pencil, Plus, RefreshCw, Save, Trash2, Check, X, Trophy } from "lucide-react";
 import useSWR from "swr";
 import { useGender } from "@/app/components/Providers";
-import { DEPARTMENT_OPTIONS } from "../shared/departmentOptions";
 import { createEvent, deleteEvent, getEvent, getEvents, updateEvent } from "./services/powersportsApi";
-import { IPowersportsEvent, PowersportsGender, POWERSPORTS_CATEGORY_OPTIONS, POWERSPORTS_EVENT_OPTIONS } from "./types";
+import { IPowersportsEvent, PowersportsGender, POWERSPORTS_CATEGORY_OPTIONS, POWERSPORTS_EVENT_OPTIONS, POWERSPORTS_DEPARTMENTS } from "./types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -16,8 +15,9 @@ export type PTeam = {
   _id?: string;
   leaderboard_id: number;
   dept_name: string;
-  category: "boys" | "girls";
+  category: "u63" | "u83" | "a83";
   group: string;
+  gender: "M" | "F";
   points?: number;
   participations?: number;
 };
@@ -38,9 +38,7 @@ function PTeamRow({ team, rank, onUpdate, onDelete }: { team: PTeam; rank: numbe
       <td className={`p-3 text-center w-10 text-sm ${RANK_COLORS[rank] ?? "text-zinc-500"}`}>{rank + 1}</td>
       <td className="p-3">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-[10px] font-bold text-blue-400">
-            ID:{team.leaderboard_id}
-          </div>
+
           <div className="flex flex-col">
             <span className="font-semibold text-zinc-200 text-sm">{team.dept_name}</span>
             <span className="text-[10px] text-blue-500 font-bold uppercase tracking-tighter">
@@ -65,15 +63,24 @@ function PTeamRow({ team, rank, onUpdate, onDelete }: { team: PTeam; rank: numbe
     <tr className="border-b border-blue-500/20 bg-blue-500/5">
       <td className="p-2 text-center text-zinc-500 text-sm">{rank + 1}</td>
       <td className="p-2">
-        <input className="input-field py-1 text-xs mb-1" value={draft.dept_name} onChange={e => f("dept_name", e.target.value)} placeholder="Dept Name" />
+        <select className="input-field py-1 text-xs mb-1" value={draft.dept_name} onChange={e => f("dept_name", e.target.value)}>
+          <option value="">Select Dept</option>
+          {POWERSPORTS_DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+        </select>
         <div className="flex gap-1">
           <select className="input-field py-1 text-[10px]" value={draft.category} onChange={e => f("category", e.target.value as any)}>
-            <option value="boys">Boys</option>
-            <option value="girls">Girls</option>
+            <option value="u63">Under 63kg</option>
+            <option value="u83">Under 83kg</option>
+            <option value="a83">Above 83kg</option>
           </select>
         </div>
       </td>
-      <td className="p-2"><input className="w-12 input-field p-1 text-center text-xs" value={draft.group} onChange={e => f("group", e.target.value.toUpperCase())} /></td>
+      <td className="p-2">
+        <select className="w-12 input-field p-1 text-center text-xs" value={draft.group} onChange={e => f("group", e.target.value)}>
+          <option value="A">A</option>
+          <option value="B">B</option>
+        </select>
+      </td>
       <td colSpan={2} className="p-2 text-right text-[10px] text-zinc-500 italic">Auto-calculated from events</td>
       <td className="p-2">
         <div className="flex gap-1 justify-end">
@@ -88,10 +95,10 @@ function PTeamRow({ team, rank, onUpdate, onDelete }: { team: PTeam; rank: numbe
 const buildInitialForm = (gender: PowersportsGender): IPowersportsEvent => ({
   event_id: Math.floor(Date.now() % 1000000),
   event_name: "squat",
-  category: "below_63",
+  category: "u63",
   event_date: new Date().toISOString().slice(0, 10),
-  department_1: DEPARTMENT_OPTIONS[0],
-  department_2: DEPARTMENT_OPTIONS[1],
+  department_1: POWERSPORTS_DEPARTMENTS[0],
+  department_2: POWERSPORTS_DEPARTMENTS[1],
   winner: null,
   event_status: "scheduled",
   gender
@@ -144,7 +151,7 @@ export default function PowersportsAdminPage() {
       setEditingEventId(eventId);
       setFormData({
         ...data,
-        category: data.category || "below_63",
+        category: data.category || "u63",
         event_date: data.event_date ? new Date(data.event_date).toISOString().slice(0, 10) : ""
       });
       setShowForm(true);
@@ -165,29 +172,28 @@ export default function PowersportsAdminPage() {
 
   // --- LEADERBOARD LOGIC ---
   const LB_API = "/api/powersport-lead";
-  const lbCategory: "boys" | "girls" = gender === "men" ? "boys" : "girls";
+  const lbGender = gender === "men" ? "M" : "F";
 
   const { data: allEntries, mutate: mutateEntries } = useSWR(LB_API, fetcher);
-  const { data: standings, mutate: mutateStandings } = useSWR(`${LB_API}/standings`, fetcher);
+  const { data: standings, mutate: mutateStandings } = useSWR(`${LB_API}/standings?gender=${gender}`, fetcher);
 
   const validEntries: PTeam[] = Array.isArray(allEntries?.data) ? allEntries.data : Array.isArray(allEntries) ? allEntries : [];
-  const filteredEntries = validEntries.filter(e => e.category === lbCategory);
-  const groups = filteredEntries.length > 0 ? [...new Set(filteredEntries.map(e => e.group))] : ["A", "B"];
+  const filteredEntries = validEntries.filter(e => e.gender === lbGender);
 
   const [addMode, setAddMode] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
   const showMsg = (msg: string) => { setSaveMsg(msg); setTimeout(() => setSaveMsg(""), 3000); };
 
   const [newEntry, setNewEntry] = useState<Partial<PTeam>>({
-    leaderboard_id: Math.floor(Math.random() * 10000),
     dept_name: "",
-    category: lbCategory,
-    group: "A"
+    category: "u83",
+    group: "A",
+    gender: lbGender
   });
 
   useEffect(() => {
-    setNewEntry(prev => ({ ...prev, category: lbCategory }));
-  }, [lbCategory]);
+    setNewEntry(prev => ({ ...prev, gender: lbGender }));
+  }, [lbGender]);
 
   const handleAddEntry = async () => {
     if (!newEntry.dept_name) return;
@@ -200,10 +206,10 @@ export default function PowersportsAdminPage() {
       showMsg("✅ Dept added to Leaderboard!");
       setAddMode(false);
       setNewEntry({
-        leaderboard_id: Math.floor(Math.random() * 10000),
         dept_name: "",
-        category: lbCategory,
-        group: "A"
+        category: "u83",
+        group: "A",
+        gender: lbGender
       });
       mutateEntries();
       mutateStandings();
@@ -214,7 +220,7 @@ export default function PowersportsAdminPage() {
   };
 
   const handleUpdateEntry = async (t: PTeam) => {
-    const res = await fetch(`${LB_API}/${t.leaderboard_id}`, {
+    const res = await fetch(`${LB_API}/${t._id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(t)
@@ -226,7 +232,7 @@ export default function PowersportsAdminPage() {
     }
   };
 
-  const handleDeleteEntry = async (id: number) => {
+  const handleDeleteEntry = async (id: string) => {
     if (!confirm("Remove dept from leaderboard?")) return;
     const res = await fetch(`${LB_API}/${id}`, { method: "DELETE" });
     if (res.ok) {
@@ -476,7 +482,7 @@ export default function PowersportsAdminPage() {
                 onChange={(e) => setFormData((prev) => ({ ...prev, department_1: e.target.value }))}
                 className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 text-sm text-white outline-none transition-all focus:border-[#FFBF00]"
               >
-                {DEPARTMENT_OPTIONS.map((department) => (
+                {POWERSPORTS_DEPARTMENTS.map((department) => (
                   <option key={department} value={department}>
                     {department}
                   </option>
@@ -493,7 +499,7 @@ export default function PowersportsAdminPage() {
                 onChange={(e) => setFormData((prev) => ({ ...prev, department_2: e.target.value }))}
                 className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 text-sm text-white outline-none transition-all focus:border-[#FFBF00]"
               >
-                {DEPARTMENT_OPTIONS.map((department) => (
+                {POWERSPORTS_DEPARTMENTS.map((department) => (
                   <option key={department} value={department}>
                     {department}
                   </option>
@@ -515,7 +521,7 @@ export default function PowersportsAdminPage() {
                 }
                 className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 text-sm text-white outline-none transition-all focus:border-[#FFBF00]"
               >
-                {DEPARTMENT_OPTIONS.map((department) => (
+                {POWERSPORTS_DEPARTMENTS.map((department) => (
                   <option key={department} value={department}>
                     {department}
                   </option>
@@ -595,7 +601,7 @@ export default function PowersportsAdminPage() {
                       <div className="mt-1 text-xs font-mono text-zinc-500">ID #{event.event_id}</div>
                     </td>
                     <td className="p-4 text-zinc-300">
-                      {(event.category || "below_63").replace("_", " ")}
+                      {POWERSPORTS_CATEGORY_OPTIONS.find(o => o.value === (event.category || "u63"))?.label}
                     </td>
                     <td className="p-4 text-zinc-300">{event.event_date ? new Date(event.event_date).toLocaleDateString() : "-"}</td>
                     <td className="p-4 font-semibold text-white">
@@ -641,55 +647,84 @@ export default function PowersportsAdminPage() {
       {/* LEADERBOARD SECTION */}
       <section className="glass rounded-3xl border border-zinc-800 overflow-hidden shadow-2xl">
         <div className="p-6 border-b border-zinc-800/50 flex justify-between items-center bg-zinc-900/40">
-           <div className="flex items-center gap-3"><Trophy className="w-5 h-5 text-blue-500" /><h2 className="text-xl font-sports text-white">Leaderboard — {gender === "men" ? "Boys" : "Girls"}</h2></div>
-           <button onClick={() => setAddMode(!addMode)} className="btn-blue px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2">
-             {addMode ? "Cancel" : <><Plus className="w-4 h-4" /> Add Dept</>}
-           </button>
+          <div className="flex items-center gap-3"><Trophy className="w-5 h-5 text-blue-500" /><h2 className="text-xl font-sports text-white">Leaderboard — {gender === "men" ? "Men" : "Women"}</h2></div>
+          <button onClick={() => setAddMode(!addMode)} className="btn-blue px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2">
+            {addMode ? "Cancel" : <><Plus className="w-4 h-4" /> Add Dept</>}
+          </button>
         </div>
         {saveMsg && <div className={`p-3 text-center text-xs font-bold border-b border-zinc-800 ${saveMsg.includes('✅') ? 'bg-blue-500/10 text-blue-500' : 'bg-red-500/10 text-red-500'}`}>{saveMsg}</div>}
         {addMode && (
           <div className="p-6 bg-zinc-900/50 border-b border-zinc-800 space-y-4">
-             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-               <div><label className="label-sm">ID</label><input type="number" value={newEntry.leaderboard_id} onChange={e => setNewEntry(p => ({...p, leaderboard_id: +e.target.value}))} className="input-field py-2" /></div>
-               <div><label className="label-sm">Dept</label><input placeholder="CS" value={newEntry.dept_name} onChange={e => setNewEntry(p => ({...p, dept_name: e.target.value}))} className="input-field py-2" /></div>
-               <div><label className="label-sm">Category</label>
-                 <select value={newEntry.category} onChange={e => setNewEntry(p => ({...p, category: e.target.value as any}))} className="input-field py-2">
-                   <option value="boys">Boys (Men)</option><option value="girls">Girls (Women)</option>
-                 </select>
-               </div>
-               <div><label className="label-sm">Group</label><input value={newEntry.group} onChange={e => setNewEntry(p => ({...p, group: e.target.value.toUpperCase()}))} className="input-field py-2" /></div>
-             </div>
-             <button onClick={handleAddEntry} className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-500 shadow-lg">REGISTER DEPARTMENT</button>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 border border-zinc-800 rounded-xl p-3 bg-black/40">
+              <div><label className="label-sm">Dept</label>
+                <select value={newEntry.dept_name} onChange={e => setNewEntry(p => ({ ...p, dept_name: e.target.value }))} className="input-field py-2">
+                  <option value="">Select Dept</option>
+                  {POWERSPORTS_DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+              <div><label className="label-sm">Category</label>
+                <select value={newEntry.category} onChange={e => setNewEntry(p => ({ ...p, category: e.target.value as any }))} className="input-field py-2">
+                  {POWERSPORTS_CATEGORY_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                </select>
+              </div>
+              <div><label className="label-sm">Group</label>
+                <select value={newEntry.group} onChange={e => setNewEntry(p => ({ ...p, group: e.target.value }))} className="input-field py-2">
+                  <option value="A">A</option>
+                  <option value="B">B</option>
+                </select>
+              </div>
+            </div>
+            <button onClick={handleAddEntry} className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-500 shadow-lg">REGISTER DEPARTMENT</button>
           </div>
         )}
         <div className="divide-y divide-zinc-800">
-          {groups.map(gp => {
-            const rawStandings: any[] = standings ? standings[gp] ?? [] : [];
-
-            const gpTeams: PTeam[] = filteredEntries
-              .filter(e => e.group === gp)
-              .map(e => {
-                const s = rawStandings.find((t: any) => t.dept_name === e.dept_name && t.category === e.category);
-                return { ...e, points: s?.points ?? 0, participations: s?.participations ?? 0 };
-              })
-              .sort((a, b) => (b.points ?? 0) - (a.points ?? 0));
+          {(["u63", "u83", "a83"] as const).map(catKey => {
+            const catEntries = filteredEntries.filter(e => e.category === catKey);
+            const groups = catEntries.length > 0 ? [...new Set(catEntries.map(e => e.group))] : ["A", "B"];
+            const catLabel = POWERSPORTS_CATEGORY_OPTIONS.find(o => o.value === catKey)?.label || catKey;
 
             return (
-              <div key={gp} className="p-6">
-                <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Group {gp} Standings</h3>
-                <div className="overflow-x-auto rounded-2xl border border-zinc-800/50 bg-black/30">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="border-b border-zinc-800 bg-zinc-900/60 text-zinc-500 uppercase font-black tracking-tighter">
-                        <th className="p-3 w-10">POS</th><th className="p-3 text-left">DEPARTMENT</th><th className="p-3">GP</th><th className="p-3">POINTS</th><th className="p-3 text-accent">EVENTS</th><th className="p-3 w-20"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {gpTeams.length === 0 ? <tr><td colSpan={6} className="p-8 text-center text-zinc-600 italic">No rankings for this group yet.</td></tr> :
-                        gpTeams.map((t: any, i: number) => <PTeamRow key={t.dept_name ?? t._id} team={{ ...t, leaderboard_id: t.leaderboard_id || 0 }} rank={i} onUpdate={handleUpdateEntry} onDelete={() => handleDeleteEntry(t.leaderboard_id)} />)
-                      }
-                    </tbody>
-                  </table>
+              <div key={catKey} className="border-b border-zinc-800/50 p-6 bg-zinc-900/20">
+                <h3 className="text-lg font-black text-white uppercase tracking-wider mb-6 flex items-center gap-3">
+                  <span className="w-2 h-8 rounded-full bg-blue-500 block" /> {catLabel}
+                </h3>
+
+                <div className="grid gap-6 xl:grid-cols-2">
+                  {groups.map(gp => {
+                    const rawStandings: any[] = standings ? standings[gp] ?? [] : [];
+
+                    const gpTeams: PTeam[] = catEntries
+                      .filter(e => e.group === gp)
+                      .map(e => {
+                        const s = rawStandings.find((t: any) => t._id === e._id);
+                        return { ...e, points: s?.points ?? 0, participations: s?.participations ?? 0 };
+                      })
+                      .sort((a, b) => (b.points ?? 0) - (a.points ?? 0));
+
+                    return (
+                      <div key={gp} className="bg-black/40 rounded-2xl border border-zinc-800/50 overflow-hidden">
+                        <div className="p-4 bg-zinc-900/60 border-b border-zinc-800/50">
+                          <h4 className="text-xs font-black text-zinc-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Group {gp}
+                          </h4>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-xs">
+                            <thead>
+                              <tr className="border-b border-zinc-800/50 bg-black/40 text-zinc-500 uppercase font-black tracking-tighter">
+                                <th className="p-3 w-10 text-center">POS</th><th className="p-3 text-left">DEPARTMENT</th><th className="p-3 text-center">GP</th><th className="p-3 text-center">PTS</th><th className="p-3 text-center text-accent">EVT</th><th className="p-3 w-20"></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {gpTeams.length === 0 ? <tr><td colSpan={6} className="p-8 text-center text-zinc-600 italic">No rankings for this group yet.</td></tr> :
+                                gpTeams.map((t: any, i: number) => <PTeamRow key={t.dept_name ?? t._id} team={t} rank={i} onUpdate={handleUpdateEntry} onDelete={() => handleDeleteEntry(t._id as string)} />)
+                              }
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );

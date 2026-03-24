@@ -5,45 +5,43 @@ import { Request, Response } from "express";
 export const getLeaderboardStandings = async (req: Request, res: Response) => {
   try {
     const gender = req.query.gender ? String(req.query.gender) : undefined;
+    const genderQuery = gender === "men" ? "M" : (gender === "women" ? "F" : undefined);
+    
     // Only completed events
     const events = await PowersportsEvent.find({
       event_status: "completed",
       ...(gender ? { gender } : {})
     });
-    const leaderboardEntries = await PowersportsLeaderboard.find();
     
-    // Map using category and dept_name to avoid mixing men's and women's stats
-    const deptCategoryMap: Record<string, { group: string }> = {};
-    leaderboardEntries.forEach(entry => {
-      deptCategoryMap[`${entry.category}_${entry.dept_name}`] = { group: entry.group || "A" };
-    });
+    const query = genderQuery ? { gender: genderQuery } : {};
+    const leaderboardEntries = await PowersportsLeaderboard.find(query);
 
-    const standings: Record<string, { dept_name: string; category: string; group: string; points: number; participations: number }> = {};
+    const standings = leaderboardEntries.map(entry => ({
+      _id: entry._id.toString(),
+      dept_name: entry.dept_name,
+      category: entry.category,
+      group: entry.group,
+      gender: entry.gender,
+      points: 0,
+      participations: 0
+    }));
 
     for (const event of events) {
-      const category = event.gender === "men" ? "boys" : "girls";
-      const departments = [event.department_1, event.department_2].filter(Boolean);
-      
-      for (const dept of departments) {
-        const key = `${category}_${dept}`;
-        const group = deptCategoryMap[key]?.group || "Unknown";
-        if (!standings[key]) standings[key] = { dept_name: dept, category, group, points: 0, participations: 0 };
-        standings[key].participations++;
-      }
+      const matchDept1 = standings.find(s => s.dept_name === event.department_1 && s.category === event.category);
+      if (matchDept1) matchDept1.participations++;
+
+      const matchDept2 = standings.find(s => s.dept_name === event.department_2 && s.category === event.category);
+      if (matchDept2) matchDept2.participations++;
 
       if (event.winner) {
-        const key = `${category}_${event.winner}`;
-        const group = deptCategoryMap[key]?.group || "Unknown";
-        if (!standings[key]) {
-          standings[key] = { dept_name: event.winner, category, group, points: 0, participations: 0 };
-        }
-        standings[key].points += 5;
+        const matchWinner = standings.find(s => s.dept_name === event.winner && s.category === event.category);
+        if (matchWinner) matchWinner.points += 5;
       }
     }
 
     // Group standings by group
     const grouped: Record<string, any[]> = {};
-    Object.values(standings).forEach(entry => {
+    standings.forEach(entry => {
       if (!grouped[entry.group]) grouped[entry.group] = [];
       grouped[entry.group].push(entry);
     });
@@ -59,17 +57,17 @@ export const getLeaderboardStandings = async (req: Request, res: Response) => {
 
 export const createLeaderboardEntry = async (req: Request, res: Response) => {
   try {
-    const { leaderboard_id, dept_name, category, group } = req.body;
-    if (!leaderboard_id || !dept_name || !category || !group) {
+    const { dept_name, category, group, gender } = req.body;
+    if (!dept_name || !category || !group || !gender) {
       res.status(400).json({ message: "Missing required fields." });
       return;
     }
-    const entry = new PowersportsLeaderboard({ leaderboard_id, dept_name, category, group });
+    const entry = new PowersportsLeaderboard({ dept_name, category, group, gender });
     await entry.save();
     res.status(201).json({ message: "Leaderboard entry created.", data: entry });
   } catch (error: any) {
     if (error.code === 11000) {
-      res.status(400).json({ message: "Duplicate leaderboard_id or department/category." });
+      res.status(400).json({ message: "Duplicate department/category/gender combination." });
       return;
     }
     res.status(500).json({ message: "Failed to create entry", error: error.message });
@@ -88,7 +86,7 @@ export const getAllLeaderboardEntries = async (req: Request, res: Response) => {
 export const getLeaderboardEntryById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const entry = await PowersportsLeaderboard.findOne({ leaderboard_id: Number(id) });
+    const entry = await PowersportsLeaderboard.findById(id);
     if (!entry) {
       res.status(404).json({ message: "Entry not found." });
       return;
@@ -103,8 +101,8 @@ export const updateLeaderboardEntry = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
-    const updated = await PowersportsLeaderboard.findOneAndUpdate(
-      { leaderboard_id: Number(id) },
+    const updated = await PowersportsLeaderboard.findByIdAndUpdate(
+      id,
       updateData,
       { new: true, runValidators: true }
     );
@@ -121,7 +119,7 @@ export const updateLeaderboardEntry = async (req: Request, res: Response) => {
 export const deleteLeaderboardEntry = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const deleted = await PowersportsLeaderboard.findOneAndDelete({ leaderboard_id: Number(id) });
+    const deleted = await PowersportsLeaderboard.findByIdAndDelete(id);
     if (!deleted) {
       res.status(404).json({ message: "Entry not found." });
       return;

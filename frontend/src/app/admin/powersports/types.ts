@@ -1,6 +1,6 @@
 export type PowersportsGender = "men" | "women";
 export type PowersportsEventName = "squat" | "deadlift" | "benchpress";
-export type PowersportsCategory = "below_63" | "63_83" | "above_83";
+export type PowersportsCategory = "u63" | "u83" | "a83";
 
 export interface IPowersportsEvent {
   _id?: string;
@@ -24,7 +24,11 @@ export const POWERSPORTS_EVENT_OPTIONS: { value: PowersportsEventName; label: st
 ];
 
 export const POWERSPORTS_CATEGORY_OPTIONS: { value: PowersportsCategory; label: string }[] = [
-  { value: "below_63", label: "Below 63" },
-  { value: "63_83", label: "63 to 83" },
-  { value: "above_83", label: "Above 83" }
+  { value: "u63", label: "Under 63kg" },
+  { value: "u83", label: "Under 83kg" },
+  { value: "a83", label: "Above 83kg" }
+];
+
+export const POWERSPORTS_DEPARTMENTS = [
+  "CS", "ECE", "EEE", "MECH", "CHEM", "SCI", "AI+MBA", "CIV"
 ];

@@ -5,16 +5,17 @@ export interface IPowersportsLeaderboard extends Document {
   dept_name: string;
   category: string;
   group: string;
+  gender: "M" | "F";
   createdAt: Date;
   updatedAt: Date;
 }
 
 const PowersportsLeaderboardSchema: Schema<IPowersportsLeaderboard> = new Schema(
   {
-    leaderboard_id: { type: Number, required: true, unique: true },
     dept_name: { type: String, required: true },
     category: { type: String, required: true },
     group: { type: String, required: true },
+    gender: { type: String, enum: ["M", "F"], required: true },
   },
   { timestamps: true }
 );

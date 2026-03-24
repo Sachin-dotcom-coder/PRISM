@@ -3,7 +3,7 @@ import mongoose, { Document, Schema } from "mongoose";
 export interface IPowersportsEvent extends Document {
   event_id: number;
   event_name: "squat" | "deadlift" | "benchpress";
-  category: "below_63" | "63_83" | "above_83";
+  category: "u63" | "u83" | "a83";
   event_date?: Date;
   venue?: string;
   department_1: string;
@@ -23,7 +23,7 @@ const PowersportsEventSchema = new Schema<IPowersportsEvent>(
     },
     category: {
       type: String,
-      enum: ["below_63", "63_83", "above_83"],
+      enum: ["u63", "u83", "a83"],
       required: true
     },
     event_date: { type: Date },
