@@ -3,6 +3,7 @@ export interface IGame {
   game_name: string; // Singles 1, Singles 2, Doubles (Decider)
   score_dept1: number | '';
   score_dept2: number | '';
+  status: "scheduled" | "completed";
 }
 
 export interface ILawnTennisMatch {

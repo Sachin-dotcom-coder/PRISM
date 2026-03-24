@@ -256,12 +256,7 @@ export default function BasketballAdminPage() {
 
         {!showForm && (
           <div className="flex flex-wrap items-center gap-3">
-<<<<<<< Updated upstream
             <button onClick={() => { fetchMatches(); fetchLeaderboard(); }} className="p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-400 transition-all hover:bg-zinc-800"><RefreshCw className={loading ? 'animate-spin' : ''} /></button>
-=======
-
-            <button onClick={() => { fetchMatches(); fetchLeaderboard(); }} className="p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-400"><RefreshCw className={loading ? 'animate-spin' : ''} /></button>
->>>>>>> Stashed changes
             <button onClick={handleAddNew} className="flex items-center gap-2 px-4 py-2 bg-[#FFBF00] hover:bg-yellow-500 text-black rounded-lg text-sm font-bold transition-all"><Plus className="w-4 h-4" /> Create Match</button>
           </div>
         )}

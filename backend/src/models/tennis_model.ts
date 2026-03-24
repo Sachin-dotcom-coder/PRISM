@@ -2,6 +2,7 @@ import mongoose, { Document, Schema } from "mongoose";
 
 export interface ITennisGame {
   tie_id: number;
+  game_name?: string;
   score_dept1: number;
   score_dept2: number;
   status: "scheduled" | "completed";
@@ -27,6 +28,10 @@ const TennisGameSchema: Schema<ITennisGame> = new Schema(
     tie_id: {
       type: Number,
       required: true,
+    },
+    game_name: {
+      type: String,
+      required: false,
     },
     score_dept1: {
       type: Number,

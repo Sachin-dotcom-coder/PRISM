@@ -13,9 +13,9 @@ interface MatchFormProps {
 }
 
 const DEFAULT_GAMES: IGame[] = [
-  { tie_id: 1, game_name: "Singles 1", score_dept1: '', score_dept2: '' },
-  { tie_id: 2, game_name: "Singles 2", score_dept1: '', score_dept2: '' },
-  { tie_id: 3, game_name: "Doubles (Decider)", score_dept1: '', score_dept2: '' },
+  { tie_id: 1, game_name: "Singles 1", score_dept1: '', score_dept2: '', status: 'scheduled' },
+  { tie_id: 2, game_name: "Singles 2", score_dept1: '', score_dept2: '', status: 'scheduled' },
+  { tie_id: 3, game_name: "Doubles (Decider)", score_dept1: '', score_dept2: '', status: 'scheduled' },
 ];
 
 export default function MatchForm({ initialData, gender, onSuccess, onCancel }: MatchFormProps) {
@@ -183,35 +183,21 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
 
         <div className="md:col-span-2">
           <label className="block text-[10px] font-black text-zinc-500 uppercase mb-2 tracking-[0.2em]">Department A</label>
-          <select required name="dept_name1" value={formData.dept_name1} onChange={handleChange} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white font-black tracking-widest">
+          <select required name="dept_name1" value={formData.dept_name1} onChange={handleChange} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white font-black tracking-widest transition-all">
             {DEPARTMENT_OPTIONS.map((department) => <option key={department} value={department}>{department}</option>)}
           </select>
         </div>
 
-<<<<<<< Updated upstream
         <div className="md:col-span-2">
           <label className="block text-[10px] font-black text-zinc-500 uppercase mb-2 tracking-[0.2em]">Department B</label>
-          <select required name="dept_name2" value={formData.dept_name2} onChange={handleChange} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white font-black tracking-widest">
-=======
-        <div>
-          <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Status</label>
-          <select required name="status" value={formData.status} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white">
-            <option value="scheduled">Scheduled</option>
-            <option value="completed">Completed</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Dept Name 1</label>
-          <select required name="dept_name1" value={formData.dept_name1} onChange={handleChange} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white">
->>>>>>> Stashed changes
+          <select required name="dept_name2" value={formData.dept_name2} onChange={handleChange} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white font-black tracking-widest transition-all">
             {DEPARTMENT_OPTIONS.map((department) => <option key={department} value={department}>{department}</option>)}
           </select>
         </div>
 
         <div>
-           <label className="block text-[10px] font-black text-zinc-500 uppercase mb-2 tracking-[0.2em]">Match Status</label>
-           <select required name="status" value={formData.status} onChange={handleChange} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white font-bold">
+           <label className="block text-[10px] font-black text-zinc-500 uppercase mb-2 tracking-[0.2em]">Overall Match Status</label>
+           <select required name="status" value={formData.status} onChange={handleChange} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white font-bold cursor-pointer hover:border-zinc-700">
              <option value="scheduled">Scheduled</option>
              <option value="completed">Completed</option>
            </select>
