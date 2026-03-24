@@ -10,8 +10,12 @@ import {
   RefreshCw,
   Save,
   Timer,
-  Trash2
+  Trash2,
+  Trophy,
+  Check,
+  X
 } from "lucide-react";
+import useSWR from "swr";
 import CategorySelector from "./components/CategorySelector";
 import EventSelector from "./components/EventSelector";
 import ParticipantForm from "./components/ParticipantForm";
@@ -26,8 +30,75 @@ import {
   IAthleticsEvent,
   IParticipant,
   getEventMeta,
-  getEventOptions
+  getEventOptions,
+  ATeam,
+  ATHLETICS_LEAD_EVENT_OPTIONS,
+  AthleticsLeadEventName
 } from "./types";
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
+function ATeamRow({ team, rank, onUpdate, onDelete }: { team: ATeam; rank: number; onUpdate: (t: ATeam) => void; onDelete: () => void }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState({ ...team });
+
+  useEffect(() => { if (!editing) setDraft({ ...team }); }, [team, editing]);
+
+  const f = (k: keyof ATeam, v: string | number) => setDraft(p => ({ ...p, [k]: v }));
+  const save = () => { onUpdate(draft); setEditing(false); };
+
+  if (!editing) return (
+    <tr className="border-b border-zinc-800/50 hover:bg-zinc-900/20">
+      <td className={`p-3 text-center w-10 text-sm font-black`}>{rank + 1}</td>
+      <td className="p-3">
+        <div className="flex flex-col">
+          <span className="font-semibold text-zinc-200 text-sm">{team.dept_name}</span>
+          <span className="text-[10px] text-blue-500 font-bold uppercase tracking-tighter">
+            {team.event_name}
+          </span>
+        </div>
+      </td>
+      <td className="p-3 text-center text-zinc-400 text-xs font-mono">{team.group}</td>
+      <td className="p-3 text-center text-zinc-100 text-xs font-bold">{team.points ?? "0"}</td>
+      <td className="p-3">
+        <div className="flex gap-1 justify-end">
+          <button onClick={() => setEditing(true)} className="p-1.5 rounded-lg bg-zinc-800 hover:bg-blue-600 hover:text-white transition-all text-zinc-400"><Pencil className="w-3.5 h-3.5" /></button>
+          <button onClick={onDelete} className="p-1.5 rounded-lg bg-zinc-800 hover:bg-red-700 hover:text-white transition-all text-zinc-400"><Trash2 className="w-3.5 h-3.5" /></button>
+        </div>
+      </td>
+    </tr>
+  );
+
+  return (
+    <tr className="border-b border-blue-500/20 bg-blue-500/5">
+      <td className="p-2 text-center text-zinc-500 text-sm">{rank + 1}</td>
+      <td className="p-2">
+        <select className="input-field py-1 text-xs mb-1" value={draft.dept_name} onChange={e => f("dept_name", e.target.value)}>
+          <option value="">Select Dept</option>
+          {DEPARTMENT_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
+        </select>
+        <div className="flex gap-1">
+          <select className="input-field py-1 text-[10px]" value={draft.event_name} onChange={e => f("event_name", e.target.value as any)}>
+            {ATHLETICS_LEAD_EVENT_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+          </select>
+        </div>
+      </td>
+      <td className="p-2">
+        <select className="w-12 input-field p-1 text-center text-xs" value={draft.group} onChange={e => f("group", e.target.value)}>
+          <option value="A">A</option>
+          <option value="B">B</option>
+        </select>
+      </td>
+      <td className="p-2"><input type="number" className="w-12 input-field p-1 text-center text-xs" value={draft.points ?? "0"} onChange={e => f("points", e.target.value)} /></td>
+      <td className="p-2">
+        <div className="flex gap-1 justify-end">
+          <button onClick={save} className="p-1.5 rounded-lg bg-blue-700 hover:bg-blue-600 text-white"><Check className="w-3.5 h-3.5" /></button>
+          <button onClick={() => setEditing(false)} className="p-1.5 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-white"><X className="w-3.5 h-3.5" /></button>
+        </div>
+      </td>
+    </tr>
+  );
+}
 
 const emptyParticipant = (): IParticipant => ({
   participant_name: "",
@@ -97,6 +168,77 @@ const rankParticipants = (
 export default function AthleticsAdminPage() {
   const { gender: globalGender } = useGender();
   const gender: AthleticsGender = globalGender === "f" ? "women" : "men";
+
+  // --- LEADERBOARD LOGIC ---
+  const LB_API = "/api/athletics-lead";
+  const lbGender = gender === "men" ? "M" : "F";
+
+  const { data: allEntries, mutate: mutateEntries } = useSWR(LB_API, fetcher);
+  const validEntries: ATeam[] = Array.isArray(allEntries) ? allEntries : [];
+  const filteredEntries = validEntries.filter(e => e.category === lbGender);
+
+  const [addMode, setAddMode] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
+  const showMsg = (msg: string) => { setSaveMsg(msg); setTimeout(() => setSaveMsg(""), 3000); };
+
+  const [newEntry, setNewEntry] = useState<Partial<ATeam>>({
+    dept_name: "",
+    event_name: "Running",
+    group: "A",
+    category: lbGender,
+    points: "0"
+  });
+
+  useEffect(() => {
+    setNewEntry(prev => ({ ...prev, category: lbGender }));
+  }, [lbGender]);
+
+  const handleAddEntry = async () => {
+    if (!newEntry.dept_name || !newEntry.event_name) return;
+    const res = await fetch(LB_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newEntry)
+    });
+    if (res.ok) {
+      showMsg("✅ Dept added to Leaderboard!");
+      setAddMode(false);
+      setNewEntry({
+        dept_name: "",
+        event_name: "Running",
+        group: "A",
+        category: lbGender,
+        points: "0"
+      });
+      mutateEntries();
+    } else {
+      const d = await res.json();
+      showMsg(`❌ ${d.message || "Failed"}`);
+    }
+  };
+
+  const handleUpdateEntry = async (t: ATeam) => {
+    const res = await fetch(`${LB_API}/${t._id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(t)
+    });
+    if (res.ok) {
+      showMsg("✅ Dept updated!");
+      mutateEntries();
+    }
+  };
+
+  const handleDeleteEntry = async (id: string) => {
+    if (!confirm("Remove dept from leaderboard?")) return;
+    const res = await fetch(`${LB_API}/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      showMsg("🗑 Dept removed");
+      mutateEntries();
+    }
+  };
+  // -----------------------
+
   const [category, setCategory] = useState<AthleticsCategory>("throw");
   const [events, setEvents] = useState<IAthleticsEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -682,6 +824,100 @@ export default function AthleticsAdminPage() {
           </table>
         </div>
       </section>
+
+      {/* LEADERBOARD SECTION */}
+      <section className="glass rounded-3xl border border-zinc-800 overflow-hidden shadow-2xl mt-8">
+        <div className="p-6 border-b border-zinc-800/50 flex justify-between items-center bg-zinc-900/40">
+          <div className="flex items-center gap-3"><Trophy className="w-5 h-5 text-blue-500" /><h2 className="text-xl font-sports text-white">Leaderboard — {gender === "men" ? "Men" : "Women"}</h2></div>
+          <button onClick={() => setAddMode(!addMode)} className="btn-blue px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2">
+            {addMode ? "Cancel" : <><Plus className="w-4 h-4" /> Add Dept</>}
+          </button>
+        </div>
+        {saveMsg && <div className={`p-3 text-center text-xs font-bold border-b border-zinc-800 ${saveMsg.includes('✅') ? 'bg-blue-500/10 text-blue-500' : 'bg-red-500/10 text-red-500'}`}>{saveMsg}</div>}
+        {addMode && (
+          <div className="p-6 bg-zinc-900/50 border-b border-zinc-800 space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 border border-zinc-800 rounded-xl p-3 bg-black/40">
+              <div><label className="label-sm">Dept</label>
+                <select value={newEntry.dept_name} onChange={e => setNewEntry(p => ({ ...p, dept_name: e.target.value }))} className="input-field py-2">
+                  <option value="">Select Dept</option>
+                  {DEPARTMENT_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+              <div><label className="label-sm">Event</label>
+                <select value={newEntry.event_name} onChange={e => setNewEntry(p => ({ ...p, event_name: e.target.value as any }))} className="input-field py-2">
+                  {ATHLETICS_LEAD_EVENT_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
+              </div>
+              <div><label className="label-sm">Group</label>
+                <select value={newEntry.group} onChange={e => setNewEntry(p => ({ ...p, group: e.target.value }))} className="input-field py-2">
+                  <option value="A">A</option>
+                  <option value="B">B</option>
+                </select>
+              </div>
+              <div><label className="label-sm">Points</label>
+                <input type="number" value={newEntry.points} onChange={e => setNewEntry(p => ({ ...p, points: e.target.value }))} className="input-field py-2" />
+              </div>
+            </div>
+            <button onClick={handleAddEntry} className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-500 shadow-lg">REGISTER DEPARTMENT</button>
+          </div>
+        )}
+        <div className="divide-y divide-zinc-800">
+          {ATHLETICS_LEAD_EVENT_OPTIONS.map(eventKey => {
+            const eventEntries = filteredEntries.filter(e => e.event_name === eventKey);
+            const groups = eventEntries.length > 0 ? [...new Set(eventEntries.map(e => e.group))] : ["A", "B"];
+
+            return (
+              <div key={eventKey} className="border-b border-zinc-800/50 p-6 bg-zinc-900/20">
+                <h3 className="text-lg font-black text-white uppercase tracking-wider mb-6 flex items-center gap-3">
+                  <span className="w-2 h-8 rounded-full bg-blue-500 block" /> {eventKey}
+                </h3>
+
+                <div className="grid gap-6 xl:grid-cols-2">
+                  {groups.map(gp => {
+                    const gpTeams: ATeam[] = eventEntries
+                      .filter(e => e.group === gp)
+                      .sort((a, b) => Number(b.points || 0) - Number(a.points || 0));
+
+                    return (
+                      <div key={gp} className="bg-black/40 rounded-2xl border border-zinc-800/50 overflow-hidden">
+                        <div className="p-4 bg-zinc-900/60 border-b border-zinc-800/50">
+                          <h4 className="text-xs font-black text-zinc-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Group {gp}
+                          </h4>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-xs">
+                            <thead>
+                              <tr className="border-b border-zinc-800/50 bg-black/40 text-zinc-500 uppercase font-black tracking-tighter">
+                                <th className="p-3 w-10 text-center">POS</th><th className="p-3 text-left">DEPARTMENT</th><th className="p-3 text-center">GP</th><th className="p-3 text-center">PTS</th><th className="p-3 w-20"></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {gpTeams.length === 0 ? <tr><td colSpan={5} className="p-8 text-center text-zinc-600 italic">No rankings for this group yet.</td></tr> :
+                                gpTeams.map((t: ATeam, i: number) => <ATeamRow key={t.dept_name ?? t._id} team={t} rank={i} onUpdate={handleUpdateEntry} onDelete={() => handleDeleteEntry(t._id as string)} />)
+                              }
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <style jsx global>{`
+        .glass { background: rgba(8, 8, 8, 0.8); backdrop-filter: blur(16px); }
+        .input-field { width: 100%; background: #121212; border: 1px solid #222; border-radius: 10px; padding: 10px; font-size: 13px; color: white; }
+        .input-field:focus { border-color: #3b82f6; outline: none; }
+        .label-sm { display: block; font-size: 9px; font-weight: 900; color: #555; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.1em; }
+        .btn-blue { background: #1d4ed8; color: white; transition: all 0.2s; }
+        .btn-blue:hover { background: #2563eb; box-shadow: 0 0 15px rgba(59,130,246,0.4); }
+      `}</style>
+
     </div>
   );
 }

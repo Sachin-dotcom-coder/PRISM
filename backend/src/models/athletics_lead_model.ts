@@ -1,18 +1,19 @@
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface IAthleticsLeaderboard extends Document {
-  leaderboard_id: number;
+  leaderboard_id?: string;
   dept_name: string;
   event_name:
-    | "hammer_throw"
-    | "shot_put"
-    | "javelin"
-    | "discus"
-    | "long_jump"
-    | "triple_jump"
-    | "double_jump";
-  category: "boys" | "girls";
+    | "Javelin Throw"
+    | "Discus Throw"
+    | "Shot Put"
+    | "Hammer Throw"
+    | "Long Jump"
+    | "Triple Jump"
+    | "Running";
+  category: "M" | "F";
   group: string; // e.g. "A", "B"
+  points?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -20,9 +21,8 @@ export interface IAthleticsLeaderboard extends Document {
 const AthleticsLeaderboardSchema: Schema<IAthleticsLeaderboard> = new Schema(
   {
     leaderboard_id: {
-      type: Number,
-      required: true,
-      unique: true,
+      type: String,
+      required: false,
     },
     dept_name: {
       type: String,
@@ -31,34 +31,39 @@ const AthleticsLeaderboardSchema: Schema<IAthleticsLeaderboard> = new Schema(
     event_name: {
       type: String,
       enum: [
-        "hammer_throw",
-        "shot_put",
-        "javelin",
-        "discus",
-        "long_jump",
-        "triple_jump",
-        "double_jump",
+        "Javelin Throw",
+        "Discus Throw",
+        "Shot Put",
+        "Hammer Throw",
+        "Long Jump",
+        "Triple Jump",
+        "Running",
       ],
       required: true,
     },
     category: {
       type: String,
-      enum: ["boys", "girls"],
+      enum: ["M", "F"],
       required: true,
     },
     group: {
       type: String,
       required: true, // e.g. "A", "B"
     },
+    points: {
+      type: String,
+      default: "0",
+    },
   },
   {
     timestamps: true,
+    collection: "athleticsleaderboards"
   }
 );
 
-// A department can only be registered once per event + category combination
+// A department can only be registered once per event + category + group combination
 AthleticsLeaderboardSchema.index(
-  { dept_name: 1, event_name: 1, category: 1 },
+  { dept_name: 1, event_name: 1, category: 1, group: 1 },
   { unique: true }
 );
 

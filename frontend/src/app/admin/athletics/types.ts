@@ -67,3 +67,31 @@ export const getEventMeta = (eventName: AthleticsEventName) =>
   [...THROW_EVENT_OPTIONS, ...RUN_JUMP_EVENT_OPTIONS].find(
     (option) => option.value === eventName
   );
+
+export type AthleticsLeadEventName =
+  | "Javelin Throw"
+  | "Discus Throw"
+  | "Shot Put"
+  | "Hammer Throw"
+  | "Long Jump"
+  | "Triple Jump"
+  | "Running";
+
+export const ATHLETICS_LEAD_EVENT_OPTIONS: AthleticsLeadEventName[] = [
+  "Javelin Throw",
+  "Discus Throw",
+  "Shot Put",
+  "Hammer Throw",
+  "Long Jump",
+  "Triple Jump",
+  "Running"
+];
+
+export interface ATeam {
+  _id?: string;
+  dept_name: string;
+  event_name: AthleticsLeadEventName;
+  category: "M" | "F";
+  group: string;
+  points?: string | number;
+}

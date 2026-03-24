@@ -81,10 +81,10 @@ const computeStats = async (
 
 export const createLeaderboardEntry = async (req: Request, res: Response) => {
   try {
-    const { leaderboard_id, dept_name, event_name, category } = req.body;
+    const { dept_name, event_name, category, group } = req.body;
 
-    if (leaderboard_id === undefined || !dept_name || !event_name || !category) {
-      res.status(400).json({ message: "leaderboard_id, dept_name, event_name and category are required." });
+    if (!dept_name || !event_name || !category || !group) {
+      res.status(400).json({ message: "dept_name, event_name, category, and group are required." });
       return;
     }
 
@@ -93,7 +93,7 @@ export const createLeaderboardEntry = async (req: Request, res: Response) => {
   } catch (error) {
     const err = error as any;
     if (err.code === 11000) {
-      res.status(400).json({ message: "leaderboard_id must be unique, or this dept+event+category combination already exists." });
+      res.status(400).json({ message: "Duplicate dept+event+category+group combination." });
       return;
     }
     res.status(500).json({
@@ -105,7 +105,7 @@ export const createLeaderboardEntry = async (req: Request, res: Response) => {
 
 export const getAllLeaderboardEntries = async (req: Request, res: Response) => {
   try {
-    const entries = await AthleticsLeaderboard.find().sort({ leaderboard_id: 1 });
+    const entries = await AthleticsLeaderboard.find().sort({ createdAt: 1 });
     res.status(200).json(entries);
   } catch (error) {
     res.status(500).json({
@@ -117,9 +117,7 @@ export const getAllLeaderboardEntries = async (req: Request, res: Response) => {
 
 export const getLeaderboardEntryById = async (req: Request, res: Response) => {
   try {
-    const entry = await AthleticsLeaderboard.findOne({
-      leaderboard_id: Number(req.params.id),
-    });
+    const entry = await AthleticsLeaderboard.findById(req.params.id);
     if (!entry) {
       res.status(404).json({ message: "Leaderboard entry not found." });
       return;
@@ -135,8 +133,8 @@ export const getLeaderboardEntryById = async (req: Request, res: Response) => {
 
 export const updateLeaderboardEntry = async (req: Request, res: Response) => {
   try {
-    const entry = await AthleticsLeaderboard.findOneAndUpdate(
-      { leaderboard_id: Number(req.params.id) },
+    const entry = await AthleticsLeaderboard.findByIdAndUpdate(
+      req.params.id,
       req.body,
       { new: true, runValidators: true }
     );
@@ -155,9 +153,9 @@ export const updateLeaderboardEntry = async (req: Request, res: Response) => {
 
 export const deleteLeaderboardEntry = async (req: Request, res: Response) => {
   try {
-    const entry = await AthleticsLeaderboard.findOneAndDelete({
-      leaderboard_id: Number(req.params.id),
-    });
+    const entry = await AthleticsLeaderboard.findByIdAndDelete(
+      req.params.id
+    );
     if (!entry) {
       res.status(404).json({ message: "Leaderboard entry not found." });
       return;
