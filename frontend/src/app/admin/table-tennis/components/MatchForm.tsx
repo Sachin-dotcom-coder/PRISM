@@ -36,21 +36,21 @@ const normalizeGames = (
   });
 
 export default function MatchForm({ initialData, gender, onSuccess, onCancel }: MatchFormProps) {
-  const [formData, setFormData] = useState<ITableTennisMatch>(() => ({
-    match_id: Date.now() % 1000000,
-    match_stage: '',
-    team1_department: DEPARTMENT_OPTIONS[0],
-    team2_department: DEPARTMENT_OPTIONS[1],
-    match_date: new Date().toISOString().slice(0, 16),
-    team1_score: 0,
-    team2_score: 0,
-    games: [],
-    total_games: 0,
-    winner: '',
-    match_status: 'completed',
-    match_type: 'singles', // ✅ now works
-    gender: gender
-  }));
+    const [formData, setFormData] = useState({
+      match_id: Date.now() % 1000000,
+      match_stage: '',
+      team1_department: DEPARTMENT_OPTIONS[0],
+      team2_department: DEPARTMENT_OPTIONS[1],
+      match_date: new Date().toISOString().slice(0, 16),
+      team1_score: 0,
+      team2_score: 0,
+      games: [],
+      total_games: 0,
+      winner: '',
+      match_status: 'completed',
+      match_type: 'singles',
+      gender: gender
+    } as ITableTennisMatch);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
