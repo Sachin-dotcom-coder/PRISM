@@ -23,25 +23,11 @@ export default function GameInput({ game, index, updateGame, dept1, dept2, forma
         <span className="text-[40px] font-black text-white italic select-none">#{index + 1}</span>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
-        {/* Status Section */}
-        <div className="md:col-span-1">
-          <label className="block text-[10px] font-black text-zinc-500 mb-2 uppercase tracking-widest">Match Status</label>
-          <select 
-            value={game.status} 
-            onChange={(e) => updateGame(index, { ...game, status: e.target.value as any })}
-            className="w-full bg-black border border-zinc-800 rounded-xl p-3 text-sm text-white focus:border-[#FFBF00] focus:ring-1 focus:ring-[#FFBF00] outline-none transition-all" 
-            required
-          >
-            <option value="scheduled">Scheduled</option>
-            <option value="completed">Completed</option>
-          </select>
-        </div>
-
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
         {/* Name Section */}
         <div className="md:col-span-1">
-          <h5 className="text-[#FFBF00] font-black text-sm tracking-widest uppercase">{game.game_name}</h5>
-          <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">{formatLabels[format]}</div>
+          <h5 className="text-[#FFBF00] font-black text-lg tracking-widest uppercase">{game.game_name}</h5>
+          <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">{formatLabels[format]}</div>
         </div>
         
         {/* Scores Section */}

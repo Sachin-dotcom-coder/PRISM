@@ -8,7 +8,7 @@ import {
   TennisLeaderboardResponse,
   StandingRow,
   normaliseMatchType,
-} from "../../../lib/sportsAPI";
+} from "@/lib/sportsAPI";
 
 function LoadingSpinner() {
   return <div className="flex items-center justify-center py-24"><div className="w-8 h-8 border-2 border-[#FFBF00] border-t-transparent rounded-full animate-spin" /></div>;
@@ -28,7 +28,6 @@ function EmptyState({ label }: { label: string }) {
 export default function LawnTennisDashboard() {
   const [gender, setGender] = useState<"men" | "women">("men");
   const [activeTab, setActiveTab] = useState<"results" | "leaderboard" | "fixtures">("results");
-  const [matchType, setMatchType] = useState<"singles" | "doubles">("singles");
 
   return (
     <div className="min-h-screen bg-[#000000] text-[#FFFFFF] font-sans flex justify-center selection:bg-[#FFBF00] selection:text-black">
@@ -45,11 +44,6 @@ export default function LawnTennisDashboard() {
                 <button key={g} onClick={() => setGender(g)} className={`px-8 py-3 rounded-full text-sm font-bold tracking-widest uppercase transition-all duration-300 hover:scale-[1.03] ${gender === g ? "bg-[#FFBF00] text-[#000000]" : "text-[#FFFFFF]"}`}>{g === "men" ? "Men" : "Women"}</button>
               ))}
             </div>
-            <div className="flex border border-[#1A1A1A] rounded-md overflow-hidden">
-              {(["singles", "doubles"] as const).map((t) => (
-                <button key={t} onClick={() => setMatchType(t)} className={`px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 ${matchType === t ? "bg-[#1A1A1A] text-[#FFBF00]" : "bg-transparent text-gray-600 hover:text-white"}`}>{t}</button>
-              ))}
-            </div>
           </div>
           <div className="flex bg-[#0A0A0A] rounded-lg p-1 border border-[#1A1A1A]">
             {(["results", "leaderboard", "fixtures"] as const).map((tab) => (
@@ -59,16 +53,16 @@ export default function LawnTennisDashboard() {
         </div>
 
         <div className="animate-in fade-in duration-500">
-          {activeTab === "results" && <Results gender={gender} matchType={matchType} />}
+          {activeTab === "results" && <Results gender={gender} />}
           {activeTab === "leaderboard" && <Leaderboard gender={gender} />}
-          {activeTab === "fixtures" && <Fixtures gender={gender} matchType={matchType} />}
+          {activeTab === "fixtures" && <Fixtures gender={gender} />}
         </div>
       </div>
     </div>
   );
 }
 
-function Results({ gender, matchType }: { gender: "men" | "women"; matchType: "singles" | "doubles" }) {
+function Results({ gender }: { gender: "men" | "women" }) {
   const [matches, setMatches] = useState<TennisMatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -77,10 +71,10 @@ function Results({ gender, matchType }: { gender: "men" | "women"; matchType: "s
     setLoading(true); setError("");
     try {
       const all = await fetchTennisMatches(gender);
-      setMatches(all.filter((m) => m.status === "completed" && normaliseMatchType(m.match_type) === matchType));
+      setMatches(all.filter((m: TennisMatch) => m.status === "completed"));
     } catch (err) { console.error(err); setError("Failed to load match results."); }
     finally { setLoading(false); }
-  }, [gender, matchType]);
+  }, [gender]);
 
   useEffect(() => { 
     load(); 
@@ -90,14 +84,14 @@ function Results({ gender, matchType }: { gender: "men" | "women"; matchType: "s
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorState message={error} onRetry={load} />;
-  if (!matches.length) return <EmptyState label={`No completed ${matchType} matches yet.`} />;
+  if (!matches.length) return <EmptyState label="No completed matches yet." />;
 
   return (
     <div className="space-y-6">
       <h2 className="text-white font-black text-2xl tracking-widest uppercase pl-1 mb-6">Match Results</h2>
       {matches.map((match) => {
-        const setsWon1 = match.games.filter((g) => g.score_dept1 > g.score_dept2).length;
-        const setsWon2 = match.games.filter((g) => g.score_dept2 > g.score_dept1).length;
+        const matchesWon1 = match.games.filter((g) => g.score_dept1 > g.score_dept2).length;
+        const matchesWon2 = match.games.filter((g) => g.score_dept2 > g.score_dept1).length;
         return (
           <div key={match._id} className="border border-[#1A1A1A] bg-[#000000] rounded-2xl p-5 md:p-6 hover:border-[#FFBF00]/20 transition-colors">
             <div className="flex justify-between items-center mb-4 border-b border-[#1A1A1A] pb-3">
@@ -114,11 +108,11 @@ function Results({ gender, matchType }: { gender: "men" | "women"; matchType: "s
               </div>
               <div className="flex flex-col items-center">
                 <div className="flex items-center gap-3">
-                  <span className={`text-4xl font-black ${match.winner_dept === match.dept_name1 ? "text-[#FFBF00]" : "text-white"}`}>{setsWon1}</span>
+                  <span className={`text-4xl font-black ${match.winner_dept === match.dept_name1 ? "text-[#FFBF00]" : "text-white"}`}>{matchesWon1}</span>
                   <span className="text-[#333] font-black text-2xl">—</span>
-                  <span className={`text-4xl font-black ${match.winner_dept === match.dept_name2 ? "text-[#FFBF00]" : "text-white"}`}>{setsWon2}</span>
+                  <span className={`text-4xl font-black ${match.winner_dept === match.dept_name2 ? "text-[#FFBF00]" : "text-white"}`}>{matchesWon2}</span>
                 </div>
-                <span className="text-gray-600 text-xs font-bold uppercase tracking-widest mt-1">Sets</span>
+                <span className="text-gray-600 text-xs font-bold uppercase tracking-widest mt-1">Matches</span>
               </div>
               <div className={`flex flex-col items-end flex-1 ${match.winner_dept === match.dept_name2 ? "text-[#FFBF00]" : "text-white"}`}>
                 <span className="font-black text-2xl md:text-3xl tracking-widest uppercase">{match.dept_name2}</span>
@@ -127,11 +121,11 @@ function Results({ gender, matchType }: { gender: "men" | "women"; matchType: "s
             </div>
             {match.games.length > 0 && (
               <div className="pt-4 border-t border-[#1A1A1A]">
-                <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-3">Set Scores</p>
+                <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-3">Match Score</p>
                 <div className="flex flex-wrap gap-3">
-                  {match.games.map((set) => (
+                  {match.games.map((set: any) => (
                     <div key={set.tie_id} className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-lg px-4 py-3 flex flex-col items-center min-w-[72px]">
-                      <span className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-1">Set {set.tie_id}</span>
+                      <span className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-1">Match {set.tie_id}</span>
                       <span className={`text-lg font-black ${set.score_dept1 > set.score_dept2 ? "text-[#FFBF00]" : "text-white"}`}>{set.score_dept1}</span>
                       <span className="text-gray-700 text-xs">—</span>
                       <span className={`text-lg font-black ${set.score_dept2 > set.score_dept1 ? "text-[#FFBF00]" : "text-white"}`}>{set.score_dept2}</span>
@@ -209,7 +203,7 @@ function Leaderboard({ gender }: { gender: "men" | "women" }) {
   );
 }
 
-function Fixtures({ gender, matchType }: { gender: "men" | "women"; matchType: "singles" | "doubles" }) {
+function Fixtures({ gender }: { gender: "men" | "women" }) {
   const [matches, setMatches] = useState<TennisMatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -218,10 +212,10 @@ function Fixtures({ gender, matchType }: { gender: "men" | "women"; matchType: "
     setLoading(true); setError("");
     try {
       const all = await fetchTennisMatches(gender);
-      setMatches(all.filter((m) => (m.status === "scheduled" || m.status === "ongoing") && normaliseMatchType(m.match_type) === matchType));
+      setMatches(all.filter((m: TennisMatch) => m.status === "scheduled"));
     } catch (err) { console.error(err); setError("Failed to load fixtures."); }
     finally { setLoading(false); }
-  }, [gender, matchType]);
+  }, [gender]);
 
   useEffect(() => { 
     load(); 
@@ -231,7 +225,7 @@ function Fixtures({ gender, matchType }: { gender: "men" | "women"; matchType: "
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorState message={error} onRetry={load} />;
-  if (!matches.length) return <EmptyState label={`No upcoming ${matchType} fixtures.`} />;
+  if (!matches.length) return <EmptyState label="No upcoming fixtures." />;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -244,7 +238,6 @@ function Fixtures({ gender, matchType }: { gender: "men" | "women"; matchType: "
             </div>
             <div className="flex flex-col items-end gap-1">
               <span className="text-xs text-gray-500 font-bold uppercase tracking-widest">{m.match_id}</span>
-              {m.status === "ongoing" && <span className="text-[10px] font-black uppercase tracking-widest text-green-400 animate-pulse">● Live</span>}
             </div>
           </div>
           <h4 className="text-2xl font-black text-white mb-2 group-hover:text-[#FFBF00] transition-colors">

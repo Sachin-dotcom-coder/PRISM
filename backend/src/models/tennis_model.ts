@@ -5,7 +5,6 @@ export interface ITennisGame {
   game_name?: string;
   score_dept1: number;
   score_dept2: number;
-  status: "scheduled" | "completed";
 }
 
 export interface ITennisMatch extends Document {
@@ -39,12 +38,6 @@ const TennisGameSchema: Schema<ITennisGame> = new Schema(
     },
     score_dept2: {
       type: Number,
-      required: true,
-    },
-    status: {
-      type: String,
-      enum: ["scheduled", "completed"],
-      default: "completed",
       required: true,
     },
   },

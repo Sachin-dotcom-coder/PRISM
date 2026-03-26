@@ -13,9 +13,9 @@ interface MatchFormProps {
 }
 
 const DEFAULT_GAMES: IGame[] = [
-  { tie_id: 1, game_name: "Singles 1", score_dept1: '', score_dept2: '', status: 'scheduled' },
-  { tie_id: 2, game_name: "Singles 2", score_dept1: '', score_dept2: '', status: 'scheduled' },
-  { tie_id: 3, game_name: "Doubles (Decider)", score_dept1: '', score_dept2: '', status: 'scheduled' },
+  { tie_id: 1, game_name: "Singles 1", score_dept1: '', score_dept2: '' },
+  { tie_id: 2, game_name: "Singles 2", score_dept1: '', score_dept2: '' },
+  { tie_id: 3, game_name: "Doubles", score_dept1: '', score_dept2: '' },
 ];
 
 export default function MatchForm({ initialData, gender, onSuccess, onCancel }: MatchFormProps) {
@@ -217,7 +217,7 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
 
       <div className="pt-8 border-t border-zinc-800 space-y-6">
         <div className="flex justify-between items-center">
-          <h4 className="text-zinc-500 font-black tracking-[0.3em] text-[10px] uppercase">Match Components (Best of 3)</h4>
+          <h4 className="text-zinc-500 font-black tracking-[0.3em] text-[10px] uppercase">Match Components (2S + 1D)</h4>
           <div className="px-3 py-1 bg-zinc-900 rounded-full text-[9px] text-zinc-500 font-bold border border-zinc-800 uppercase tracking-tighter">Fixed Slots</div>
         </div>
         
