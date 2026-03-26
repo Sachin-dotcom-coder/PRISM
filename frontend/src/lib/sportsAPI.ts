@@ -75,17 +75,25 @@ export const fetchBasketballStandings = (category: "boys" | "girls") =>
 
 // ─── Badminton ────────────────────────────────────────────────────────────────
 
-export interface BadmintonGame {
-  game_number: number;
+export interface BadmintonSet {
   team1_score: number;
   team2_score: number;
+}
+
+export interface BadmintonGame {
+  game_number: number;
+  game_type: "single" | "double";
+  sets: BadmintonSet[];
+  team1_score: number;
+  team2_score: number;
+  winner: string | null;
 }
 
 export interface BadmintonMatch {
   _id: string;
   match_id: number;
-  match_stage: string;
-  match_type: string;   // use normaliseMatchType() when comparing
+  match_stage: "group" | "semifinal" | "final";
+  match_type: string;
   team1_department: string;
   team2_department: string;
   match_date: string;

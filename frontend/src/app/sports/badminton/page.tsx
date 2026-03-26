@@ -31,7 +31,6 @@ function fmtDate(d?: string) {
 export default function BadmintonDashboard() {
   const [gender, setGender] = useState<"men" | "women">("men");
   const [activeTab, setActiveTab] = useState<"results" | "leaderboard" | "fixtures">("results");
-  const [matchType, setMatchType] = useState<"singles" | "doubles">("singles");
 
   return (
     <div className="min-h-screen bg-[#000000] text-[#FFFFFF] font-sans flex justify-center selection:bg-[#FFBF00] selection:text-black">
@@ -48,11 +47,6 @@ export default function BadmintonDashboard() {
                 <button key={g} onClick={() => setGender(g)} className={`px-8 py-3 rounded-full text-sm font-bold tracking-widest uppercase transition-all duration-300 hover:scale-[1.03] ${gender === g ? "bg-[#FFBF00] text-[#000000]" : "text-[#FFFFFF]"}`}>{g === "men" ? "Men" : "Women"}</button>
               ))}
             </div>
-            <div className="flex border border-[#1A1A1A] rounded-md overflow-hidden">
-              {(["singles", "doubles"] as const).map((t) => (
-                <button key={t} onClick={() => setMatchType(t)} className={`px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 ${matchType === t ? "bg-[#1A1A1A] text-[#FFBF00]" : "bg-transparent text-gray-600 hover:text-white"}`}>{t}</button>
-              ))}
-            </div>
           </div>
           <div className="flex bg-[#0A0A0A] rounded-lg p-1 border border-[#1A1A1A]">
             {(["results", "leaderboard", "fixtures"] as const).map((tab) => (
@@ -62,16 +56,16 @@ export default function BadmintonDashboard() {
         </div>
 
         <div className="animate-in fade-in duration-500">
-          {activeTab === "results" && <Results gender={gender} matchType={matchType} />}
+          {activeTab === "results" && <Results gender={gender} />}
           {activeTab === "leaderboard" && <Leaderboard gender={gender} />}
-          {activeTab === "fixtures" && <Fixtures gender={gender} matchType={matchType} />}
+          {activeTab === "fixtures" && <Fixtures gender={gender} />}
         </div>
       </div>
     </div>
   );
 }
 
-function Results({ gender, matchType }: { gender: "men" | "women"; matchType: "singles" | "doubles" }) {
+function Results({ gender }: { gender: "men" | "women" }) {
   const [matches, setMatches] = useState<BadmintonMatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -80,10 +74,10 @@ function Results({ gender, matchType }: { gender: "men" | "women"; matchType: "s
     setLoading(true); setError("");
     try {
       const all = await fetchBadmintonMatches(gender);
-      setMatches(all.filter((m) => m.match_status === "completed" && normaliseMatchType(m.match_type) === matchType));
+      setMatches(all.filter((m) => m.match_status === "completed"));
     } catch (err) { console.error(err); setError("Failed to load match results."); }
     finally { setLoading(false); }
-  }, [gender, matchType]);
+  }, [gender]);
 
   useEffect(() => { 
     load(); 
@@ -93,62 +87,62 @@ function Results({ gender, matchType }: { gender: "men" | "women"; matchType: "s
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorState message={error} onRetry={load} />;
-  if (!matches.length) return <EmptyState label={`No completed ${matchType} matches yet.`} />;
+  if (!matches.length) return <EmptyState label="No completed matches yet." />;
 
   return (
     <div className="space-y-6">
       <h2 className="text-white font-black text-2xl tracking-widest uppercase pl-1 mb-6">Match Results</h2>
-      {matches.map((match) => (
-        <div key={match._id} className="border border-[#1A1A1A] bg-[#000000] rounded-2xl p-5 md:p-6 hover:border-[#FFBF00]/20 transition-colors">
-          <div className="flex justify-between items-center mb-4 border-b border-[#1A1A1A] pb-3">
-            <div className="flex items-center gap-3">
-              <span className="text-[#FFBF00] text-xs font-bold uppercase tracking-widest">{match.match_stage}</span>
-              <span className="text-gray-600 text-xs font-bold uppercase tracking-widest border border-[#333] px-2 py-0.5 rounded">{match.match_type}</span>
+      {matches.map((match) => {
+        const matchesWon1 = match.games.filter(g => g.winner === match.team1_department).length;
+        const matchesWon2 = match.games.filter(g => g.winner === match.team2_department).length;
+
+        return (
+          <div key={match._id} className="border border-[#1A1A1A] bg-[#000000] rounded-2xl p-5 md:p-6 hover:border-[#FFBF00]/20 transition-colors">
+            <div className="flex justify-between items-center mb-4 border-b border-[#1A1A1A] pb-3">
+              <div className="flex items-center gap-3">
+                <span className="text-[#FFBF00] text-xs font-bold uppercase tracking-widest">{match.match_stage}</span>
+                <span className="text-gray-600 text-xs font-bold uppercase tracking-widest border border-[#333] px-2 py-0.5 rounded">{match.match_type || "Match"}</span>
+              </div>
+              <span className="text-gray-500 text-xs font-bold tracking-widest uppercase">Completed</span>
             </div>
-            <span className="text-gray-500 text-xs font-bold tracking-widest uppercase">Completed</span>
-          </div>
-          <div className="flex items-center justify-between gap-4 mb-5">
-            <div className={`flex flex-col items-start flex-1 ${match.winner === match.team1_department ? "text-[#FFBF00]" : "text-white"}`}>
-              <span className="font-black text-2xl md:text-3xl tracking-widest uppercase">{match.team1_department}</span>
-              {match.winner === match.team1_department && <span className="text-xs font-bold tracking-widest mt-1 text-[#FFBF00]">WINNER</span>}
-            </div>
-            <div className="flex items-center gap-3 md:gap-5">
-              <span className={`text-4xl md:text-5xl font-black tracking-tighter ${match.winner === match.team1_department ? "text-[#FFBF00]" : "text-white"}`}>{match.team1_score}</span>
-              <span className="text-2xl font-black text-[#333]">—</span>
-              <span className={`text-4xl md:text-5xl font-black tracking-tighter ${match.winner === match.team2_department ? "text-[#FFBF00]" : "text-white"}`}>{match.team2_score}</span>
-            </div>
-            <div className={`flex flex-col items-end flex-1 ${match.winner === match.team2_department ? "text-[#FFBF00]" : "text-white"}`}>
-              <span className="font-black text-2xl md:text-3xl tracking-widest uppercase">{match.team2_department}</span>
-              {match.winner === match.team2_department && <span className="text-xs font-bold tracking-widest mt-1 text-[#FFBF00]">WINNER</span>}
-            </div>
-          </div>
-          {match.games.length > 0 && (
-            <div className="pt-4 border-t border-[#1A1A1A]">
-              <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-3">Game by Game</p>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm whitespace-nowrap">
-                  <thead>
-                    <tr className="text-gray-600 border-b border-[#1A1A1A] uppercase text-xs font-bold tracking-widest">
-                      <th className="py-2 px-3 text-left">Game</th>
-                      <th className="py-2 px-3 text-center">{match.team1_department}</th>
-                      <th className="py-2 px-3 text-center">{match.team2_department}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#1A1A1A]">
-                    {match.games.map((g) => (
-                      <tr key={g.game_number} className="hover:bg-[#0A0A0A] transition-colors">
-                        <td className="py-2 px-3 text-gray-500 font-bold">Game {g.game_number}</td>
-                        <td className={`py-2 px-3 text-center font-black ${g.team1_score > g.team2_score ? "text-[#FFBF00]" : "text-white"}`}>{g.team1_score}</td>
-                        <td className={`py-2 px-3 text-center font-black ${g.team2_score > g.team1_score ? "text-[#FFBF00]" : "text-white"}`}>{g.team2_score}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <div className="flex items-center justify-between gap-4 mb-5">
+              <div className={`flex flex-col items-start flex-1 ${match.winner === match.team1_department ? "text-[#FFBF00]" : "text-white"}`}>
+                <span className="font-black text-2xl md:text-3xl tracking-widest uppercase">{match.team1_department}</span>
+                {match.winner === match.team1_department && <span className="text-xs font-bold tracking-widest mt-1 text-[#FFBF00]">WINNER</span>}
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="flex items-center gap-3">
+                  <span className={`text-4xl font-black ${match.winner === match.team1_department ? "text-[#FFBF00]" : "text-white"}`}>{matchesWon1}</span>
+                  <span className="text-[#333] font-black text-2xl">—</span>
+                  <span className={`text-4xl font-black ${match.winner === match.team2_department ? "text-[#FFBF00]" : "text-white"}`}>{matchesWon2}</span>
+                </div>
+                <span className="text-gray-600 text-xs font-bold uppercase tracking-widest mt-1">Matches</span>
+              </div>
+              <div className={`flex flex-col items-end flex-1 ${match.winner === match.team2_department ? "text-[#FFBF00]" : "text-white"}`}>
+                <span className="font-black text-2xl md:text-3xl tracking-widest uppercase">{match.team2_department}</span>
+                {match.winner === match.team2_department && <span className="text-xs font-bold tracking-widest mt-1 text-[#FFBF00]">WINNER</span>}
               </div>
             </div>
-          )}
-        </div>
-      ))}
+            {match.games.length > 0 && (
+              <div className="pt-4 border-t border-[#1A1A1A]">
+                <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-3">Match Score</p>
+                <div className="flex flex-wrap gap-3">
+                  {match.games.map((g) => (
+                    <div key={g.game_number} className="bg-[#0A0A0A] border border-[#1A1A1A] rounded-lg px-4 py-3 flex flex-col items-center min-w-[80px]">
+                      <span className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-1">{g.game_type} {g.game_number}</span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-lg font-black ${g.team1_score > g.team2_score ? "text-[#FFBF00]" : "text-white"}`}>{g.team1_score}</span>
+                        <span className="text-gray-700 text-xs">:</span>
+                        <span className={`text-lg font-black ${g.team2_score > g.team1_score ? "text-[#FFBF00]" : "text-white"}`}>{g.team2_score}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -179,40 +173,43 @@ function Leaderboard({ gender }: { gender: "men" | "women" }) {
 
   return (
     <div className="space-y-12">
-      {groups.map(([grp, teams]) => (
-        <div key={grp} className="bg-[#000000] p-6 rounded-xl border border-[#1A1A1A]">
-          <h3 className="text-[#FFBF00] font-black text-2xl mb-6 border-l-8 border-[#FFBF00] pl-4 uppercase tracking-wider">Group {grp}</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-base whitespace-nowrap">
-              <thead>
-                <tr className="text-gray-400 border-b border-[#333] uppercase text-sm font-bold tracking-widest">
-                  <th className="py-4 px-4">#</th><th className="py-4 px-4">Team</th>
-                  <th className="py-4 px-3 text-center">P</th><th className="py-4 px-3 text-center">W</th>
-                  <th className="py-4 px-3 text-center">L</th>
-                  <th className="py-4 px-3 text-center text-[#FFBF00] font-black text-base md:text-lg">Pts</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#1A1A1A]">
-                {teams.map((t, i) => (
-                  <tr key={t.dept_name} className="hover:bg-[#0A0A0A] transition-colors">
-                    <td className="py-5 px-4 text-gray-500 font-mono text-sm">{i + 1}</td>
-                    <td className={`py-5 px-4 font-black tracking-widest uppercase ${i === 0 ? "text-[#FFBF00]" : "text-white"}`}>{t.dept_name}</td>
-                    <td className="py-5 px-3 text-center text-gray-400">{t.matches}</td>
-                    <td className="py-5 px-3 text-center text-gray-400">{t.wins}</td>
-                    <td className="py-5 px-3 text-center text-gray-500">{t.losses}</td>
-                    <td className="py-5 px-3 text-center font-black text-xl text-white">{t.wins * 2}</td>
+      {groups.map(([grp, teams]) => {
+        const displayGroup = (grp === "unknown" || !grp) ? "Default" : grp.toUpperCase().replace("GROUP", "").trim();
+        return (
+          <div key={grp} className="bg-[#000000] p-6 rounded-xl border border-[#1A1A1A]">
+            <h3 className="text-[#FFBF00] font-black text-2xl mb-6 border-l-8 border-[#FFBF00] pl-4 uppercase tracking-wider">Group {displayGroup}</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-base whitespace-nowrap">
+                <thead>
+                  <tr className="text-gray-400 border-b border-[#333] uppercase text-sm font-bold tracking-widest">
+                    <th className="py-4 px-4">#</th><th className="py-4 px-4">Team</th>
+                    <th className="py-4 px-3 text-center">P</th><th className="py-4 px-3 text-center">W</th>
+                    <th className="py-4 px-3 text-center">L</th>
+                    <th className="py-4 px-3 text-center text-[#FFBF00] font-black text-base md:text-lg">Pts</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-[#1A1A1A]">
+                  {teams.map((t, i) => (
+                    <tr key={t.dept_name} className="hover:bg-[#0A0A0A] transition-colors">
+                      <td className="py-5 px-4 text-gray-500 font-mono text-sm">{i + 1}</td>
+                      <td className={`py-5 px-4 font-black tracking-widest uppercase ${i === 0 ? "text-[#FFBF00]" : "text-white"}`}>{t.dept_name}</td>
+                      <td className="py-5 px-3 text-center text-gray-400">{t.matches}</td>
+                      <td className="py-5 px-3 text-center text-gray-400">{t.wins}</td>
+                      <td className="py-5 px-3 text-center text-gray-500">{t.losses}</td>
+                      <td className="py-5 px-3 text-center font-black text-xl text-white">{t.wins * 2}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
 
-function Fixtures({ gender, matchType }: { gender: "men" | "women"; matchType: "singles" | "doubles" }) {
+function Fixtures({ gender }: { gender: "men" | "women" }) {
   const [matches, setMatches] = useState<BadmintonMatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -222,19 +219,14 @@ function Fixtures({ gender, matchType }: { gender: "men" | "women"; matchType: "
     try {
       const all = await fetchBadmintonMatches(gender);
       setMatches(
-    all.filter((m) => {
-    const status = m.match_status?.toLowerCase();
-    const type = normaliseMatchType(m.match_type);
-
-    return (
-      (status === "scheduled" || status === "ongoing") &&
-      type === matchType
-    );
-  })
-);
+        all.filter((m) => {
+          const status = m.match_status?.toLowerCase();
+          return (status === "scheduled" || status === "ongoing");
+        })
+      );
     } catch (err) { console.error(err); setError("Failed to load fixtures."); }
     finally { setLoading(false); }
-  }, [gender, matchType]);
+  }, [gender]);
 
   useEffect(() => { 
     load(); 
@@ -244,7 +236,7 @@ function Fixtures({ gender, matchType }: { gender: "men" | "women"; matchType: "
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorState message={error} onRetry={load} />;
-  if (!matches.length) return <EmptyState label={`No upcoming ${matchType} fixtures.`} />;
+  if (!matches.length) return <EmptyState label="No upcoming fixtures." />;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -253,7 +245,7 @@ function Fixtures({ gender, matchType }: { gender: "men" | "women"; matchType: "
           <div className="flex justify-between items-start mb-4">
             <div className="flex items-center gap-2">
               <span className="text-sm font-bold bg-[#111] text-[#FFBF00] px-3 py-1 rounded tracking-widest uppercase border border-[#333]">{m.match_stage}</span>
-              <span className="text-xs font-bold text-gray-600 border border-[#222] px-2 py-1 rounded uppercase tracking-widest">{m.match_type}</span>
+              {m.match_type && <span className="text-xs font-bold text-gray-600 border border-[#222] px-2 py-1 rounded uppercase tracking-widest">{m.match_type}</span>}
             </div>
             <div className="flex flex-col items-end gap-1">
               <span className="text-xs text-gray-500 font-bold uppercase tracking-widest">#{m.match_id}</span>
