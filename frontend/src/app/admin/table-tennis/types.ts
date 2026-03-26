@@ -27,4 +27,5 @@ export interface ITableTennisMatch {
   winner: string | null;
   match_status: "scheduled" | "completed";
   gender: "men" | "women";
+  match_type: string;
 }

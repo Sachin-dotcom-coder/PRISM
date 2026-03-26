@@ -151,6 +151,7 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
     const newGame: IGame = {
       game_number: formData.games.length + 1,
       match_type: 'singles',
+      sets: [], // ✅ FIX
       team1_score: '',
       team2_score: '',
       winner: null,
@@ -180,6 +181,7 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
         games: formData.games.map((game, index) => ({
           game_number: index + 1,
           match_type: game.match_type,
+          sets: game.sets || [], // ✅ FIX (IMPORTANT)
           team1_score: Number(game.team1_score),
           team2_score: Number(game.team2_score),
           winner: game.winner || null,
