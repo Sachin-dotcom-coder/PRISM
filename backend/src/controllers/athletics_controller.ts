@@ -182,7 +182,11 @@ const validateEvent = (
 };
 
 const getGenderFromRequest = (req: Request) => {
-  const gender = req.query.gender ?? req.body.gender;
+  const rawGender = req.query.gender ?? req.body.gender;
+
+  const gender =
+    typeof rawGender === "string" ? rawGender : Array.isArray(rawGender) ? rawGender[0] : undefined;
+
   return isValidGender(gender) ? gender : null;
 };
 
