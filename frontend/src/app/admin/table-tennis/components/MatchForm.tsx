@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ITableTennisMatch, IGame } from '../types';
+import { ITableTennisMatch, IGame } from '@/app/admin/table-tennis/types';
 import GameInput from './GameInput';
 import { Plus, Save, X } from 'lucide-react';
 import { createMatch, updateMatch } from '../services/tableTennisApi';
