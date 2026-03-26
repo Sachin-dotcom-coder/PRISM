@@ -273,7 +273,6 @@ export const fetchTugOfWarMatches = (gender: "men" | "women") =>
 export const fetchTugOfWarStandings = (category: string) =>
   apiFetch<GroupedStandings>(`/tugofwar-leaderboard/standings?category=${category}`);
 
-<<<<<<< Updated upstream
 // ---------------- CARROM ----------------
 
 export interface CarromMatch {
@@ -311,7 +310,7 @@ export const fetchCarromStandings = (category: "boys" | "girls") =>
   apiFetch<CarromGroupedStandings>(
     `/carrom-leaderboard/standings?category=${category}`
   );
-=======
+
 // ─── Chess ──────────────────────────────────────────────────────────────────
 
 export interface ChessMatch {
@@ -334,4 +333,3 @@ export const fetchChessMatches = (gender: "men" | "women") =>
 
 export const fetchChessStandings = (category: string) =>
   apiFetch<GroupedStandings>(`/chess-leaderboard/standings?category=${category}`);
->>>>>>> Stashed changes
