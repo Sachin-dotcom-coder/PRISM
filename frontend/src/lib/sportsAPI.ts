@@ -35,6 +35,10 @@ export interface StandingRow {
   matches: number;
   points?: number | string;
   played?: number;
+  // Volleyball specific or legacy stats
+  Won?: string;
+  Lost?: string;
+  Matches?: string;
 }
 
 export type GroupedStandings = Record<string, StandingRow[]>;
@@ -244,5 +248,5 @@ export const fetchVolleyballMatches = (gender: "men" | "women") =>
   apiFetch<unknown>(`/volleyball?gender=${gender}`)
     .then((r) => unwrapArray<VolleyballMatch>(r));
 
-export const fetchVolleyballStandings = (category: "boys" | "girls") =>
-  apiFetch<GroupedStandings>(`/volleyball-lead/standings?category=${category}`);
+export const fetchVolleyballStandings = (category: string) =>
+  apiFetch<GroupedStandings>(`/volleylead/standings?category=${category}`);

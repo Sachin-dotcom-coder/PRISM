@@ -67,18 +67,19 @@ function Results({ gender }: { gender: "men" | "women" }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const load = useCallback(async () => {
-    setLoading(true); setError("");
+  const load = useCallback(async (isInitial = false) => {
+    if (isInitial) setLoading(true); 
+    setError("");
     try {
       const all = await fetchVolleyballMatches(gender);
       setMatches(all.filter((m) => m.match_status === "completed"));
     } catch (err) { console.error(err); setError("Failed to load match results."); }
-    finally { setLoading(false); }
+    finally { if (isInitial) setLoading(false); }
   }, [gender]);
 
   useEffect(() => { 
-    load(); 
-    const interval = setInterval(load, 5000);
+    load(true); 
+    const interval = setInterval(() => load(false), 5000);
     return () => clearInterval(interval);
   }, [load]);
 
@@ -145,21 +146,27 @@ function Results({ gender }: { gender: "men" | "women" }) {
 }
 
 function Leaderboard({ gender }: { gender: "men" | "women" }) {
-  const category = gender === "men" ? "boys" : "girls";
+  const category = gender; // Synchronized with matches (men/women)
   const [grouped, setGrouped] = useState<GroupedStandings>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const load = useCallback(async () => {
-    setLoading(true); setError("");
-    try { setGrouped(await fetchVolleyballStandings(category)); }
+  const load = useCallback(async (isInitial = false) => {
+    if (isInitial) setLoading(true); 
+    setError("");
+    try { 
+      const res = await fetchVolleyballStandings(category);
+      // Resilience: handle both raw objects and { success: true, data: { ... } }
+      const rawData = (res as any)?.success || (res as any)?.data ? ((res as any).data || res) : res;
+      setGrouped(rawData && typeof rawData === 'object' ? rawData : {}); 
+    }
     catch (err) { console.error(err); setError("Failed to load standings."); }
-    finally { setLoading(false); }
+    finally { if (isInitial) setLoading(false); }
   }, [category]);
 
   useEffect(() => { 
-    load(); 
-    const interval = setInterval(load, 10000);
+    load(true); 
+    const interval = setInterval(() => load(false), 10000);
     return () => clearInterval(interval);
   }, [load]);
 
@@ -188,9 +195,9 @@ function Leaderboard({ gender }: { gender: "men" | "women" }) {
                   <tr key={t.dept_name} className="hover:bg-[#0A0A0A] transition-colors">
                     <td className="py-5 px-4 text-gray-500 font-mono text-sm">{i + 1}</td>
                     <td className={`py-5 px-4 font-black tracking-widest uppercase ${i === 0 ? "text-[#FFBF00]" : "text-white"}`}>{t.dept_name}</td>
-                    <td className="py-5 px-3 text-center text-gray-400">{t.played ?? t.matches}</td>
-                    <td className="py-5 px-3 text-center text-gray-400">{t.wins}</td>
-                    <td className="py-5 px-3 text-center text-gray-500">{t.losses}</td>
+                    <td className="py-5 px-3 text-center text-gray-400">{t.Matches || (t.played ?? t.matches)}</td>
+                    <td className="py-5 px-3 text-center text-gray-400">{t.Won || t.wins}</td>
+                    <td className="py-5 px-3 text-center text-gray-500">{t.Lost || t.losses}</td>
                     <td className="py-5 px-3 text-center font-black text-xl text-white">{t.points ?? t.wins * 3}</td>
                   </tr>
                 ))}
@@ -209,18 +216,19 @@ function Fixtures({ gender }: { gender: "men" | "women" }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const load = useCallback(async () => {
-    setLoading(true); setError("");
+  const load = useCallback(async (isInitial = false) => {
+    if (isInitial) setLoading(true); 
+    setError("");
     try {
       const all = await fetchVolleyballMatches(gender);
       setMatches(all.filter((m) => m.match_status === "scheduled" || m.match_status === "ongoing"));
     } catch (err) { console.error(err); setError("Failed to load fixtures."); }
-    finally { setLoading(false); }
+    finally { if (isInitial) setLoading(false); }
   }, [gender]);
 
   useEffect(() => { 
-    load(); 
-    const interval = setInterval(load, 10000);
+    load(true); 
+    const interval = setInterval(() => load(false), 10000);
     return () => clearInterval(interval);
   }, [load]);
 

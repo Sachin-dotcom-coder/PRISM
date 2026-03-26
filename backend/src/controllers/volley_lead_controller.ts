@@ -10,8 +10,8 @@ import VolleyballLeaderboard from "../models/volley_lead_model";
 import VolleyballMatch from "../models/volleyball_model";
 
 const computeStats = async (dept_name: string, category: string) => {
-  // Map leaderboard "boys/girls" to match "men/women"
-  const matchGender = category === "boys" ? "men" : "women";
+  // Map leaderboard "boys/girls" or "men/women" to match "men/women"
+  const matchGender = (category === "boys" || category === "men") ? "men" : "women";
 
   // Filter matches using the correct field names from volleyball_model.ts
   const matches = await VolleyballMatch.find({
@@ -35,7 +35,16 @@ const computeStats = async (dept_name: string, category: string) => {
   }
 
   const points = wins * 3; // Win = 3pts, Loss = 0pts (Volleyball standard)
-  return { played, wins, losses, points };
+  return { 
+    played, 
+    wins, 
+    losses, 
+    points,
+    Won: String(wins),
+    Lost: String(losses),
+    Matches: String(played),
+    pointsStr: String(points)
+  };
 };
 
 
@@ -72,21 +81,44 @@ export const getAllLeaderboardEntries = async (req: Request, res: Response) => {
 
 export const getLeaderboardStandings = async (req: Request, res: Response) => {
   try {
-    const { category } = req.query; // "boys" or "girls"
+    const { category: queryCategory } = req.query; // "men" or "women" (or legacy "boys"/"girls")
+    
+    // Robust category filter supporting multiple naming conventions (case-insensitive)
+    let categoryFilter: any = queryCategory;
+    if (queryCategory) {
+      const q = String(queryCategory).toLowerCase();
+      if (q === "men" || q === "boys") {
+        categoryFilter = { $in: ["men", "boys", "Men", "Boys", "BOYS", "MEN"] };
+      } else if (q === "women" || q === "girls") {
+        categoryFilter = { $in: ["women", "girls", "Women", "Girls", "GIRLS", "WOMEN"] };
+      }
+    }
+
     const filter: any = {};
-    if (category) filter.category = category;
+    if (queryCategory) filter.category = categoryFilter;
 
     const entries = await VolleyballLeaderboard.find(filter).sort({ group: 1 });
 
     const enriched = await Promise.all(
       entries.map(async (entry) => {
         const stats = await computeStats(entry.dept_name, entry.category);
+        
+        // Prioritize calculated stats if they move past zero, but allow manual overrides
+        const wonVal = (entry.Won && entry.Won !== "0") ? entry.Won : stats.Won;
+        const lostVal = (entry.Lost && entry.Lost !== "0") ? entry.Lost : stats.Lost;
+        const matchesVal = (entry.Matches && entry.Matches !== "0") ? entry.Matches : stats.Matches;
+        const pointsVal = (entry.points && entry.points !== "0") ? entry.points : String(stats.points);
+
         return {
           _id: entry._id,
           dept_name: entry.dept_name,
           category: entry.category,
           group: entry.group,
           ...stats,
+          points: Number(pointsVal),
+          Won: wonVal,
+          Lost: lostVal,
+          Matches: matchesVal,
         };
       })
     );
@@ -99,7 +131,7 @@ export const getLeaderboardStandings = async (req: Request, res: Response) => {
 
     // Sort teams within each group by points desc
     Object.keys(result).forEach(grp => {
-      result[grp].sort((a, b) => b.points - a.points || b.wins - a.wins);
+      result[grp].sort((a: any, b: any) => (b.points - a.points) || (b.wins - a.wins));
     });
 
     res.status(200).json(result);

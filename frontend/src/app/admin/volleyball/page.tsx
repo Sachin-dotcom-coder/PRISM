@@ -8,12 +8,13 @@ import MatchForm from './components/MatchForm';
 import { IVolleyballMatch } from './types';
 import { getMatches, deleteMatch } from './services/volleyballApi';
 import { useGender } from '@/app/components/Providers';
+import { DEPARTMENT_OPTIONS } from '../shared/departmentOptions';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface VolleyLeaderboardEntry {
   _id: string;
   dept_name: string;
-  category: 'boys' | 'girls';
+  category: 'men' | 'women';
   group: string;
   played?: number;
   wins?: number;
@@ -80,19 +81,25 @@ function VolleyTeamRow({
     <tr className="border-b border-[#FFBF00]/20 bg-[#FFBF00]/5">
       <td className="p-2 text-center text-zinc-500 text-sm">{rank + 1}</td>
       <td className="p-2">
-        <input
+        <select
           className="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-xs text-white outline-none focus:border-[#FFBF00]"
           value={draft.dept_name}
           onChange={(e) => setDraft(p => ({ ...p, dept_name: e.target.value }))}
-          placeholder="Dept Name"
-        />
+        >
+          {DEPARTMENT_OPTIONS.map(opt => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
+        </select>
       </td>
       <td className="p-2">
-        <input
+        <select
           className="w-14 bg-zinc-800 border border-zinc-700 rounded p-1.5 text-center text-xs text-white outline-none focus:border-[#FFBF00]"
           value={draft.group}
-          onChange={(e) => setDraft(p => ({ ...p, group: e.target.value.toUpperCase() }))}
-        />
+          onChange={(e) => setDraft(p => ({ ...p, group: e.target.value }))}
+        >
+          <option value="A">A</option>
+          <option value="B">B</option>
+        </select>
       </td>
       <td colSpan={4} className="p-2 text-center text-[10px] text-zinc-500 italic">Auto-calculated from completed league matches</td>
       <td className="p-2">
@@ -113,7 +120,7 @@ function VolleyTeamRow({
 export default function VolleyballAdminPage() {
   const { gender: globalGender, setGender: setGlobalGender } = useGender();
   const gender = globalGender === "f" ? "women" : "men";
-  const lbCategory: 'boys' | 'girls' = gender === 'men' ? 'boys' : 'girls';
+  const lbCategory: 'men' | 'women' = gender;
 
   // ── Match state ──
   const [matches, setMatches] = useState<IVolleyballMatch[]>([]);
@@ -128,7 +135,7 @@ export default function VolleyballAdminPage() {
   const [addMode, setAddMode] = useState(false);
   const [lbMsg, setLbMsg] = useState('');
   const [newEntry, setNewEntry] = useState<Partial<VolleyLeaderboardEntry>>({
-    dept_name: '', category: lbCategory, group: 'A',
+    dept_name: DEPARTMENT_OPTIONS[0], category: lbCategory, group: 'A',
   });
 
   // ─── Fetch helpers ─────────────────────────────────────────────────────────
@@ -348,10 +355,10 @@ export default function VolleyballAdminPage() {
           <section className="bg-zinc-950/50 rounded-3xl border border-zinc-800 overflow-hidden backdrop-blur-xl">
             {/* Header */}
             <div className="p-5 border-b border-zinc-800 bg-zinc-900/40 flex items-center justify-between">
-              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3">
                 <Trophy className="w-5 h-5 text-[#FFBF00]" />
                 <h2 className="text-lg font-[900] text-white uppercase tracking-widest">
-                  Leaderboard — {lbCategory === 'boys' ? 'Boys (Men)' : 'Girls (Women)'}
+                  Leaderboard — {lbCategory === 'men' ? 'Men' : 'Women'}
                 </h2>
               </div>
               <button onClick={() => setAddMode(!addMode)}
@@ -366,24 +373,31 @@ export default function VolleyballAdminPage() {
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-[10px] font-black text-zinc-500 uppercase mb-1 tracking-widest">Department</label>
-                    <input placeholder="e.g. CS" value={newEntry.dept_name}
+                    <select value={newEntry.dept_name}
                       onChange={e => setNewEntry(p => ({ ...p, dept_name: e.target.value }))}
-                      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2.5 text-sm text-white outline-none focus:border-[#FFBF00]" />
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2.5 text-sm text-white outline-none focus:border-[#FFBF00]">
+                      {DEPARTMENT_OPTIONS.map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-[10px] font-black text-zinc-500 uppercase mb-1 tracking-widest">Category</label>
                     <select value={newEntry.category}
-                      onChange={e => setNewEntry(p => ({ ...p, category: e.target.value as 'boys' | 'girls' }))}
+                      onChange={e => setNewEntry(p => ({ ...p, category: e.target.value as 'men' | 'women' }))}
                       className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2.5 text-sm text-white outline-none focus:border-[#FFBF00]">
-                      <option value="boys">Boys (Men)</option>
-                      <option value="girls">Girls (Women)</option>
+                      <option value="men">Men</option>
+                      <option value="women">Women</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-[10px] font-black text-zinc-500 uppercase mb-1 tracking-widest">Group</label>
-                    <input value={newEntry.group}
-                      onChange={e => setNewEntry(p => ({ ...p, group: e.target.value.toUpperCase() }))}
-                      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2.5 text-sm text-white outline-none focus:border-[#FFBF00]" />
+                    <select value={newEntry.group}
+                      onChange={e => setNewEntry(p => ({ ...p, group: e.target.value }))}
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2.5 text-sm text-white outline-none focus:border-[#FFBF00]">
+                      <option value="A">A</option>
+                      <option value="B">B</option>
+                    </select>
                   </div>
                 </div>
                 <button onClick={handleAddEntry}

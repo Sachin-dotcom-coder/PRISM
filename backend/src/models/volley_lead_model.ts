@@ -2,8 +2,12 @@ import mongoose, { Document, Schema } from "mongoose";
 
 export interface IVolleyballLeaderboard extends Document {
   dept_name: string;
-  category: "boys" | "girls";
+  category: "men" | "women";
   group: string; // e.g. "A", "B", "C"
+  points: string;
+  Lost: string;
+  Matches: string;
+  Won: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -16,13 +20,17 @@ const VolleyballLeaderboardSchema: Schema<IVolleyballLeaderboard> = new Schema(
     },
     category: {
       type: String,
-      enum: ["boys", "girls"],
+      enum: ["men", "women"],
       required: true,
     },
     group: {
       type: String,
       required: true, // e.g. "A", "B"
     },
+    points: { type: String, default: "0" },
+    Lost: { type: String, default: "0" },
+    Matches: { type: String, default: "0" },
+    Won: { type: String, default: "0" },
   },
   {
     timestamps: true,
@@ -35,13 +43,8 @@ VolleyballLeaderboardSchema.index(
   { unique: true }
 );
 
-const VOLLEYBALL_URI = process.env.MONGODB_VOLLEYBALL_URI || 
-  "mongodb+srv://Vishal:VISHAL2006@prism.mczk5vc.mongodb.net/volleyballDB?appName=PRISM";
-
-const volleyballDb = mongoose.createConnection(VOLLEYBALL_URI);
-
-export default volleyballDb.models.VolleyballLeaderboard ||
-  volleyballDb.model<IVolleyballLeaderboard>(
+export default mongoose.models.VolleyballLeaderboard ||
+  mongoose.model<IVolleyballLeaderboard>(
     "VolleyballLeaderboard",
     VolleyballLeaderboardSchema
   );
