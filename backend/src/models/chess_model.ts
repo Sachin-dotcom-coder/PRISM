@@ -3,6 +3,7 @@ import mongoose, { Document, Schema } from "mongoose";
 export interface IChessEvent extends Document {
   event_id: number;
   event_name: "chess";
+  category?: string;
   event_date?: Date;
   department_1: string;
   department_2: string;
@@ -20,6 +21,7 @@ const ChessEventSchema = new Schema<IChessEvent>(
       default: "chess",
       required: true
     },
+    category: { type: String },
     event_date: { type: Date },
     department_1: { type: String, required: true },
     department_2: { type: String, required: true },

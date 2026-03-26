@@ -54,6 +54,7 @@ const validatePayload = (body: Record<string, unknown>) => {
     payload: {
       event_id: Number(event_id),
       event_name: "chess" as const,
+      category: body.category ? String(body.category).trim() : undefined,
       event_date: body.event_date ? String(body.event_date) : undefined,
       department_1: normalizedDepartment1,
       department_2: normalizedDepartment2,

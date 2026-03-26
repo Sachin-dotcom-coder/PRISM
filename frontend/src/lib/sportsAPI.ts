@@ -273,6 +273,7 @@ export const fetchTugOfWarMatches = (gender: "men" | "women") =>
 export const fetchTugOfWarStandings = (category: string) =>
   apiFetch<GroupedStandings>(`/tugofwar-leaderboard/standings?category=${category}`);
 
+<<<<<<< Updated upstream
 // ---------------- CARROM ----------------
 
 export interface CarromMatch {
@@ -310,3 +311,27 @@ export const fetchCarromStandings = (category: "boys" | "girls") =>
   apiFetch<CarromGroupedStandings>(
     `/carrom-leaderboard/standings?category=${category}`
   );
+=======
+// ─── Chess ──────────────────────────────────────────────────────────────────
+
+export interface ChessMatch {
+  _id: string;
+  event_id: number;
+  event_name: "chess";
+  category?: string;
+  event_date?: string;
+  venue?: string;
+  department_1: string;
+  department_2: string;
+  winner: string | null;
+  event_status: "scheduled" | "completed" | "ongoing";
+  gender: "men" | "women";
+}
+
+export const fetchChessMatches = (gender: "men" | "women") =>
+  apiFetch<unknown>(`/chess?gender=${gender}`)
+    .then((r) => unwrapArray<ChessMatch>(r));
+
+export const fetchChessStandings = (category: string) =>
+  apiFetch<GroupedStandings>(`/chess-leaderboard/standings?category=${category}`);
+>>>>>>> Stashed changes

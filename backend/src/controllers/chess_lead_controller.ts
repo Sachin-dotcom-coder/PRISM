@@ -4,43 +4,74 @@ import { Request, Response } from "express";
 
 export const getLeaderboardStandings = async (req: Request, res: Response) => {
   try {
-    // Only completed matches
-    const matches = await ChessEvent.find({ event_status: "completed" });
-    // Get group info for each team from leaderboard
-    const leaderboardEntries = await ChessLeaderboard.find();
+    const { category: queryCategory } = req.query; // "men" or "women" (or legacy "boys"/"girls")
+
+    // Robust category filter supporting multiple naming conventions
+    let categoryFilter: any = queryCategory;
+    if (queryCategory) {
+      const q = String(queryCategory).toLowerCase();
+      if (q === "men" || q === "boys") categoryFilter = { $in: ["men", "boys"] };
+      else if (q === "women" || q === "girls") categoryFilter = { $in: ["women", "girls"] };
+    }
+
+    const leadQuery = queryCategory ? { category: categoryFilter } : {};
+    const matchGender = (queryCategory === "boys" || queryCategory === "men") ? "men" : "women";
+
+    // Only completed events count for tournament standings
+    const matches = await ChessEvent.find({ 
+      event_status: "completed",
+      gender: matchGender 
+    });
+    const leaderboardEntries = await ChessLeaderboard.find(leadQuery);
     
-    // Key by category_deptName to avoid mixing boys and girls from same dept
-    const deptCategoryMap: Record<string, { group: string }> = {};
+    // Key by dept_name
+    const standings: Record<string, { 
+      dept_name: string; 
+      group: string; 
+      category: string; 
+      wins: number; 
+      losses: number; 
+      matches: number;
+      points: number;
+    }> = {};
+
+    // 1. Initialize standings for all registered departments in this category
     leaderboardEntries.forEach(entry => {
-      deptCategoryMap[`${entry.category}_${entry.dept_name}`] = { group: entry.group };
+      standings[entry.dept_name] = { 
+        dept_name: entry.dept_name, 
+        group: entry.group || "A", 
+        category: entry.category,
+        wins: 0, 
+        losses: 0, 
+        matches: 0,
+        points: 0
+      };
     });
 
-    const standings: Record<string, { dept_name: string; group: string; category: string; wins: number; losses: number; matches: number }> = {};
-
+    // 2. Process match results
     for (const match of matches) {
-      const category = match.gender === "men" ? "boys" : "girls";
       const t1 = match.department_1;
       const t2 = match.department_2;
       const winner = match.winner;
       
-      const key1 = `${category}_${t1}`;
-      const key2 = `${category}_${t2}`;
+      if (standings[t1]) {
+        standings[t1].matches++;
+        if (winner === t1) {
+          standings[t1].wins++;
+          standings[t1].points += 3;
+        } else if (winner === t2) {
+          standings[t1].losses++;
+        }
+      }
 
-      const group1 = deptCategoryMap[key1]?.group || "Unknown";
-      const group2 = deptCategoryMap[key2]?.group || "Unknown";
-
-      if (!standings[key1]) standings[key1] = { dept_name: t1, category, group: group1, wins: 0, losses: 0, matches: 0 };
-      if (!standings[key2]) standings[key2] = { dept_name: t2, category, group: group2, wins: 0, losses: 0, matches: 0 };
-
-      standings[key1].matches++;
-      standings[key2].matches++;
-
-      if (winner === t1) {
-        standings[key1].wins++;
-        standings[key2].losses++;
-      } else if (winner === t2) {
-        standings[key2].wins++;
-        standings[key1].losses++;
+      if (standings[t2]) {
+        standings[t2].matches++;
+        if (winner === t2) {
+          standings[t2].wins++;
+          standings[t2].points += 3;
+        } else if (winner === t1) {
+          standings[t2].losses++;
+        }
       }
     }
 
@@ -51,10 +82,11 @@ export const getLeaderboardStandings = async (req: Request, res: Response) => {
       grouped[entry.group].push(entry);
     });
     
-    // Sort each group by wins desc, then matches desc
+    // Sort each group by points desc, then wins desc
     Object.keys(grouped).forEach(group => {
-      grouped[group].sort((a, b) => b.wins - a.wins || b.matches - a.matches);
+      grouped[group].sort((a, b) => (b.points - a.points) || (b.wins - a.wins) || (b.matches - a.matches));
     });
+
     res.status(200).json(grouped);
   } catch (error) {
     res.status(500).json({ message: "Failed to compute standings", error: (error as Error).message || error });
