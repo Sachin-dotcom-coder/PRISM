@@ -4,9 +4,17 @@ import { Request, Response } from "express";
 
 export const getLeaderboardStandings = async (req: Request, res: Response) => {
   try {
-    // Only completed matches
-    const matches = await CarromEvent.find({ event_status: "completed" });
-    // Get group info for each team from leaderboard
+      const categoryQuery = req.query.category as string;
+
+      const genderFilter =
+        categoryQuery === "boys" ? "men" :
+        categoryQuery === "girls" ? "women" :
+        null;
+
+      const matches = await CarromEvent.find({
+        event_status: "completed",
+        ...(genderFilter && { gender: genderFilter }),
+      });
     const leaderboardEntries = await CarromLeaderboard.find();
     
     // Key by category_deptName to avoid mixing boys and girls from same dept
@@ -55,7 +63,7 @@ export const getLeaderboardStandings = async (req: Request, res: Response) => {
     Object.keys(grouped).forEach(group => {
       grouped[group].sort((a, b) => b.wins - a.wins || b.matches - a.matches);
     });
-    res.status(200).json(grouped);
+    res.status(200).json({ success: true, data: grouped });
   } catch (error) {
     res.status(500).json({ message: "Failed to compute standings", error: (error as Error).message || error });
   }

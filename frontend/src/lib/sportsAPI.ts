@@ -272,3 +272,41 @@ export const fetchTugOfWarMatches = (gender: "men" | "women") =>
 
 export const fetchTugOfWarStandings = (category: string) =>
   apiFetch<GroupedStandings>(`/tugofwar-leaderboard/standings?category=${category}`);
+
+// ---------------- CARROM ----------------
+
+export interface CarromMatch {
+  _id: string;
+  event_id: number;
+  event_name: string;
+  department_1: string;
+  department_2: string;
+  event_date?: string;
+  winner: string | null;
+  event_status: "scheduled" | "ongoing" | "completed";
+  gender: "men" | "women";
+}
+
+// Fetch matches
+export const fetchCarromMatches = (gender: "men" | "women") =>
+  apiFetch<unknown>(`/carrom?gender=${gender}`)
+    .then((r) => unwrapArray<CarromMatch>(r));
+
+// Leaderboard type (same as others)
+export type CarromGroupedStandings = Record<
+  string,
+  {
+    dept_name: string;
+    group: string;
+    category: string;
+    wins: number;
+    losses: number;
+    matches: number;
+  }[]
+>;
+
+// Fetch standings
+export const fetchCarromStandings = (category: "boys" | "girls") =>
+  apiFetch<CarromGroupedStandings>(
+    `/carrom-leaderboard/standings?category=${category}`
+  );
