@@ -9,7 +9,7 @@ const fetcher = async (url: string) => {
   if (url.includes("/api/matches")) {
     const gender = genderMap[url.includes("gender=f") ? "f" : "m"];
 
-    const res = await fetch(`http://localhost:5000/api/carrom?gender=${gender}`);
+    const res = await fetch(`/api/carrom?gender=${gender}`);
     if (!res.ok) throw new Error("Failed to fetch matches");
 
     const json = await res.json();
@@ -35,12 +35,12 @@ const fetcher = async (url: string) => {
     }));
   }
 
-  if (url.includes("/api/leaderboard")) {
-    const gender = url.includes("gender=f") ? "girls" : "boys";
+ if (url.includes("/api/leaderboard")) {
+  const category = url.includes("gender=f") ? "girls" : "boys";
 
-    const res = await fetch(
-      `http://localhost:5000/api/carrom-leaderboard/standings?category=${gender}`
-    );
+  const res = await fetch(
+    `/api/carrom-leaderboard/standings?category=${category}`
+  );
     if (!res.ok) throw new Error("Failed to fetch standings");
 
     const json = await res.json();

@@ -94,8 +94,8 @@ export default function KabaddiAdminPage() {
   const genderLabel = gender === "f" ? "Women's" : "Men's";
 
   // API Routes
-  const MATCHES_API = `http://localhost:5000/api/kabaddi?gender=${gender}`;
-  const LB_API = `http://localhost:5000/api/kabaddi-leaderboard?gender=${gender}`;
+  const MATCHES_API = `/api/kabaddi?gender=${gender}`;
+  const LB_API = `/api/kabaddi-leaderboard?category=${gender === "m" ? "boys" : "girls"}`;
 
   // Fetching Data
   const { data: matches, mutate: mutateMatches } = useSWR(MATCHES_API, fetcher);

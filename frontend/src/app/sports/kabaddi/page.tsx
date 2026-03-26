@@ -11,7 +11,7 @@ export default function KabaddiDashboard() {
 
   // Fetch matches to get live count for header (adjust API route if needed)
   const { data: matches } = useSWR(
-    `http://localhost:5000/api/kabaddi?gender=${gender}`,
+    `/api/kabaddi?gender=${gender}`,
     fetcher,
     { refreshInterval: 10000 }
   );
@@ -249,9 +249,9 @@ function ScorecardContent({ match, isLive = false }: { match: any, isLive?: bool
 
 function LiveScore({ gender }: { gender: "m" | "f" }) {
   const { data: matches, error, isLoading } = useSWR(
-    `http://localhost:5000/api/kabaddi?gender=${gender}`,
+    `/api/kabaddi?gender=${gender}`,
     fetcher,
-    { refreshInterval: 5000 } // Faster refresh for kabaddi
+    { refreshInterval: 5000 }
   );
 
   const liveMatches = Array.isArray(matches) ? matches.filter((m: any) => m.status === "LIVE") : [];
@@ -273,8 +273,10 @@ function LiveScore({ gender }: { gender: "m" | "f" }) {
 }
 
 function Leaderboard({ gender }: { gender: "m" | "f" }) {
+  const category = gender === "m" ? "boys" : "girls";
+
   const { data: teams, error, isLoading } = useSWR(
-    `http://localhost:5000/api/kabaddi-leaderboard?gender=${gender}`,
+    `/api/kabaddi-leaderboard/standings?category=${category}`,
     fetcher,
     { refreshInterval: 10000 }
   );
@@ -342,7 +344,7 @@ function Leaderboard({ gender }: { gender: "m" | "f" }) {
 
 function Fixtures({ gender }: { gender: "m" | "f" }) {
   const { data: matches, error, isLoading } = useSWR(
-    `http://localhost:5000/api/kabaddi?gender=${gender}`,
+    `/api/kabaddi?gender=${gender}`,
     fetcher,
     { refreshInterval: 30000 }
   );

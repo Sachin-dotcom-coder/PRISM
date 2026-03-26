@@ -56,8 +56,8 @@ export default function KabaddiMatchAdmin() {
   const router = useRouter();
   const match_id = params?.match_id as string;
 
-  const MATCH_API = match_id ? `http://localhost:5000/api/kabaddi/${match_id}?gender=${gender}` : null;
-  const UPDATE_API = match_id ? `http://localhost:5000/api/kabaddi/${match_id}?gender=${gender}` : null;
+  const MATCH_API = match_id ? `/api/kabaddi/${match_id}?gender=${gender}` : null;
+  const UPDATE_API = match_id ? `/api/kabaddi/${match_id}?gender=${gender}` : null;
 
   const { data: matchData, mutate } = useSWR(MATCH_API, fetcher);
 
@@ -324,7 +324,9 @@ export default function KabaddiMatchAdmin() {
 async function handleDeleteMatch(matchId: string, router: any) {
   if (!confirm("Are you sure you want to delete this match completely?")) return;
   const gender = new URLSearchParams(window.location.search).get('gender') || 'm';
-  const res = await fetch(`http://localhost:5000/api/kabaddi/${matchId}?gender=${gender}`, { method: "DELETE" });
+  const res = await fetch(`/api/kabaddi/${matchId}?gender=${gender}`, {
+  method: "DELETE",
+  });
   if (res.ok) router.push("/admin/kabaddi");
   else alert("Delete failed");
 }
