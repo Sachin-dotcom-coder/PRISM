@@ -88,22 +88,38 @@ const validatePayload = (body: Record<string, unknown>) => {
 export const createPowerSportsEvent = async (req: Request, res: Response): Promise<void> => {
   try {
     const validation = validatePayload(req.body);
+
     if (!validation.valid) {
       res.status(400).json({ success: false, message: validation.message });
       return;
     }
 
-    const savedEvent = await PowersportsEvent.create(validation.payload);
-    res.status(201).json({ success: true, message: "PowerSports event created.", data: savedEvent });
+    const payload = validation.payload!; // ✅ FIX
+
+    const savedEvent = await PowersportsEvent.create(payload);
+
+    res.status(201).json({
+      success: true,
+      message: "PowerSports event created.",
+      data: savedEvent
+    });
+
   } catch (error: any) {
     if (error.code === 11000) {
-      res.status(400).json({ success: false, message: "event_id must be unique for the selected gender." });
+      res.status(400).json({
+        success: false,
+        message: "event_id must be unique for the selected gender."
+      });
       return;
     }
-    res.status(500).json({ success: false, message: "Server Error", data: error.message });
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      data: error.message
+    });
   }
 };
-
 export const getAllPowerSportsEvents = async (req: Request, res: Response): Promise<void> => {
   try {
     const gender = getGenderFromRequest(req);

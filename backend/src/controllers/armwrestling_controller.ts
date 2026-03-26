@@ -88,12 +88,15 @@ const validatePayload = (body: Record<string, unknown>) => {
 export const createArmWrestlingEvent = async (req: Request, res: Response): Promise<void> => {
   try {
     const validation = validatePayload(req.body);
-    if (!validation.valid) {
-      res.status(400).json({ success: false, message: validation.message });
-      return;
-    }
 
-    const savedEvent = await ArmWrestlingEvent.create(validation.payload);
+if (!validation.valid) {
+  res.status(400).json({ success: false, message: validation.message });
+  return;
+}
+
+const payload = validation.payload!; // 🔥 important
+
+const savedEvent = await ArmWrestlingEvent.create(payload);
     res.status(201).json({ success: true, message: "Arm Wrestling event created.", data: savedEvent });
   } catch (error: any) {
     if (error.code === 11000) {
