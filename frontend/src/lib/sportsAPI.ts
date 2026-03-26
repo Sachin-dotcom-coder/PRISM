@@ -250,3 +250,25 @@ export const fetchVolleyballMatches = (gender: "men" | "women") =>
 
 export const fetchVolleyballStandings = (category: string) =>
   apiFetch<GroupedStandings>(`/volleylead/standings?category=${category}`);
+
+// ─── Tug of War ──────────────────────────────────────────────────────────────
+
+export interface TugOfWarMatch {
+  _id: string;
+  event_id: number;
+  event_name: "tug_of_war";
+  event_date?: string;
+  venue?: string;
+  department_1: string;
+  department_2: string;
+  winner: string | null;
+  event_status: "scheduled" | "completed" | "ongoing";
+  gender: "men" | "women";
+}
+
+export const fetchTugOfWarMatches = (gender: "men" | "women") =>
+  apiFetch<unknown>(`/tug-of-war?gender=${gender}`)
+    .then((r) => unwrapArray<TugOfWarMatch>(r));
+
+export const fetchTugOfWarStandings = (category: string) =>
+  apiFetch<GroupedStandings>(`/tugofwar-leaderboard/standings?category=${category}`);
