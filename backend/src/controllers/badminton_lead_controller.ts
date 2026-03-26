@@ -25,14 +25,22 @@ export const getLeaderboardStandings = async (req: Request, res: Response) => {
       deptCategoryMap[`${entry.category}_${entry.dept_name}`] = { group: entry.group || "A" };
     });
 
+    const normalizeCat = (c: string) => {
+      const s = c.toLowerCase();
+      if (s === "men" || s === "boys") return "boys";
+      if (s === "women" || s === "girls") return "girls";
+      return s;
+    };
+
     const standings: Record<string, { dept_name: string; group: string; category: string; wins: number; losses: number; matches: number }> = {};
 
     // Initialize standings with all teams from leaderboard entries
     leaderboardEntries.forEach(entry => {
-      const key = `${entry.category}_${entry.dept_name}`;
+      const cat = normalizeCat(entry.category);
+      const key = `${cat}_${entry.dept_name}`;
       standings[key] = { 
         dept_name: entry.dept_name, 
-        category: entry.category,
+        category: cat,
         group: entry.group || "A", 
         wins: 0, 
         losses: 0, 
@@ -43,23 +51,24 @@ export const getLeaderboardStandings = async (req: Request, res: Response) => {
     // Match gender from category
     let genderFilter: string | undefined = undefined;
     if (queryCategory) {
-      const q = String(queryCategory).toLowerCase();
-      genderFilter = (q === "women" || q === "girls") ? "women" : "men";
+      const q = normalizeCat(String(queryCategory));
+      genderFilter = (q === "girls") ? "women" : "men";
     }
 
     const matches = await BadmintonMatch.find({ 
-      match_status: "completed",
+      // Only completed matches (or default to completed if match_status not set)
+      $or: [{ match_status: "completed" }, { match_status: { $exists: false } }, { match_status: "" }],
       ...(genderFilter ? { gender: genderFilter } : {})
     });
 
     for (const match of matches) {
-      const category = match.gender === "men" ? "boys" : "girls";
+      const cat = normalizeCat(match.gender || "");
       const t1 = match.team1_department;
       const t2 = match.team2_department;
       const winner = match.winner;
       
-      const key1 = `${category}_${t1}`;
-      const key2 = `${category}_${t2}`;
+      const key1 = `${cat}_${t1}`;
+      const key2 = `${cat}_${t2}`;
 
       if (standings[key1]) {
         standings[key1].matches++;

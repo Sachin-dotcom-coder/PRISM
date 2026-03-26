@@ -7,19 +7,34 @@ export const getLeaderboardStandings = async (req: Request, res: Response) => {
     const { category: queryCategory } = req.query;
     
     // Determine the equivalent match gender for the requested category
-    let matchGender: string | undefined = undefined;
-    if (queryCategory === "boys") matchGender = "men";
-    else if (queryCategory === "girls") matchGender = "women";
+    const normalizeCat = (c: string) => {
+      const s = c.toLowerCase();
+      if (s === "men" || s === "boys") return "boys";
+      if (s === "women" || s === "girls") return "girls";
+      return s;
+    };
 
-    const matchQuery = matchGender ? { gender: matchGender, match_status: "completed" } : { match_status: "completed" };
+    // Match gender from category
+    let genderFilter: string | undefined = undefined;
+    if (queryCategory) {
+      const q = normalizeCat(String(queryCategory));
+      genderFilter = (q === "girls") ? "women" : "men";
+    }
+
+    const matchQuery: any = { 
+      $or: [{ match_status: "completed" }, { match_status: { $exists: false } }, { match_status: "" }]
+    };
+    if (genderFilter) matchQuery.gender = genderFilter;
+
     const matches = await TTMatch.find(matchQuery);
     
     // Support both "boys"/"girls" and "men"/"women" in the leaderboard database
-    const categoryFilter = queryCategory === "boys" 
-      ? { $in: ["boys", "men"] } 
-      : queryCategory === "girls" 
-        ? { $in: ["girls", "women"] } 
-        : queryCategory;
+    let categoryFilter: any = queryCategory;
+    if (queryCategory) {
+      const q = normalizeCat(String(queryCategory));
+      if (q === "boys") categoryFilter = { $in: ["boys", "men", "Boys", "Men", "BOYS", "MEN"] };
+      else if (q === "girls") categoryFilter = { $in: ["girls", "women", "Girls", "Women", "GIRLS", "WOMEN"] };
+    }
 
     const leadQuery = queryCategory ? { category: categoryFilter } : {};
     const leaderboardEntries = await TTLeaderboard.find(leadQuery);
@@ -30,39 +45,40 @@ export const getLeaderboardStandings = async (req: Request, res: Response) => {
       wins: number; 
       losses: number; 
       matches: number;
-      points: string;
-      played: number;
     }> = {};
 
     // 1. Initialize standings for all registered departments in this category
     leaderboardEntries.forEach(entry => {
-      standings[entry.dept_name] = { 
+      const cat = normalizeCat(entry.category);
+      const key = `${cat}_${entry.dept_name}`;
+      standings[key] = { 
         dept_name: entry.dept_name, 
         group: entry.group || "A", 
         wins: 0, 
         losses: 0, 
-        matches: 0,
-        points: entry.points || "0",
-        played: entry.played || 0
+        matches: 0
       };
     });
 
     // 2. Process match results to update standings
     for (const match of matches) {
+      const cat = normalizeCat(match.gender || "");
       const t1 = match.team1_department;
       const t2 = match.team2_department;
+      const key1 = `${cat}_${t1}`;
+      const key2 = `${cat}_${t2}`;
 
       // Only update if department is in the registered leaderboard for this category
-      if (standings[t1]) {
-        standings[t1].matches++;
-        if (match.winner === t1) standings[t1].wins++;
-        else if (match.winner === t2) standings[t1].losses++;
+      if (standings[key1]) {
+        standings[key1].matches++;
+        if (match.winner === t1) standings[key1].wins++;
+        else if (match.winner === t2) standings[key1].losses++;
       }
       
-      if (standings[t2]) {
-        standings[t2].matches++;
-        if (match.winner === t2) standings[t2].wins++;
-        else if (match.winner === t1) standings[t2].losses++;
+      if (standings[key2]) {
+        standings[key2].matches++;
+        if (match.winner === t2) standings[key2].wins++;
+        else if (match.winner === t1) standings[key2].losses++;
       }
     }
 
@@ -74,7 +90,6 @@ export const getLeaderboardStandings = async (req: Request, res: Response) => {
 
     Object.keys(grouped).forEach(group => {
       grouped[group].sort((a, b) => 
-        (Number(b.points) - Number(a.points)) || 
         (b.wins - a.wins) || 
         (a.losses - b.losses) || 
         (b.matches - a.matches)

@@ -56,7 +56,7 @@ function TTTeamRow({ team, rank, onUpdate, onDelete }: {
       <td className="p-3 text-center text-zinc-300 text-sm">{team.matches ?? 0}</td>
       <td className="p-3 text-center text-green-400 text-sm font-black">{team.wins ?? 0}</td>
       <td className="p-3 text-center text-red-400 text-sm">{team.losses ?? 0}</td>
-      <td className="p-3 text-center text-[#FFBF00] font-mono text-sm font-black">{team.points ?? "0"}</td>
+      <td className="p-3 text-center text-[#FFBF00] font-mono text-sm font-black">{(team.wins || 0) * 3}</td>
       <td className="p-3 text-right">
         <div className="flex gap-1 justify-end">
           <button onClick={() => setEditing(true)} className="p-1.5 rounded-lg bg-zinc-800 hover:bg-[#FFBF00] hover:text-black transition-all text-zinc-400">

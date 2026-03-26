@@ -196,7 +196,7 @@ function Leaderboard({ gender }: { gender: "men" | "women" }) {
                       <td className="py-5 px-3 text-center text-gray-400">{t.matches}</td>
                       <td className="py-5 px-3 text-center text-gray-400">{t.wins}</td>
                       <td className="py-5 px-3 text-center text-gray-500">{t.losses}</td>
-                      <td className="py-5 px-3 text-center font-black text-xl text-white">{t.wins * 2}</td>
+                      <td className="py-5 px-3 text-center font-black text-xl text-white">{t.wins * 3}</td>
                     </tr>
                   ))}
                 </tbody>
