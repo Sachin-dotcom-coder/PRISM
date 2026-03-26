@@ -1,10 +1,23 @@
+import { Request, Response } from "express";
 import BadmintonMatch from "../models/badminton_model";
+import BadmintonLeaderboard from "../models/badminton_lead_model";
+
 export const getLeaderboardStandings = async (req: Request, res: Response) => {
   try {
-    // Only completed matches
-    const matches = await BadmintonMatch.find({ match_status: "completed" });
+    const { category: queryCategory } = req.query;
+
+    let categoryFilter: any = queryCategory;
+    if (queryCategory) {
+      const q = String(queryCategory).toLowerCase();
+      if (q === "men" || q === "boys") categoryFilter = { $in: ["men", "boys", "Men", "Boys", "MEN", "BOYS"] };
+      else if (q === "women" || q === "girls") categoryFilter = { $in: ["women", "girls", "Women", "Girls", "WOMEN", "GIRLS"] };
+    }
+
+    const filter: any = {};
+    if (queryCategory) filter.category = categoryFilter;
+
     // Get group info for each team from leaderboard
-    const leaderboardEntries = await BadmintonLeaderboard.find();
+    const leaderboardEntries = await BadmintonLeaderboard.find(filter);
     
     // Key by category_deptName to avoid mixing boys and girls from same dept
     const deptCategoryMap: Record<string, { group: string }> = {};
@@ -13,6 +26,31 @@ export const getLeaderboardStandings = async (req: Request, res: Response) => {
     });
 
     const standings: Record<string, { dept_name: string; group: string; category: string; wins: number; losses: number; matches: number }> = {};
+
+    // Initialize standings with all teams from leaderboard entries
+    leaderboardEntries.forEach(entry => {
+      const key = `${entry.category}_${entry.dept_name}`;
+      standings[key] = { 
+        dept_name: entry.dept_name, 
+        category: entry.category,
+        group: entry.group || "A", 
+        wins: 0, 
+        losses: 0, 
+        matches: 0 
+      };
+    });
+
+    // Match gender from category
+    let genderFilter: string | undefined = undefined;
+    if (queryCategory) {
+      const q = String(queryCategory).toLowerCase();
+      genderFilter = (q === "women" || q === "girls") ? "women" : "men";
+    }
+
+    const matches = await BadmintonMatch.find({ 
+      match_status: "completed",
+      ...(genderFilter ? { gender: genderFilter } : {})
+    });
 
     for (const match of matches) {
       const category = match.gender === "men" ? "boys" : "girls";
@@ -23,33 +61,32 @@ export const getLeaderboardStandings = async (req: Request, res: Response) => {
       const key1 = `${category}_${t1}`;
       const key2 = `${category}_${t2}`;
 
-      const group1 = deptCategoryMap[key1]?.group || "Unknown";
-      const group2 = deptCategoryMap[key2]?.group || "Unknown";
+      if (standings[key1]) {
+        standings[key1].matches++;
+        if (winner === t1) {
+          standings[key1].wins++;
+        } else if (winner === t2) {
+          standings[key1].losses++;
+        }
+      }
 
-      if (!standings[key1]) standings[key1] = { dept_name: t1, category, group: group1, wins: 0, losses: 0, matches: 0 };
-      if (!standings[key2]) standings[key2] = { dept_name: t2, category, group: group2, wins: 0, losses: 0, matches: 0 };
-
-      standings[key1].matches++;
-      standings[key2].matches++;
-
-      if (winner === t1) {
-        standings[key1].wins++;
-        standings[key2].losses++;
-      } else if (winner === t2) {
-        standings[key2].wins++;
-        standings[key1].losses++;
+      if (standings[key2]) {
+        standings[key2].matches++;
+        if (winner === t2) {
+          standings[key2].wins++;
+        } else if (winner === t1) {
+          standings[key2].losses++;
+        }
       }
     }
-
     // Group standings by group
     const grouped: Record<string, any[]> = {};
     Object.values(standings).forEach(entry => {
-      // Frontend expects the group array to contain the standings items
       if (!grouped[entry.group]) grouped[entry.group] = [];
       grouped[entry.group].push(entry);
     });
     
-    // Sort each group by wins desc, then losses asc
+    // Sort each group
     Object.keys(grouped).forEach(group => {
       grouped[group].sort((a, b) => b.wins - a.wins || Math.abs(a.losses) - Math.abs(b.losses) || b.matches - a.matches);
     });
@@ -58,8 +95,6 @@ export const getLeaderboardStandings = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Failed to compute standings", error: (error as Error).message || error });
   }
 };
-import { Request, Response } from "express";
-import BadmintonLeaderboard from "../models/badminton_lead_model";
 
 export const createLeaderboardEntry = async (req: Request, res: Response) => {
   try {
