@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+// Added useEffect to the React import
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { useGender } from "@/app/components/Providers";
@@ -11,6 +12,15 @@ import SportsMenuOverlay from "../homepage/sportsmenu";
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const { gender } = useGender();
+
+  // 2. This listens for the Footer's "Live Scores" button custom event
+  useEffect(() => {
+    const handleOpenMenu = () => setIsOpen(true);
+    window.addEventListener("openSportsMenu", handleOpenMenu);
+    
+    // Cleanup the listener when the component unmounts
+    return () => window.removeEventListener("openSportsMenu", handleOpenMenu);
+  }, []);
 
   return (
     <>

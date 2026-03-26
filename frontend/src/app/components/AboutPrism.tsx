@@ -23,14 +23,14 @@ export default function AboutPrism() {
           {/* Sleek Stats (No boxes, thin vertical partitions) */}
           <div className="flex items-center gap-6 md:gap-8">
             <div className="flex flex-col">
-              <span className="text-gray-100 text-2xl md:text-3xl font-bold tracking-widest mb-1">16+</span>
+              <span className="text-gray-100 text-2xl md:text-3xl font-bold tracking-widest mb-1">15</span>
               <span className="text-white/40 text-[0.65rem] md:text-xs uppercase tracking-[0.3em] font-semibold">Registered<br/>Sports</span>
             </div>
             
             <div className="h-12 w-[1px] bg-white/20"></div> {/* Sleek Partition */}
             
             <div className="flex flex-col">
-              <span className="text-gray-100 text-2xl md:text-3xl font-bold tracking-widest mb-1">5K+</span>
+              <span className="text-gray-100 text-2xl md:text-3xl font-bold tracking-widest mb-1">1K+</span>
               <span className="text-white/40 text-[0.65rem] md:text-xs uppercase tracking-[0.3em] font-semibold">Participating<br/>Athletes</span>
             </div>
             
@@ -49,10 +49,10 @@ export default function AboutPrism() {
             PRISM is the premier sports festival of SVNIT, a grand celebration of athleticism, teamwork, and unyielding spirit. 
             Bringing together the brightest and most talented athletes across departments, PRISM transcends beyond mere competition—it is a legacy of passion.
             <br /><br />
-            Established to foster camaraderie and test the limits of human endurance, this annual spectacle transforms the campus into a battleground of skill and strategy. 
+            Established to foster camaraderie and test the limits of human endurance, this annual spectacle transforms the campus into a battleground of skill and agility. 
             From the roar of the crowd in the football stadium to the silent, calculated tension of the chess arena, every moment is forged in dedication. 
             <br /><br />
-            This is where legends are born, rivalries are honored, and the ultimate department rises to claim the glory. Step into the arena, witness the dedication, and become part of the legacy.
+            This is where stars are born, rivalries are honored, and the ultimate department rises to claim the glory. Step into the arena, witness the dedication, and become part of the journey.
           </p>
         </div>
 
