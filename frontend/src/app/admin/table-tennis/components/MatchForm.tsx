@@ -36,7 +36,7 @@ const normalizeGames = (
   });
 
 export default function MatchForm({ initialData, gender, onSuccess, onCancel }: MatchFormProps) {
-  const [formData, setFormData] = useState<ITableTennisMatch>({
+  const [formData, setFormData] = useState<ITableTennisMatch>(() => ({
     match_id: Date.now() % 1000000,
     match_stage: '',
     team1_department: DEPARTMENT_OPTIONS[0],
@@ -48,9 +48,9 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
     total_games: 0,
     winner: '',
     match_status: 'completed',
-    match_type: 'singles',
+    match_type: 'singles', // ✅ now works
     gender: gender
-  });
+  }));
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
