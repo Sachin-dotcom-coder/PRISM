@@ -259,6 +259,19 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
             </select>
           </div>
         </div>
+        <div>
+          <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Status</label>
+          <select 
+            required 
+            name="match_status" 
+            value={formData.match_status} 
+            onChange={handleChange} 
+            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-[#FFBF00] outline-none text-white"
+          >
+            <option value="scheduled">Scheduled</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
       </div>
 
       <div className="pt-4 border-t border-zinc-800">

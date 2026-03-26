@@ -118,6 +118,7 @@ export default function KabaddiAdminPage() {
     date: new Date().toISOString().split("T")[0],
     startTime: "20:00",
     format: "Standard",
+    status: "UPCOMING",
   });
 
   // LB Form State
@@ -137,7 +138,7 @@ export default function KabaddiAdminPage() {
       date: newMatch.date,
       startTime: newMatch.startTime,
       format: newMatch.format,
-      status: "UPCOMING",
+      status: newMatch.status,
       teams: {
         team_a: { name: newMatch.team_a, score: 0 },
         team_b: { name: newMatch.team_b, score: 0 }
@@ -155,7 +156,7 @@ export default function KabaddiAdminPage() {
       const createdData = await res.json();
       console.log("Match created:", createdData);
       setIsCreatingMatch(false);
-      setNewMatch({ match_id: `KBD${Math.floor(Math.random() * 1000)}`, team_a: "", team_a_short: "", team_b: "", team_b_short: "", date: new Date().toISOString().split("T")[0], startTime: "20:00", format: "Standard" });
+      setNewMatch({ match_id: `KBD${Math.floor(Math.random() * 1000)}`, team_a: "", team_a_short: "", team_b: "", team_b_short: "", date: new Date().toISOString().split("T")[0], startTime: "20:00", format: "Standard", status: "UPCOMING" });
       mutateMatches();
     } catch (error) {
       console.error("Catch error:", error);
@@ -275,29 +276,45 @@ export default function KabaddiAdminPage() {
 
         {isCreatingMatch && (
           <form onSubmit={handleCreateMatch} className="p-6 bg-zinc-900/50 border-b border-zinc-800 space-y-4 animate-in slide-in-from-top duration-300">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input required placeholder="Match ID" value={newMatch.match_id} onChange={e => setNewMatch({ ...newMatch, match_id: e.target.value })} className="input-field" />
-              <select value={newMatch.format} onChange={e => setNewMatch({ ...newMatch, format: e.target.value })} className="input-field">
-                <option value="Standard">Standard</option>
-                <option value="Pro Kabaddi">Pro Kabaddi</option>
-              </select>
-              <input type="date" required value={newMatch.date} onChange={e => setNewMatch({ ...newMatch, date: e.target.value })} className="input-field" />
-              <input type="time" required value={newMatch.startTime} onChange={e => setNewMatch({ ...newMatch, startTime: e.target.value })} className="input-field" />
-              <div className="flex gap-2">
-                <select required value={newMatch.team_a} onChange={e => {
-                  const s = validTeams.find(t => t.name === e.target.value);
-                  setNewMatch({ ...newMatch, team_a: s?.name || "", team_a_short: s?.shortName || "" });
-                }} className="input-field flex-1">
-                  <option value="">— Team A —</option>
-                  {validTeams.map(t => <option key={t._id} value={t.name}>{t.name}</option>)}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-1">
+                <label className="label-sm">Match ID</label>
+                <input required placeholder="Match ID" value={newMatch.match_id} onChange={e => setNewMatch({ ...newMatch, match_id: e.target.value })} className="input-field" />
+              </div>
+              <div className="space-y-1">
+                <label className="label-sm">Status</label>
+                <select value={newMatch.status} onChange={e => setNewMatch({ ...newMatch, status: e.target.value })} className="input-field">
+                  <option value="UPCOMING">UPCOMING</option>
+                  <option value="LIVE">LIVE</option>
+                  <option value="COMPLETED">COMPLETED</option>
                 </select>
-                <select required value={newMatch.team_b} onChange={e => {
-                  const s = validTeams.find(t => t.name === e.target.value);
-                  setNewMatch({ ...newMatch, team_b: s?.name || "", team_b_short: s?.shortName || "" });
-                }} className="input-field flex-1">
-                  <option value="">— Team B —</option>
-                  {validTeams.filter(t => t.name !== newMatch.team_a).map(t => <option key={t._id} value={t.name}>{t.name}</option>)}
-                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="label-sm">Date</label>
+                <input type="date" required value={newMatch.date} onChange={e => setNewMatch({ ...newMatch, date: e.target.value })} className="input-field" />
+              </div>
+              <div className="space-y-1">
+                <label className="label-sm">Start Time</label>
+                <input type="time" required value={newMatch.startTime} onChange={e => setNewMatch({ ...newMatch, startTime: e.target.value })} className="input-field" />
+              </div>
+              <div className="space-y-1">
+                <label className="label-sm">Teams</label>
+                <div className="flex gap-2">
+                  <select required value={newMatch.team_a} onChange={e => {
+                    const s = validTeams.find(t => t.name === e.target.value);
+                    setNewMatch({ ...newMatch, team_a: s?.name || "", team_a_short: s?.shortName || "" });
+                  }} className="input-field flex-1 text-xs">
+                    <option value="">— Team A —</option>
+                    {validTeams.map(t => <option key={t._id} value={t.name}>{t.name}</option>)}
+                  </select>
+                  <select required value={newMatch.team_b} onChange={e => {
+                    const s = validTeams.find(t => t.name === e.target.value);
+                    setNewMatch({ ...newMatch, team_b: s?.name || "", team_b_short: s?.shortName || "" });
+                  }} className="input-field flex-1 text-xs">
+                    <option value="">— Team B —</option>
+                    {validTeams.filter(t => t.name !== newMatch.team_a).map(t => <option key={t._id} value={t.name}>{t.name}</option>)}
+                  </select>
+                </div>
               </div>
             </div>
             {createError && <p className="text-red-500 text-sm">⚠ {createError}</p>}

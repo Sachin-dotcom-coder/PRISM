@@ -383,11 +383,18 @@ export default function BadmintonAdminPage() {
                  <label className="label-sm">Date</label>
                  <input required type="date" value={newMatch.match_date} onChange={e => setNewMatch({...newMatch, match_date: e.target.value})} className="input-field" />
                </div>
-               <div>
-                  <label className="label-sm">Venue</label>
-                  <input type="text" value={newMatch.venue} onChange={e => setNewMatch({...newMatch, venue: e.target.value})} className="input-field" placeholder="Court 1" />
+                <div>
+                   <label className="label-sm">Venue</label>
+                   <input type="text" value={newMatch.venue} onChange={e => setNewMatch({...newMatch, venue: e.target.value})} className="input-field" placeholder="Court 1" />
+                 </div>
+                <div>
+                  <label className="label-sm">Status</label>
+                  <select value={newMatch.match_status} onChange={e => setNewMatch({ ...newMatch, match_status: e.target.value as any })} className="input-field">
+                    <option value="scheduled">Scheduled</option>
+                    <option value="completed">Completed</option>
+                  </select>
                 </div>
-              </div>
+               </div>
 
               {/* Games and Sets */}
               <div className="space-y-4">
