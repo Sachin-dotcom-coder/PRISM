@@ -6,13 +6,15 @@ const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000/a
 export const getMatches = async (gender: "men" | "women"): Promise<ITableTennisMatch[]> => {
   const res = await fetch(`${BASE_URL}/tabletennis?gender=${gender}`);
   if (!res.ok) throw new Error("Failed to fetch matches");
-  return res.json();
+  const json = await res.json();
+  return Array.isArray(json) ? json : json?.data || [];
 };
 
 export const getMatch = async (match_id: number, gender: "men" | "women"): Promise<ITableTennisMatch> => {
   const res = await fetch(`${BASE_URL}/tabletennis/${match_id}?gender=${gender}`);
   if (!res.ok) throw new Error(`Failed to fetch match ${match_id}`);
-  return res.json();
+  const json = await res.json();
+  return json?.data || json;
 };
 
 export const createMatch = async (data: Omit<ITableTennisMatch, "_id">): Promise<ITableTennisMatch> => {
@@ -25,7 +27,8 @@ export const createMatch = async (data: Omit<ITableTennisMatch, "_id">): Promise
     const errorText = await res.text();
     throw new Error(errorText || "Failed to create match");
   }
-  return res.json();
+  const json = await res.json();
+  return json?.data || json;
 };
 
 export const updateMatch = async (match_id: number, data: Partial<ITableTennisMatch>): Promise<ITableTennisMatch> => {
@@ -38,7 +41,8 @@ export const updateMatch = async (match_id: number, data: Partial<ITableTennisMa
     const errorText = await res.text();
     throw new Error(errorText || `Failed to update match ${match_id}`);
   }
-  return res.json();
+  const json = await res.json();
+  return json?.data || json;
 };
 
 export const deleteMatch = async (match_id: number): Promise<void> => {

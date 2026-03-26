@@ -8,13 +8,14 @@ import MatchForm from './components/MatchForm';
 import { ITableTennisMatch } from './types';
 import { getMatches, deleteMatch } from './services/tableTennisApi';
 import { useGender } from '@/app/components/Providers';
+import { DEPARTMENT_OPTIONS } from '../shared/departmentOptions';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
 interface TTLeaderboardEntry {
   leaderboard_id: number;
   dept_name: string;
-  category: 'boys' | 'girls';
+  category: 'men' | 'women';
   group: string;
+  points: string;
   wins?: number;
   losses?: number;
   matches?: number;
@@ -41,6 +42,8 @@ function TTTeamRow({ team, rank, onUpdate, onDelete }: {
 
   useEffect(() => { if (!editing) setDraft({ ...team }); }, [team, editing]);
 
+  const GROUPS = ["A", "B", "C", "D"];
+
   const save = () => { onUpdate(draft); setEditing(false); };
 
   if (!editing) return (
@@ -53,7 +56,7 @@ function TTTeamRow({ team, rank, onUpdate, onDelete }: {
       <td className="p-3 text-center text-zinc-300 text-sm">{team.matches ?? 0}</td>
       <td className="p-3 text-center text-green-400 text-sm font-black">{team.wins ?? 0}</td>
       <td className="p-3 text-center text-red-400 text-sm">{team.losses ?? 0}</td>
-      <td className="p-3 text-center text-[#FFBF00] font-mono text-sm font-black">{team.wins ?? 0}</td>
+      <td className="p-3 text-center text-[#FFBF00] font-mono text-sm font-black">{team.points ?? "0"}</td>
       <td className="p-3 text-right">
         <div className="flex gap-1 justify-end">
           <button onClick={() => setEditing(true)} className="p-1.5 rounded-lg bg-zinc-800 hover:bg-[#FFBF00] hover:text-black transition-all text-zinc-400">
@@ -71,12 +74,19 @@ function TTTeamRow({ team, rank, onUpdate, onDelete }: {
     <tr className="border-b border-[#FFBF00]/20 bg-[#FFBF00]/5">
       <td className="p-2 text-center text-zinc-500 text-sm">{rank + 1}</td>
       <td className="p-2">
-        <input className="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-xs text-white outline-none focus:border-[#FFBF00]" value={draft.dept_name} onChange={(e) => setDraft(p => ({ ...p, dept_name: e.target.value }))} />
+        <select className="w-full bg-zinc-800 border border-zinc-700 rounded p-1.5 text-xs text-white outline-none focus:border-[#FFBF00]" value={draft.dept_name} onChange={(e: any) => setDraft((p: any) => ({ ...p, dept_name: e.target.value }))}>
+          {DEPARTMENT_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
+        </select>
       </td>
       <td className="p-2">
-        <input className="w-14 bg-zinc-800 border border-zinc-700 rounded p-1.5 text-center text-xs text-white outline-none focus:border-[#FFBF00]" value={draft.group} onChange={(e) => setDraft(p => ({ ...p, group: e.target.value.toUpperCase() }))} />
+        <select className="w-14 bg-zinc-800 border border-zinc-700 rounded p-1.5 text-center text-xs text-white outline-none focus:border-[#FFBF00]" value={draft.group} onChange={(e: any) => setDraft((p: any) => ({ ...p, group: e.target.value }))}>
+          {GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
+        </select>
       </td>
-      <td colSpan={4} className="p-2 text-center text-[10px] text-zinc-500 italic">Auto-calculated</td>
+      <td className="p-2">
+        <input className="w-14 bg-zinc-800 border border-zinc-700 rounded p-1.5 text-center text-xs text-white outline-none focus:border-[#FFBF00]" value={draft.points} onChange={(e: any) => setDraft((p: any) => ({ ...p, points: e.target.value }))} />
+      </td>
+      <td colSpan={3} className="p-2 text-center text-[10px] text-zinc-500 italic uppercase tracking-tighter">Auto-calculated (Matches/Wins/Loss)</td>
       <td className="p-2">
         <div className="flex gap-1 justify-end">
           <button onClick={save} className="p-1.5 rounded-lg bg-[#FFBF00] text-black hover:bg-yellow-500 transition-all"><Check className="w-4 h-4" /></button>
@@ -91,7 +101,7 @@ function TTTeamRow({ team, rank, onUpdate, onDelete }: {
 export default function TableTennisAdminPage() {
   const { gender: globalGender } = useGender();
   const gender = globalGender === "f" ? "women" : "men";
-  const lbCategory = gender === "men" ? "boys" : "girls";
+  const lbCategory = gender; // Synchronized with matches (men/women)
 
   const [matches, setMatches] = useState<ITableTennisMatch[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,7 +115,7 @@ export default function TableTennisAdminPage() {
   const [lbMsg, setLbMsg] = useState('');
   const [nextId, setNextId] = useState(1);
   const [newEntry, setNewEntry] = useState<Partial<TTLeaderboardEntry>>({
-    dept_name: '', category: lbCategory, group: 'A',
+    dept_name: '', category: lbCategory, group: 'A', points: '0',
   });
 
   // ─── Fetch ─────────────────────────────────────────────────
@@ -113,7 +123,7 @@ export default function TableTennisAdminPage() {
     setLoading(true);
     try {
       const res = await getMatches(gender as any);
-      setMatches(Array.isArray(res) ? res : res?.data || []);
+      setMatches(res || []);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -127,12 +137,18 @@ export default function TableTennisAdminPage() {
         fetch(`${LB_API}`),
         fetch(`${LB_API}/standings?category=${lbCategory}`),
       ]);
-      const entriesData = await entriesRes.json();
+      const entriesRaw = await entriesRes.json();
       const standingsData = await standingsRes.json();
-      setLbEntries(Array.isArray(entriesData) ? entriesData : []);
-      setStandings(standingsData || {});
-      
-      const entries = Array.isArray(entriesData) ? entriesData : [];
+      // Backend returns { data: [...] } shape
+      const entries: TTLeaderboardEntry[] = Array.isArray(entriesRaw)
+        ? entriesRaw
+        : Array.isArray(entriesRaw?.data)
+          ? entriesRaw.data
+          : [];
+      setLbEntries(entries);
+      setStandings(standingsData && typeof standingsData === 'object' ? standingsData : {});
+      console.log("TT Leaderboard rows fetched:", entries.length);
+      console.log("TT Standings dict fetched:", Object.keys(standingsData || {}).length);
       if (entries.length > 0) {
         setNextId(Math.max(...entries.map((e: any) => e.leaderboard_id ?? 0)) + 1);
       }
@@ -147,7 +163,7 @@ export default function TableTennisAdminPage() {
   }, [gender, fetchMatches, fetchLeaderboard]);
 
   useEffect(() => {
-    setNewEntry(p => ({ ...p, category: lbCategory }));
+    setNewEntry((p: any) => ({ ...p, category: lbCategory }));
   }, [lbCategory]);
 
   const showMsg = (msg: string) => { setLbMsg(msg); setTimeout(() => setLbMsg(''), 3000); };
@@ -171,7 +187,7 @@ export default function TableTennisAdminPage() {
     if (res.ok) {
       showMsg('✅ Department registered!');
       setAddMode(false);
-      setNewEntry({ dept_name: '', category: lbCategory, group: 'A' });
+      setNewEntry({ dept_name: '', category: lbCategory, group: 'A', points: '0' });
       fetchLeaderboard();
     }
   };
@@ -180,7 +196,7 @@ export default function TableTennisAdminPage() {
     const res = await fetch(`${LB_API}/${t.leaderboard_id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dept_name: t.dept_name, category: t.category, group: t.group }),
+      body: JSON.stringify({ dept_name: t.dept_name, category: t.category, group: t.group, points: t.points }),
     });
     if (res.ok) { showMsg('✅ Updated!'); fetchLeaderboard(); }
   };
@@ -313,11 +329,20 @@ export default function TableTennisAdminPage() {
               <div className="p-6 bg-zinc-900/50 border-b border-zinc-800 grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Department Name</label>
-                  <input placeholder="e.g. CS" value={newEntry.dept_name} onChange={(e) => setNewEntry(p => ({ ...p, dept_name: e.target.value }))} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2.5 text-sm text-white outline-none focus:border-[#FFBF00]"/>
+                  <select value={newEntry.dept_name} onChange={(e: any) => setNewEntry((p: any) => ({ ...p, dept_name: e.target.value }))} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2.5 text-sm text-white outline-none focus:border-[#FFBF00]">
+                    <option value="">Select Dept</option>
+                    {DEPARTMENT_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Group (A/B)</label>
-                  <input placeholder="A" value={newEntry.group} onChange={(e) => setNewEntry(p => ({ ...p, group: e.target.value.toUpperCase() }))} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2.5 text-sm text-white outline-none focus:border-[#FFBF00]"/>
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Group</label>
+                  <select value={newEntry.group} onChange={(e: any) => setNewEntry((p: any) => ({ ...p, group: e.target.value }))} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2.5 text-sm text-white outline-none focus:border-[#FFBF00]">
+                    {["A", "B", "C", "D"].map(g => <option key={g} value={g}>{g}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Points</label>
+                  <input placeholder="0" value={newEntry.points} onChange={(e: any) => setNewEntry((p: any) => ({ ...p, points: e.target.value }))} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2.5 text-sm text-white outline-none focus:border-[#FFBF00]"/>
                 </div>
                 <div className="md:col-span-2 flex items-end">
                   <button onClick={handleAddEntry} className="w-full h-[46px] bg-[#FFBF00] text-black font-black rounded-lg uppercase tracking-widest text-sm shadow-lg hover:shadow-[#FFBF00]/20 transition-all">Register Department</button>

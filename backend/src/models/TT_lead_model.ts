@@ -5,6 +5,8 @@ export interface ITTLeaderboard extends Document {
   dept_name: string;
   category: string;
   group: string;
+  points?: string;
+  played?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -15,6 +17,8 @@ const TTLeaderboardSchema: Schema<ITTLeaderboard> = new Schema(
     dept_name: { type: String, required: true },
     category: { type: String, required: true },
     group: { type: String, required: true },
+    points: { type: String, default: "0" },
+    played: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

@@ -33,7 +33,7 @@ export interface StandingRow {
   wins: number;
   losses: number;
   matches: number;
-  points?: number;
+  points?: number | string;
   played?: number;
 }
 
@@ -195,7 +195,6 @@ export interface TTMatch {
   _id: string;
   match_id: number;
   match_stage: string;
-  match_type: string;   // use normaliseMatchType() when comparing
   team1_department: string;
   team2_department: string;
   match_date?: string;
@@ -213,7 +212,7 @@ export const fetchTTMatches = (gender: "men" | "women") =>
   apiFetch<unknown>(`/tabletennis?gender=${gender}`)
     .then((r) => unwrapArray<TTMatch>(r));
 
-export const fetchTTStandings = (category: "boys" | "girls") =>
+export const fetchTTStandings = (category: string) =>
   apiFetch<GroupedStandings>(`/tt-lead/standings?category=${category}`);
 
 // ─── Volleyball ───────────────────────────────────────────────────────────────

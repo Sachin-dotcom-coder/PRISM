@@ -4,39 +4,65 @@ import { Request, Response } from "express";
 
 export const getLeaderboardStandings = async (req: Request, res: Response) => {
   try {
-    const matches = await TTMatch.find();
-    const leaderboardEntries = await TTLeaderboard.find();
-    const deptCategoryMap: Record<string, { group: string }> = {};
+    const { category: queryCategory } = req.query;
+    
+    // Determine the equivalent match gender for the requested category
+    let matchGender: string | undefined = undefined;
+    if (queryCategory === "boys") matchGender = "men";
+    else if (queryCategory === "girls") matchGender = "women";
+
+    const matchQuery = matchGender ? { gender: matchGender, match_status: "completed" } : { match_status: "completed" };
+    const matches = await TTMatch.find(matchQuery);
+    
+    // Support both "boys"/"girls" and "men"/"women" in the leaderboard database
+    const categoryFilter = queryCategory === "boys" 
+      ? { $in: ["boys", "men"] } 
+      : queryCategory === "girls" 
+        ? { $in: ["girls", "women"] } 
+        : queryCategory;
+
+    const leadQuery = queryCategory ? { category: categoryFilter } : {};
+    const leaderboardEntries = await TTLeaderboard.find(leadQuery);
+    
+    const standings: Record<string, { 
+      dept_name: string; 
+      group: string; 
+      wins: number; 
+      losses: number; 
+      matches: number;
+      points: string;
+      played: number;
+    }> = {};
+
+    // 1. Initialize standings for all registered departments in this category
     leaderboardEntries.forEach(entry => {
-      deptCategoryMap[`${entry.category}_${entry.dept_name}`] = { group: entry.group || "A" };
+      standings[entry.dept_name] = { 
+        dept_name: entry.dept_name, 
+        group: entry.group || "A", 
+        wins: 0, 
+        losses: 0, 
+        matches: 0,
+        points: entry.points || "0",
+        played: entry.played || 0
+      };
     });
 
-    const standings: Record<string, { dept_name: string; category: string; group: string; wins: number; losses: number; matches: number }> = {};
-
+    // 2. Process match results to update standings
     for (const match of matches) {
-      const category = match.gender === "men" ? "men" : "women";
       const t1 = match.team1_department;
       const t2 = match.team2_department;
-      const key1 = `${category}_${t1}`;
-      const key2 = `${category}_${t2}`;
 
-      const group1 = deptCategoryMap[key1]?.group || "Unknown";
-      const group2 = deptCategoryMap[key2]?.group || "Unknown";
-
-      if (!standings[key1]) standings[key1] = { dept_name: t1, category, group: group1, wins: 0, losses: 0, matches: 0 };
-      if (!standings[key2]) standings[key2] = { dept_name: t2, category, group: group2, wins: 0, losses: 0, matches: 0 };
-
-      for (const game of match.games ?? []) {
-        standings[key1].matches++;
-        standings[key2].matches++;
-
-        if (game.winner === t1) {
-          standings[key1].wins++;
-          standings[key2].losses++;
-        } else if (game.winner === t2) {
-          standings[key2].wins++;
-          standings[key1].losses++;
-        }
+      // Only update if department is in the registered leaderboard for this category
+      if (standings[t1]) {
+        standings[t1].matches++;
+        if (match.winner === t1) standings[t1].wins++;
+        else if (match.winner === t2) standings[t1].losses++;
+      }
+      
+      if (standings[t2]) {
+        standings[t2].matches++;
+        if (match.winner === t2) standings[t2].wins++;
+        else if (match.winner === t1) standings[t2].losses++;
       }
     }
 
@@ -47,8 +73,14 @@ export const getLeaderboardStandings = async (req: Request, res: Response) => {
     });
 
     Object.keys(grouped).forEach(group => {
-      grouped[group].sort((a, b) => b.wins - a.wins || a.losses - b.losses || b.matches - a.matches);
+      grouped[group].sort((a, b) => 
+        (Number(b.points) - Number(a.points)) || 
+        (b.wins - a.wins) || 
+        (a.losses - b.losses) || 
+        (b.matches - a.matches)
+      );
     });
+
     res.status(200).json(grouped);
   } catch (error) {
     res.status(500).json({ message: "Failed to compute standings", error: (error as Error).message || error });
