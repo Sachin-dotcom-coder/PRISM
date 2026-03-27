@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { ITableTennisMatch, IGame } from '@/app/admin/table-tennis/types';
 import GameInput from './GameInput';
 import { Plus, Save, X } from 'lucide-react';
@@ -36,24 +36,43 @@ const normalizeGames = (
   });
 
 export default function MatchForm({ initialData, gender, onSuccess, onCancel }: MatchFormProps) {
-    const [formData, setFormData] = useState({
-      match_id: Date.now() % 1000000,
-      match_stage: '',
-      team1_department: DEPARTMENT_OPTIONS[0],
-      team2_department: DEPARTMENT_OPTIONS[1],
-      match_date: new Date().toISOString().slice(0, 16),
-      team1_score: 0,
-      team2_score: 0,
-      games: [],
-      total_games: 0,
-      winner: '',
-      match_status: 'completed',
-      match_type: 'singles',
-      gender: gender
-    } as ITableTennisMatch);
+  const [formData, setFormData] = useState<ITableTennisMatch>({
+    match_id: Date.now() % 1000000,
+    match_stage: '',
+    team1_department: DEPARTMENT_OPTIONS[0],
+    team2_department: DEPARTMENT_OPTIONS[1],
+    match_date: new Date().toISOString().slice(0, 16),
+    team1_score: 0,
+    team2_score: 0,
+    games: [],
+    total_games: 0,
+    winner: '',
+    match_status: 'completed',
+    match_type: 'singles',
+    gender: gender
+  });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // ✅ FIX: Calculate derived data during render instead of a second useEffect to prevent infinite loops
+  const derivedData = useMemo(() => {
+    const normalized = normalizeGames(formData.games, formData.team1_department, formData.team2_department);
+    const team1Wins = normalized.filter((game) => game.winner === formData.team1_department).length;
+    const team2Wins = normalized.filter((game) => game.winner === formData.team2_department).length;
+    const calculatedWinner = team1Wins > team2Wins
+      ? formData.team1_department
+      : team2Wins > team1Wins
+        ? formData.team2_department
+        : '';
+
+    return {
+      normalizedGames: normalized,
+      team1Wins,
+      team2Wins,
+      calculatedWinner
+    };
+  }, [formData.games, formData.team1_department, formData.team2_department]);
 
   useEffect(() => {
     if (initialData) {
@@ -91,42 +110,6 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
     }
   }, [initialData, gender]);
 
-  useEffect(() => {
-    const games = normalizeGames(formData.games, formData.team1_department, formData.team2_department);
-    const team1Wins = games.filter((game) => game.winner === formData.team1_department).length;
-    const team2Wins = games.filter((game) => game.winner === formData.team2_department).length;
-    const winner = team1Wins > team2Wins
-      ? formData.team1_department
-      : team2Wins > team1Wins
-        ? formData.team2_department
-        : '';
-
-    const isSame =
-      games.length === formData.games.length &&
-      games.every((game, index) =>
-        game.game_number === formData.games[index]?.game_number &&
-        game.match_type === formData.games[index]?.match_type &&
-        game.team1_score === formData.games[index]?.team1_score &&
-        game.team2_score === formData.games[index]?.team2_score &&
-        game.winner === formData.games[index]?.winner
-      ) &&
-      team1Wins === formData.team1_score &&
-      team2Wins === formData.team2_score &&
-      games.length === formData.total_games &&
-      winner === (formData.winner || '');
-
-    if (isSame) return;
-
-    setFormData((prev) => ({
-      ...prev,
-      games,
-      total_games: games.length,
-      team1_score: team1Wins,
-      team2_score: team2Wins,
-      winner,
-    }));
-  }, [formData.games, formData.team1_department, formData.team2_department, formData.team1_score, formData.team2_score, formData.total_games, formData.winner]);
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -151,7 +134,7 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
     const newGame: IGame = {
       game_number: formData.games.length + 1,
       match_type: 'singles',
-      sets: [], // ✅ FIX
+      sets: [],
       team1_score: '',
       team2_score: '',
       winner: null,
@@ -168,28 +151,22 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
     setLoading(true);
     setError('');
 
-    if (formData.total_games !== formData.games.length) {
-      setError("Total games count does not match the number of games listed.");
-      setLoading(false);
-      return;
-    }
-
     try {
       const payload = {
         ...formData,
         gender,
-        games: formData.games.map((game, index) => ({
+        games: derivedData.normalizedGames.map((game, index) => ({
           game_number: index + 1,
           match_type: game.match_type,
-          sets: game.sets || [], // ✅ FIX (IMPORTANT)
+          sets: game.sets || [],
           team1_score: Number(game.team1_score),
           team2_score: Number(game.team2_score),
           winner: game.winner || null,
         })),
-        team1_score: Number(formData.team1_score || 0),
-        team2_score: Number(formData.team2_score || 0),
+        team1_score: Number(derivedData.team1Wins || 0),
+        team2_score: Number(derivedData.team2Wins || 0),
         total_games: formData.games.length,
-        winner: formData.winner || null,
+        winner: derivedData.calculatedWinner || null,
       };
 
       if (initialData?._id || (initialData && initialData.match_id)) {
@@ -242,14 +219,14 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
         <div>
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Overall Winner</label>
           <div className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm text-white font-bold">
-            {formData.winner || 'No overall winner yet'}
+            {derivedData.calculatedWinner || 'No overall winner yet'}
             <div className="text-[10px] text-zinc-500 mt-1">Auto-calculated from games won</div>
           </div>
         </div>
         <div>
           <label className="block text-xs font-semibold text-zinc-500 uppercase mb-1">Match Score</label>
           <div className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm text-white text-center font-bold">
-            {formData.team1_score || 0} - {formData.team2_score || 0}
+            {derivedData.team1Wins || 0} - {derivedData.team2Wins || 0}
             <div className="text-[10px] text-zinc-500 mt-1">Games won by each department</div>
           </div>
         </div>
