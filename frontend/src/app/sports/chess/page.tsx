@@ -41,7 +41,7 @@ export default function ChessDashboard() {
         <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 border-b border-[#1A1A1A] pb-6 gap-4">
           <h1 className="text-[#FFBF00] font-black text-6xl md:text-7xl tracking-tighter uppercase">Chess</h1>
           <p className="text-sm text-gray-400 font-medium tracking-wide">
-            <span className="text-gray-200">Event:</span> PRISM 2026 <span className="mx-2 text-[#333]">|</span> 
+            <span className="text-gray-200">Event:</span> PRISM 2025 <span className="mx-2 text-[#333]">|</span> 
             <span className="text-gray-200">Venue:</span> SVNIT Indoor Sports Complex
           </p>
         </header>

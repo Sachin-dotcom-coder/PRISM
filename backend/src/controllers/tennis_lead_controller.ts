@@ -2,34 +2,6 @@ import { Request, Response } from "express";
 import TennisLeaderboard from "../models/tennis_lead_model";
 import TennisMatch from "../models/tennis_model";
 
-// ─── HELPER: compute stats for a dept in a category from league matches ───────
-const computeStats = async (dept_name: string, category: string) => {
-  // Only count completed league matches involving this dept
-  const matches = await TennisMatch.find({
-    category,
-    stage: "league",
-    status: "completed",
-    $or: [{ dept_name1: dept_name }, { dept_name2: dept_name }],
-  });
-
-  let played = 0;
-  let wins = 0;
-  let losses = 0;
-
-  for (const match of matches) {
-    played++;
-    if (match.winner_dept === dept_name) {
-      wins++;
-    } else {
-      losses++;
-    }
-  }
-
-  const points = wins * 3; // Win = 3pts, Loss = 0pts
-
-  return { played, wins, losses, points };
-};
-
 // ─── CREATE a leaderboard entry ───────────────────────────────────────────────
 export const createLeaderboardEntry = async (req: Request, res: Response) => {
   try {
@@ -60,48 +32,114 @@ export const getAllLeaderboardEntries = async (req: Request, res: Response) => {
 };
 
 // ─── GET COMPUTED LEADERBOARD ─────────────────────────────────────────────────
-// Returns standings grouped by category → group, with computed stats
-// GET /api/tennis-leaderboard/standings?category=boys
-// GET /api/tennis-leaderboard/standings          (returns both boys & girls)
 export const getLeaderboardStandings = async (req: Request, res: Response) => {
   try {
-    const { category } = req.query;
+    const { category: queryCategory } = req.query;
 
-    const filter: Record<string, unknown> = {};
-    if (category) filter.category = category;
+    const normalizeCat = (c: string) => {
+      const s = String(c || "").toLowerCase();
+      if (s === "men" || s === "boys") return "boys";
+      if (s === "women" || s === "girls") return "girls";
+      return s;
+    };
 
-    const entries = await TennisLeaderboard.find(filter).sort({ group: 1 });
+    let categoryFilter: any = queryCategory;
+    if (queryCategory) {
+      const q = normalizeCat(String(queryCategory));
+      if (q === "boys") categoryFilter = { $in: ["boys", "men", "Boys", "Men", "BOYS", "MEN"] };
+      else if (q === "girls") categoryFilter = { $in: ["girls", "women", "Girls", "Women", "GIRLS", "WOMEN"] };
+    }
 
-    // Enrich each entry with computed stats
-    const enriched = await Promise.all(
-      entries.map(async (entry) => {
-        const stats = await computeStats(entry.dept_name, entry.category);
-        return {
-          _id: entry._id,
-          dept_name: entry.dept_name,
-          category: entry.category,
-          group: entry.group,
-          ...stats,
-        };
-      })
-    );
+    const filter: any = {};
+    if (queryCategory) filter.category = categoryFilter;
+
+    const leaderboardEntries = await TennisLeaderboard.find(filter);
+    
+    const standings: Record<string, { 
+      dept_name: string; 
+      group: string; 
+      category: string; 
+      wins: number; 
+      losses: number; 
+      matches: number;
+    }> = {};
+
+    // Initialize with all teams from leaderboard
+    leaderboardEntries.forEach(entry => {
+      const cat = normalizeCat(entry.category);
+      const key = `${cat}_${entry.dept_name}`;
+      standings[key] = { 
+        dept_name: entry.dept_name, 
+        group: entry.group || "A", 
+        category: cat,
+        wins: 0, 
+        losses: 0, 
+        matches: 0 
+      };
+    });
+
+    // Determine gender filter for matches based on category
+    let genderFilter: string | undefined = undefined;
+    if (queryCategory) {
+      const q = normalizeCat(String(queryCategory));
+      genderFilter = (q === "girls") ? "women" : "men";
+    }
+
+    const matches = await TennisMatch.find({ 
+      status: "completed",
+      stage: "league",
+      ...(genderFilter ? { gender: genderFilter } : {})
+    });
+
+    for (const match of matches) {
+      const cat = normalizeCat(match.gender || "");
+      const t1 = match.dept_name1;
+      const t2 = match.dept_name2;
+      const winner = match.winner_dept;
+      
+      const key1 = `${cat}_${t1}`;
+      const key2 = `${cat}_${t2}`;
+
+      if (standings[key1]) {
+        standings[key1].matches++;
+        if (winner === t1) {
+          standings[key1].wins++;
+        } else if (winner === t2) {
+          standings[key1].losses++;
+        }
+      }
+
+      if (standings[key2]) {
+        standings[key2].matches++;
+        if (winner === t2) {
+          standings[key2].wins++;
+        } else if (winner === t1) {
+          standings[key2].losses++;
+        }
+      }
+    }
 
     // Group by category → group
-    // Result shape: { boys: { A: [...], B: [...] }, girls: { A: [...], B: [...] } }
-    const result: Record<string, Record<string, typeof enriched>> = {};
+    const result: Record<string, Record<string, any[]>> = {};
 
-    for (const row of enriched) {
-      if (!result[row.category]) result[row.category] = {};
-      if (!result[row.category][row.group]) result[row.category][row.group] = [];
+    Object.values(standings).forEach(s => {
+      const cat = s.category;
+      const grp = s.group;
+      const points = s.wins * 3;
 
-      // Sort teams within each group by points descending
-      result[row.category][row.group].push(row);
-    }
+      if (!result[cat]) result[cat] = {};
+      if (!result[cat][grp]) result[cat][grp] = [];
+
+      result[cat][grp].push({
+        ...s,
+        points
+      });
+    });
 
     // Sort teams within each group by points descending
     for (const cat of Object.keys(result)) {
       for (const grp of Object.keys(result[cat])) {
-        result[cat][grp].sort((a, b) => b.points - a.points);
+        result[cat][grp].sort((a, b) => b.points - a.points || b.wins - a.wins || a.losses - b.losses);
       }
     }
 

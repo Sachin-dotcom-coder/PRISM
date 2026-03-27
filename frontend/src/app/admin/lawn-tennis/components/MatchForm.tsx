@@ -42,37 +42,30 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
     const calculateWinner = () => {
       let dept1Wins = 0;
       let dept2Wins = 0;
-      let allGamesPlayed = true;
 
-      const formatThresholds = {
+      const formatThresholds: Record<string, number> = {
         best_of_7: 4,
         best_of_9: 5,
         full_set: 6
       };
 
-      const threshold = formatThresholds[formData.series_format];
+      const threshold = formatThresholds[formData.series_format] || 4;
 
       formData.games.forEach(game => {
         const s1 = Number(game.score_dept1);
         const s2 = Number(game.score_dept2);
         
-        if (game.score_dept1 === '' || game.score_dept2 === '') {
-          allGamesPlayed = false;
-          return;
-        }
+        if (game.score_dept1 === '' || game.score_dept2 === '') return;
 
         if (s1 >= threshold || s2 >= threshold) {
            if (s1 > s2) dept1Wins++;
            else if (s2 > s1) dept2Wins++;
-        } else {
-          // If neither reached threshold, it's not "complete" or a winner isn't clear
-          // But for best of 7, 4 wins is the goal.
-          // If the score is 3-3, it's a draw/ongoing.
         }
       });
 
-      if (dept1Wins >= 2) return formData.dept_name1;
-      if (dept2Wins >= 2) return formData.dept_name2;
+      // Tie-winner is whoever won more games in the tie
+      if (dept1Wins > dept2Wins && dept1Wins >= Math.ceil(formData.games.length / 2)) return formData.dept_name1;
+      if (dept2Wins > dept1Wins && dept2Wins >= Math.ceil(formData.games.length / 2)) return formData.dept_name2;
       return '';
     };
 
@@ -103,6 +96,23 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
     const newGames = [...formData.games];
     newGames[index] = updatedGame;
     setFormData(prev => ({ ...prev, games: newGames }));
+  };
+
+  const addGame = () => {
+    setFormData(prev => ({
+      ...prev,
+      games: [
+        ...prev.games,
+        { tie_id: prev.games.length + 1, game_name: `Game ${prev.games.length + 1}`, score_dept1: '', score_dept2: '' }
+      ]
+    }));
+  };
+
+  const removeGame = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      games: prev.games.filter((_, i) => i !== index)
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -217,8 +227,14 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
 
       <div className="pt-8 border-t border-zinc-800 space-y-6">
         <div className="flex justify-between items-center">
-          <h4 className="text-zinc-500 font-black tracking-[0.3em] text-[10px] uppercase">Match Components (2S + 1D)</h4>
-          <div className="px-3 py-1 bg-zinc-900 rounded-full text-[9px] text-zinc-500 font-bold border border-zinc-800 uppercase tracking-tighter">Fixed Slots</div>
+          <h4 className="text-zinc-500 font-black tracking-[0.3em] text-[10px] uppercase">Match Components</h4>
+          <button 
+            type="button" 
+            onClick={addGame} 
+            className="flex items-center gap-2 px-3 py-1.5 bg-[#FFBF00]/10 border border-[#FFBF00]/20 text-[#FFBF00] rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-[#FFBF00] hover:text-black transition-all"
+          >
+            <Plus className="w-3.5 h-3.5" /> Add Game
+          </button>
         </div>
         
         <div className="grid grid-cols-1 gap-4">
@@ -228,6 +244,7 @@ export default function MatchForm({ initialData, gender, onSuccess, onCancel }: 
               game={game} 
               index={idx} 
               updateGame={updateGame}
+              removeGame={removeGame}
               dept1={formData.dept_name1}
               dept2={formData.dept_name2}
               format={formData.series_format}
